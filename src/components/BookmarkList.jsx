@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { VariableSizeList } from "react-window";
 import BookmarkCard from "./BookmarkCard.jsx";
 import FilterBar from "./FilterBar.jsx";
+import EmptyStack from "./effects/EmptyStack.jsx";
 import { Button, EmptyState as DesignEmptyState } from "./DesignSystem.jsx";
 
 const ITEM_HEIGHT = 104; // px — initial card-row estimate before measurement
@@ -21,28 +22,16 @@ function EmptyState({
   onClear,
   onAddNew,
   onImport,
+  effectsEnabled = true,
 }) {
   if (isLoading) return null;
 
   if (bookmarksTotal === 0) {
     return (
       <DesignEmptyState
-        icon={
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-          </svg>
-        }
-        title="No bookmarks yet."
-        description={'Click "Add New" to get started or import from a browser export.'}
+        icon={<EmptyStack enabled={effectsEnabled} />}
+        title="Your shelf is empty."
+        description="Add your first bookmark, or import a browser export."
         actions={
           <>
             <Button onClick={onAddNew}>Add New</Button>
@@ -251,6 +240,7 @@ const BookmarkList = React.memo(function BookmarkList({
   onClearFilters,
   filterSummary,
   remoteFavicons,
+  effectsEnabled,
 }) {
   const listRef = useRef(null);
   const containerRef = useRef(null);
@@ -350,6 +340,7 @@ const BookmarkList = React.memo(function BookmarkList({
           onClear={onClearSearch}
           onAddNew={onAddNew}
           onImport={onImport}
+          effectsEnabled={effectsEnabled}
         />
       </div>
     );

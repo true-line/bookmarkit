@@ -27,6 +27,7 @@ import { useSemanticDedupe } from "../hooks/useSemanticDedupe.js";
 import { isSafeHttpUrl } from "../utils/url.js";
 import { parseNetscapeHtml } from "../utils/netscapeBookmarks.js";
 import { remoteFaviconsEnabled, setRemoteFaviconsEnabled } from "../utils/favicon.js";
+import { effectsEnabled, setEffectsEnabled } from "../utils/effects.js";
 import { readImportedBookmarks } from "../utils/importedBookmarks.js";
 import { useAgentEngine } from "../hooks/useAgentEngine.js";
 import { useBookmarkSelection, keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
@@ -57,6 +58,7 @@ import FolderTree, { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
 import SmartViewBar from "./SmartViewBar.jsx";
+import BrandMark from "./effects/BrandMark.jsx";
 import { AgentPlan, Button, IconButton, Kbd, Modal, SearchBar, Toast } from "./DesignSystem.jsx";
 
 // Plan steps that write a new order to the store, rather than sorting the view.
@@ -106,6 +108,23 @@ const BookmarkApp = () => {
   // Init store on mount
   useEffect(() => init(showCustomMessage), []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The header is fixed so it can slide out of view, but its height is its
+  // content's: a fixed 9rem cropped the search bar at desktop widths and
+  // overlapped it at narrow ones. The measured height drives the main area's
+  // padding through --app-header-height, which is the only other consumer.
+  // The header is not rendered while loading, so this re-runs once it is.
+  const headerRef = useRef(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return undefined;
+    const syncHeight = () =>
+      document.documentElement.style.setProperty("--app-header-height", `${header.offsetHeight}px`);
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [isLoading]);
+
   // ─── LLM provider settings (#9/#29/#36 live in the hook) ────────────────────
   const {
     provider: runtimeProvider,
@@ -122,6 +141,8 @@ const BookmarkApp = () => {
   // #39: Off by default — fetching favicons from a third party would report the
   // user's hostnames on every render.
   const [remoteFavicons, setRemoteFavicons] = useState(remoteFaviconsEnabled);
+  // Decorative 3D effects, on by default and opted out in Options.
+  const [effects, setEffects] = useState(effectsEnabled);
   const [searchQuery, setSearchQuery] = useState("");
   // The agent's accumulated plan. It stays here rather than inside the engine
   // because the view, the manual filters and a persisted reorder all read it.
@@ -961,13 +982,15 @@ const BookmarkApp = () => {
       )}
 
       <header
+        ref={headerRef}
         className={`bookmarkit-header fixed top-0 left-0 right-0 z-10 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
         role="banner"
       >
-        <div className="bg-primary-bg shadow-sm border-b border-border h-full">
-          <div className="max-w-4xl mx-auto px-4 py-4 h-full flex flex-col justify-center">
+        <div className="bg-primary-bg shadow-sm border-b border-border">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col gap-2">
             <h1 className="sr-only">bookmarkit</h1>
-            <div className="flex justify-center items-center space-x-2">
+            <div className="flex justify-center items-center gap-3">
+              <BrandMark enabled={effects} size={44} />
               <div className="relative w-full max-w-md">
                 <SearchBar
                   id="search-input"
@@ -999,7 +1022,7 @@ const BookmarkApp = () => {
                 </svg>
               </IconButton>
             </div>
-            <div className="flex justify-center items-center mt-2 space-x-2 flex-wrap gap-y-1">
+            <div className="flex justify-center items-center gap-2 flex-wrap">
               <Button size="sm" onClick={handleAddNewBookmark}>
                 Add New
               </Button>
@@ -1058,10 +1081,24 @@ const BookmarkApp = () => {
                 </Button>
               )}
               <IconButton label="Options" variant="bordered" onClick={() => setIsOptionsOpen(true)}>
-                ⚙
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                </svg>
               </IconButton>
             </div>
-            <div className="text-center text-xs text-secondary-text mt-1">
+            <div className="text-center text-xs text-secondary-text">
               Click to select, <Kbd>Shift</Kbd>
               +click to open, double-click or <Kbd>E</Kbd> to edit.
             </div>
@@ -1163,6 +1200,7 @@ const BookmarkApp = () => {
                 onAddNew={handleAddNewBookmark}
                 onImport={handleImportExportOpen}
                 remoteFavicons={remoteFavicons}
+                effectsEnabled={effects}
                 filters={manualFilters}
                 tagFacets={tagFacets}
                 onFilterChange={setManualFilters}
@@ -1205,6 +1243,11 @@ const BookmarkApp = () => {
             onRemoteFaviconsChange={(enabled) => {
               setRemoteFaviconsEnabled(enabled);
               setRemoteFavicons(enabled);
+            }}
+            effects={effects}
+            onEffectsChange={(enabled) => {
+              setEffectsEnabled(enabled);
+              setEffects(enabled);
             }}
             onClose={() => setIsOptionsOpen(false)}
           />

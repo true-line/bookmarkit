@@ -109,3 +109,21 @@ describe("OptionsModal encryption UI (#29)", () => {
     expect(onDisableEncryption).toHaveBeenCalled();
   });
 });
+
+describe("OptionsModal effects preference", () => {
+  it("reports the 3D effects toggle and reflects the persisted state", () => {
+    const onEffectsChange = vi.fn();
+    const { rerender } = render(
+      <OptionsModal {...baseProps} effects onEffectsChange={onEffectsChange} />
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: /show 3d effects/i });
+    expect(checkbox).toBeChecked();
+
+    fireEvent.click(checkbox);
+    expect(onEffectsChange).toHaveBeenCalledWith(false);
+
+    rerender(<OptionsModal {...baseProps} effects={false} onEffectsChange={onEffectsChange} />);
+    expect(screen.getByRole("checkbox", { name: /show 3d effects/i })).not.toBeChecked();
+  });
+});

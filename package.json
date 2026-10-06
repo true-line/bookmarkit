@@ -40,7 +40,8 @@
     "js-yaml": "^4.3.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-window": "^1.8.10"
+    "react-window": "^1.8.10",
+    "three": "^0.186.1"
   },
   "overrides": {
     "firebase": {

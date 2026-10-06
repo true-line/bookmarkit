@@ -33,6 +33,10 @@ export default defineConfig(({ mode }) => ({
           "firebase-app": ["firebase/app"],
           "firebase-auth": ["firebase/auth"],
           "firebase-firestore": ["firebase/firestore"],
+          // three.js is only reachable through dynamic imports (the 3D brand
+          // mark and empty-state stack), so this chunk never loads with the app
+          // or the popup — naming it keeps it out of the synthesized chunks.
+          three: ["three"],
         },
       },
     },
