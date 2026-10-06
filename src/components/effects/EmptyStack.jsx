@@ -6,6 +6,7 @@ import React, { Suspense, lazy } from "react";
 // fails, or the chunk cannot load; a single static frame under reduced motion.
 
 const EmptyStackScene = lazy(() => import("./EmptyStackScene.jsx"));
+import SceneFallback from "./SceneFallback.jsx";
 
 export function EmptyStackGlyph({ size = 48 }) {
   return (
@@ -31,9 +32,11 @@ export default function EmptyStack({ enabled = true, width = 260, height = 150 }
 
   return (
     <div className="ds-empty-stack" style={{ width, height }} aria-hidden="true">
-      <Suspense fallback={<EmptyStackGlyph />}>
-        <EmptyStackScene width={width} height={height} />
-      </Suspense>
+      <SceneFallback fallback={<EmptyStackGlyph />}>
+        <Suspense fallback={<EmptyStackGlyph />}>
+          <EmptyStackScene width={width} height={height} />
+        </Suspense>
+      </SceneFallback>
     </div>
   );
 }

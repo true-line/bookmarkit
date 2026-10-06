@@ -32,15 +32,18 @@ export function createRenderer(canvas) {
 }
 
 /**
- * Renders on demand. Each scheduled frame calls `frame(now)` (seconds); when it
- * returns true another frame is scheduled, and when it returns false the loop
- * settles — no frames run until `request()` is called again (a pointer move, a
- * hover, a return to visibility). Nothing is scheduled while the document is
- * hidden or, when IntersectionObserver is available, while `element` is
- * offscreen. With reduced motion exactly one frame is rendered synchronously
- * and nothing is ever scheduled.
+ * Renders on demand. Each scheduled frame calls `frame(now)` (seconds — the
+ * browser's millisecond timestamps are converted here, because every scene
+ * expresses its durations in seconds); when `frame` returns true another frame
+ * is scheduled, and when it returns false the loop settles — no frames run
+ * until `request()` is called again (a pointer move, a hover, a return to
+ * visibility). Nothing is scheduled while the document is hidden or, when
+ * IntersectionObserver is available, while `element` is offscreen. With reduced
+ * motion exactly one frame is rendered synchronously and nothing is ever
+ * scheduled.
  *
- * @returns {{ request: () => void, stop: () => void }} stop cancels everything.
+ * @returns {{ request: () => void, stop: () => void }} stop cancels everything
+ *   and disposes the renderer, on both paths.
  */
 export function startRenderLoop({
   renderer,
@@ -52,7 +55,10 @@ export function startRenderLoop({
 }) {
   if (reducedMotion) {
     frame(0);
-    return { request: () => {}, stop: () => {} };
+    return {
+      request: () => {},
+      stop: () => renderer?.dispose(),
+    };
   }
 
   let scheduledId = null;
@@ -64,7 +70,7 @@ export function startRenderLoop({
 
   const tick = (now) => {
     scheduledId = null;
-    if (stopped || !frame(now)) return;
+    if (stopped || !frame(now / 1000)) return;
     if (canRun()) scheduledId = schedule(tick);
   };
 
@@ -116,4 +122,28 @@ export function disposeScene(scene) {
     for (const material of materials) material.dispose();
   });
   scene.clear();
+}
+
+/**
+ * Calls `onChange(value)` whenever the named CSS variable's computed value on
+ * the document root changes, and only then. Themes are applied by writing
+ * inline custom properties on <html>, so the scenes use this to pick up accent
+ * changes without rebuilding — a theme switch just retints the materials and
+ * requests one more frame.
+ *
+ * @returns {() => void} stop watching.
+ */
+export function watchCssVariable(name, onChange) {
+  const root = document.documentElement;
+  const read = () => getComputedStyle(root).getPropertyValue(name).trim();
+  let last = read();
+  const observer = new MutationObserver(() => {
+    const value = read();
+    if (value !== last) {
+      last = value;
+      onChange(value);
+    }
+  });
+  observer.observe(root, { attributes: true, attributeFilter: ["style"] });
+  return () => observer.disconnect();
 }

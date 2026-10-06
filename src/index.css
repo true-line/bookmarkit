@@ -157,10 +157,12 @@ body {
 
 /* The header is fixed (so it can be slid away) but its height is content-driven:
    the app measures it and writes --app-header-height, which the main area's
-   padding follows. The value here is only the pre-measurement fallback. */
+   padding follows. The value on :root is only the pre-measurement fallback.
+   No min-height here — feeding the measured height back into a minimum would
+   ratchet: once a narrow layout made the header tall, widening the window
+   could never make offsetHeight report anything smaller. */
 .bookmarkit-header {
   height: auto;
-  min-height: var(--app-header-height);
 }
 
 .bookmarkit-main--header-visible {

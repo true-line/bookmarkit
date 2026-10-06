@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { startRenderLoop } from "./sceneRuntime.js";
+import { waitFor } from "@testing-library/react";
+import { startRenderLoop, watchCssVariable } from "./sceneRuntime.js";
 
 // The loop's contract, in isolation from three.js: one static frame under
-// reduced motion, on-demand frames that stop when a scene settles, and no
-// frames while the document is hidden.
+// reduced motion, on-demand frames that stop when a scene settles, no frames
+// while the document is hidden, and browser timestamps handed to scenes as
+// seconds.
 
 const manualClock = () => {
   const pending = [];
@@ -25,6 +27,33 @@ describe("startRenderLoop", () => {
     expect(frame).toHaveBeenCalledTimes(1);
     expect(schedule).not.toHaveBeenCalled();
     expect(pendingCount()).toBe(0);
+  });
+
+  it("disposes the renderer when a reduced-motion loop stops", () => {
+    const { schedule } = manualClock();
+    const renderer = fakeRenderer();
+    const loop = startRenderLoop({
+      renderer,
+      frame: vi.fn(() => true),
+      reducedMotion: true,
+      schedule,
+    });
+
+    expect(renderer.dispose).not.toHaveBeenCalled();
+    loop.stop();
+    expect(renderer.dispose).toHaveBeenCalled();
+  });
+
+  it("passes requestAnimationFrame milliseconds to frame as seconds", () => {
+    const { schedule, run } = manualClock();
+    const frame = vi.fn(() => true);
+    startRenderLoop({ renderer: fakeRenderer(), frame, schedule, cancel: () => {} });
+
+    run(1000);
+    run(1516);
+
+    expect(frame).toHaveBeenNthCalledWith(1, 1);
+    expect(frame).toHaveBeenNthCalledWith(2, 1.516);
   });
 
   it("ignores requests after settling until asked again", () => {
@@ -90,5 +119,26 @@ describe("startRenderLoop", () => {
     expect(cancel).toHaveBeenCalled();
     expect(renderer.dispose).toHaveBeenCalled();
     expect(schedule).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("watchCssVariable", () => {
+  it("reports only real value changes on the document root", async () => {
+    document.documentElement.style.setProperty("--watched-var", "a");
+    const onChange = vi.fn();
+    const stop = watchCssVariable("--watched-var", onChange);
+
+    // a rewrite of the same value mutates the style attribute but must not fire
+    document.documentElement.style.setProperty("--watched-var", "a");
+    document.documentElement.style.setProperty("--watched-var", "b");
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(onChange).toHaveBeenCalledWith("b");
+
+    stop();
+    document.documentElement.style.setProperty("--watched-var", "c");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    document.documentElement.style.removeProperty("--watched-var");
   });
 });

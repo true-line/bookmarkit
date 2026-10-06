@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
 import {
   createRenderer,
   disposeScene,
   prefersReducedMotion,
   startRenderLoop,
+  watchCssVariable,
 } from "./sceneRuntime.js";
+import { buildStackScene, CARDS, CARD_SPREAD } from "./stackScene.js";
 import { EmptyStackGlyph } from "./EmptyStack.jsx";
 
 // A shallow stack of bookmark cards that assembles and settles into place,
@@ -13,39 +14,9 @@ import { EmptyStackGlyph } from "./EmptyStack.jsx";
 // permanently — an empty list that kept animating would be the one surface
 // drawing frames while nothing happens.
 
-const CARDS = 5;
 const STAGGER = 0.12;
 const TRAVEL = 0.65;
-const CARD_SPREAD = { x: 0.14, y: -0.3, z: -0.09 };
-
-function buildStackScene(accent) {
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-  camera.position.set(0, 1.4, 7);
-  camera.lookAt(0, 0, 0);
-
-  const geometry = new THREE.BoxGeometry(2.7, 1.75, 0.07);
-  const cards = [];
-  for (let i = 0; i < CARDS; i += 1) {
-    const front = i === CARDS - 1;
-    const material = new THREE.MeshStandardMaterial({
-      color: front ? accent : i % 2 === 0 ? 0xfdfbf5 : 0xf3ece0,
-      roughness: 0.6,
-      metalness: 0.05,
-    });
-    const card = new THREE.Mesh(geometry.clone(), material);
-    scene.add(card);
-    cards.push(card);
-  }
-
-  const key = new THREE.DirectionalLight(0xffffff, 1.4);
-  key.position.set(2, 3.5, 4);
-  const fill = new THREE.DirectionalLight(0xffffff, 0.45);
-  fill.position.set(-2.5, -1, 3);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.85), key, fill);
-
-  return { scene, camera, cards };
-}
+const DEFAULT_ACCENT = "#c62f35";
 
 // Each card's resting place in the stack, from the back to the red front card.
 const restPose = (index) => {
@@ -76,8 +47,9 @@ export default function EmptyStackScene({ width = 260, height = 150 }) {
     renderer.setSize(width, height, false);
 
     const accent =
-      getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#c62f35";
-    const { scene, camera, cards } = buildStackScene(accent);
+      getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() ||
+      DEFAULT_ACCENT;
+    const { scene, camera, cards, frontMaterial } = buildStackScene(accent, width / height);
     const reducedMotion = prefersReducedMotion();
     const totalDuration = (CARDS - 1) * STAGGER + TRAVEL;
 
@@ -116,7 +88,17 @@ export default function EmptyStackScene({ width = 260, height = 150 }) {
     };
 
     const loop = startRenderLoop({ renderer, frame, reducedMotion, element: canvas });
+
+    // Theme switches write new CSS custom properties on the root; retint the
+    // front card in place instead of replaying the entrance.
+    const stopWatchingAccent = watchCssVariable("--accent", (value) => {
+      frontMaterial.color.set(value || DEFAULT_ACCENT);
+      if (reducedMotion) renderer.render(scene, camera);
+      else loop.request();
+    });
+
     return () => {
+      stopWatchingAccent();
       loop.stop();
       disposeScene(scene);
     };

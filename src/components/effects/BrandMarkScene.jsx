@@ -5,6 +5,7 @@ import {
   disposeScene,
   prefersReducedMotion,
   startRenderLoop,
+  watchCssVariable,
 } from "./sceneRuntime.js";
 import BrandMarkGlyph from "./BrandMarkGlyph.jsx";
 
@@ -18,10 +19,11 @@ const IDLE_AMPLITUDE = 0.24;
 const IDLE_DECAY = 0.5;
 const SETTLE_EPSILON = 0.01;
 const HOVER_MARGIN = 24;
+const DEFAULT_ACCENT = "#c62f35";
 
 function accentColor() {
   const value = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-  return value || "#c62f35";
+  return value || DEFAULT_ACCENT;
 }
 
 function buildMarkScene(accent) {
@@ -99,12 +101,14 @@ export default function BrandMarkScene({ size = 44 }) {
       rot.y += (target.y - rot.y) * k;
       mesh.rotation.set(rot.x, rot.y, 0);
 
-      return !(
-        !hovering &&
-        idle < SETTLE_EPSILON &&
+      // The hovered pose settles too: a pointer parked near the mark does not
+      // keep WebGL rendering. The pointermove handler requests a frame again
+      // whenever a new position gives the mark something to move toward.
+      const settled =
+        (hovering || idle < SETTLE_EPSILON) &&
         Math.abs(target.x - rot.x) < SETTLE_EPSILON &&
-        Math.abs(target.y - rot.y) < SETTLE_EPSILON
-      );
+        Math.abs(target.y - rot.y) < SETTLE_EPSILON;
+      return !settled;
     };
 
     const frame = (now) => {
@@ -139,7 +143,16 @@ export default function BrandMarkScene({ size = 44 }) {
 
     const loop = startRenderLoop({ renderer, frame, reducedMotion, element: canvas });
 
+    // Theme switches write new CSS custom properties on the root; retint the
+    // accent material in place instead of rebuilding the scene.
+    const stopWatchingAccent = watchCssVariable("--accent", (value) => {
+      mesh.material[0].color.set(value || DEFAULT_ACCENT);
+      if (reducedMotion) renderer.render(scene, camera);
+      else loop.request();
+    });
+
     return () => {
+      stopWatchingAccent();
       window.removeEventListener("pointermove", onPointerMove);
       loop.stop();
       disposeScene(scene);

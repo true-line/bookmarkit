@@ -8,15 +8,18 @@ import React, { Suspense, lazy } from "react";
 
 const BrandMarkScene = lazy(() => import("./BrandMarkScene.jsx"));
 import BrandMarkGlyph from "./BrandMarkGlyph.jsx";
+import SceneFallback from "./SceneFallback.jsx";
 
 export default function BrandMark({ enabled = true, size = 44 }) {
   if (!enabled) return <BrandMarkGlyph size={size} />;
 
   return (
     <div className="ds-brand-mark" style={{ width: size, height: size }} aria-hidden="true">
-      <Suspense fallback={<BrandMarkGlyph size={size} />}>
-        <BrandMarkScene size={size} />
-      </Suspense>
+      <SceneFallback fallback={<BrandMarkGlyph size={size} />}>
+        <Suspense fallback={<BrandMarkGlyph size={size} />}>
+          <BrandMarkScene size={size} />
+        </Suspense>
+      </SceneFallback>
     </div>
   );
 }
