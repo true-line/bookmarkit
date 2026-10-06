@@ -65,7 +65,10 @@ const FilterBar = React.memo(function FilterBar({
       aria-label="Filter bookmarks"
     >
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[13.75rem]">
+        {/* The text filter is grouped apart from the discrete controls: below
+            40rem it takes a full row and the controls scroll as one strip
+            (see the media query in index.css), instead of six wrapped lines. */}
+        <div className="ds-filter-text relative flex-1 min-w-[13.75rem]">
           <Input
             id="filter-text"
             type="text"
@@ -86,67 +89,71 @@ const FilterBar = React.memo(function FilterBar({
           )}
         </div>
 
-        <Select
-          id="filter-rating"
-          value={filters.minRating}
-          onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
-          aria-label="Minimum rating"
-          wrapperClassName="w-[9.375rem]"
-          options={[
-            { value: 0, label: "Any rating" },
-            ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${"★".repeat(n)}+` })),
-          ]}
-        />
+        <div className="ds-filter-controls flex items-center gap-2 flex-wrap">
+          <Select
+            id="filter-rating"
+            value={filters.minRating}
+            onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
+            aria-label="Minimum rating"
+            wrapperClassName="w-[9.375rem]"
+            options={[
+              { value: 0, label: "Any rating" },
+              ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${"★".repeat(n)}+` })),
+            ]}
+          />
 
-        {/* #47: what the sweep found, as a filter — the status it reads is written
+          {/* #47: what the sweep found, as a filter — the status it reads is written
             by the link check, so this stays useful with no LLM and no network. */}
-        <Button
-          type="button"
-          size="sm"
-          intent={filters.brokenOnly ? "primary" : "secondary"}
-          onClick={() => onChange({ ...filters, brokenOnly: !filters.brokenOnly })}
-          aria-pressed={Boolean(filters.brokenOnly)}
-        >
-          Broken only
-        </Button>
-
-        {/* #50: the other filter that reads something the app observed rather than
-            something a user typed. */}
-        <Button
-          type="button"
-          size="sm"
-          intent={filters.neverOpened ? "primary" : "secondary"}
-          onClick={() => onChange({ ...filters, neverOpened: !filters.neverOpened })}
-          aria-pressed={Boolean(filters.neverOpened)}
-        >
-          Never opened
-        </Button>
-
-        <Select
-          id="filter-sort"
-          value={filters.sortBy}
-          onChange={(e) => onChange({ ...filters, sortBy: e.target.value })}
-          aria-label="Sort by"
-          wrapperClassName="w-[10.625rem]"
-          options={SORT_FIELDS}
-        />
-
-        <Button
-          type="button"
-          size="sm"
-          intent="secondary"
-          onClick={() => onChange({ ...filters, order: filters.order === "asc" ? "desc" : "asc" })}
-          disabled={!filters.sortBy}
-          aria-label={`Sort direction: ${filters.order === "asc" ? "ascending" : "descending"}. Activate to reverse.`}
-        >
-          {filters.order === "asc" ? "↑ Asc" : "↓ Desc"}
-        </Button>
-
-        {active && (
-          <Button type="button" intent="ghost" onClick={onClear}>
-            Clear filters
+          <Button
+            type="button"
+            size="sm"
+            intent={filters.brokenOnly ? "primary" : "secondary"}
+            onClick={() => onChange({ ...filters, brokenOnly: !filters.brokenOnly })}
+            aria-pressed={Boolean(filters.brokenOnly)}
+          >
+            Broken only
           </Button>
-        )}
+
+          {/* #50: the other filter that reads something the app observed rather than
+            something a user typed. */}
+          <Button
+            type="button"
+            size="sm"
+            intent={filters.neverOpened ? "primary" : "secondary"}
+            onClick={() => onChange({ ...filters, neverOpened: !filters.neverOpened })}
+            aria-pressed={Boolean(filters.neverOpened)}
+          >
+            Never opened
+          </Button>
+
+          <Select
+            id="filter-sort"
+            value={filters.sortBy}
+            onChange={(e) => onChange({ ...filters, sortBy: e.target.value })}
+            aria-label="Sort by"
+            wrapperClassName="w-[10.625rem]"
+            options={SORT_FIELDS}
+          />
+
+          <Button
+            type="button"
+            size="sm"
+            intent="secondary"
+            onClick={() =>
+              onChange({ ...filters, order: filters.order === "asc" ? "desc" : "asc" })
+            }
+            disabled={!filters.sortBy}
+            aria-label={`Sort direction: ${filters.order === "asc" ? "ascending" : "descending"}. Activate to reverse.`}
+          >
+            {filters.order === "asc" ? "↑ Asc" : "↓ Desc"}
+          </Button>
+
+          {active && (
+            <Button type="button" intent="ghost" onClick={onClear}>
+              Clear filters
+            </Button>
+          )}
+        </div>
       </div>
 
       {tagFacets.length > 0 && (

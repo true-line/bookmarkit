@@ -1022,7 +1022,9 @@ const BookmarkApp = () => {
                 </svg>
               </IconButton>
             </div>
-            <div className="flex justify-center items-center gap-2 flex-wrap">
+            {/* One horizontally scrollable strip: at phone widths the buttons
+                used to wrap into five rows and eat the viewport. */}
+            <div className="bookmarkit-header-actions flex items-center gap-2">
               <Button size="sm" onClick={handleAddNewBookmark}>
                 Add New
               </Button>
@@ -1098,7 +1100,7 @@ const BookmarkApp = () => {
                 </svg>
               </IconButton>
             </div>
-            <div className="text-center text-xs text-secondary-text">
+            <div className="bookmarkit-hint text-center text-xs text-secondary-text">
               Click to select, <Kbd>Shift</Kbd>
               +click to open, double-click or <Kbd>E</Kbd> to edit.
             </div>
@@ -1111,7 +1113,7 @@ const BookmarkApp = () => {
         role="main"
       >
         <div
-          className={`flex-1 min-h-0 w-full mx-auto px-4 flex gap-4 ${
+          className={`relative flex-1 min-h-0 w-full mx-auto px-4 flex gap-4 ${
             isFolderPaneOpen ? "max-w-6xl" : "max-w-4xl"
           }`}
         >
@@ -1124,7 +1126,10 @@ const BookmarkApp = () => {
               onMoveFolder={handleRenameFolder}
               onRenameFolder={handleRenameFolder}
               onDeleteFolder={handleDeleteFolder}
-              className="w-56 shrink-0 py-1"
+              // Below 40rem the fixed 224px column takes most of the viewport,
+              // so the pane overlays the content area as a full-width sheet
+              // instead of crushing the list beside it.
+              className="w-56 shrink-0 py-1 max-sm:absolute max-sm:inset-0 max-sm:z-20 max-sm:w-auto max-sm:bg-primary-bg max-sm:shadow-xl max-sm:py-2"
             />
           )}
           <div className="flex-1 min-w-0 min-h-0 flex flex-col">
