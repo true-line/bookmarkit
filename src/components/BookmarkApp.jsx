@@ -43,6 +43,7 @@ import { useTheme } from "../hooks/useTheme.js";
 import { useDebounce } from "../hooks/useDebounce.js";
 import { useSmartViews } from "../hooks/useSmartViews.js";
 import { useUndoHistory } from "../hooks/useUndoHistory.js";
+import { useFolderSheetViewport } from "../hooks/useFolderSheetViewport.js";
 
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import HelpModal from "./HelpModal";
@@ -161,6 +162,15 @@ const BookmarkApp = () => {
   // #55: the folder tree, shown on request. It is a way to browse, not something
   // the collection needs, so it does not take space until asked for.
   const [isFolderPaneOpen, setIsFolderPaneOpen] = useState(false);
+  // #151: below `sm` the pane overlays the content as a full-width sheet, which
+  // gets sheet keyboard behavior — see the Escape binding and selectFolder.
+  const isFolderSheetViewport = useFolderSheetViewport();
+  const isFolderSheet = isFolderPaneOpen && isFolderSheetViewport;
+  const folderToggleRef = useRef(null);
+  const closeFolderSheet = useCallback(() => {
+    setIsFolderPaneOpen(false);
+    folderToggleRef.current?.focus();
+  }, []);
   const [bookmarksToDelete, setBookmarksToDelete] = useState([]);
   // #50: the digest being read, null when none is.
   const [digest, setDigest] = useState(null);
@@ -437,8 +447,11 @@ const BookmarkApp = () => {
     (folder) => {
       clearSelectedBookmarks();
       setManualFilters((prev) => ({ ...prev, folder }));
+      // On the mobile sheet the pane is in the way of the list it just
+      // filtered, so picking a folder is also done with it.
+      if (isFolderSheet) closeFolderSheet();
     },
-    [clearSelectedBookmarks]
+    [clearSelectedBookmarks, isFolderSheet, closeFolderSheet]
   );
 
   // A dragged card carries the selection it belongs to, and only itself otherwise.
@@ -671,7 +684,17 @@ const BookmarkApp = () => {
 
   useKeyboardShortcuts(
     {
-      Escape: clearSelection,
+      // The mobile folder sheet behaves like a dialog while it is open, so
+      // Escape dismisses it (and returns focus to its toggle) before doing
+      // anything else. Handlers are read at keypress time, so this sees the
+      // pane's current state without resubscribing.
+      Escape: () => {
+        if (isFolderSheet) {
+          closeFolderSheet();
+          return;
+        }
+        clearSelection();
+      },
       // #56: the history outlives the toast, so this reaches writes whose offer
       // has already gone.
       "Mod+z": (event) => {
@@ -1029,6 +1052,7 @@ const BookmarkApp = () => {
                 Add New
               </Button>
               <Button
+                ref={folderToggleRef}
                 size="sm"
                 intent="secondary"
                 onClick={() => setIsFolderPaneOpen((open) => !open)}
@@ -1132,7 +1156,10 @@ const BookmarkApp = () => {
               className="w-56 shrink-0 py-1 max-sm:absolute max-sm:inset-0 max-sm:z-20 max-sm:w-auto max-sm:bg-primary-bg max-sm:shadow-xl max-sm:py-2"
             />
           )}
-          <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+          {/* The sheet covers this subtree completely on mobile; `inert` keeps
+              its controls out of the tab order and the accessibility tree while
+              it is open, so focus cannot land somewhere invisible. */}
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col" inert={isFolderSheet || undefined}>
             {/* Agent plan display */}
             {lastAction && (
               <div className="mb-4">

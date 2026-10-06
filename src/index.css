@@ -210,6 +210,12 @@ body {
     overflow-x: auto;
     scrollbar-width: none;
   }
+  /* The strip only scrolls if its contents refuse to shrink: .ds-field and
+     the buttons default to flex-shrink: 1, which on a nowrap row collapses
+     the selects to slivers instead of letting the strip overflow. */
+  .ds-filter-controls > * {
+    flex-shrink: 0;
+  }
   .ds-filter-controls::-webkit-scrollbar {
     display: none;
   }
