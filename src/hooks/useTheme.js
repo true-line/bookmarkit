@@ -2,14 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+// The default palette is the same one :root declares in index.css: warm paper
+// surfaces, ink text, and the brand mark's bookmark red. Keep the two in sync —
+// this object is what gets written to the CSS variables when no theme is
+// selected, so a drift would override the stylesheet on every mount.
 const DEFAULT_THEME = {
-  bgPrimary: "#ffffff",
-  bgSecondary: "#f9fafb",
-  textPrimary: "#111827",
-  textSecondary: "#6b7280",
-  border: "#d1d5db",
-  accent: "#3b82f6",
-  accentHover: "#2563eb",
+  bgPrimary: "#fffdf8",
+  bgSecondary: "#f6f1e7",
+  textPrimary: "#211d18",
+  textSecondary: "#6d675c",
+  border: "#e4dcc9",
+  accent: "#c62f35",
+  accentHover: "#a92329",
 };
 
 const REQUIRED_THEME_KEYS = [
@@ -25,13 +29,13 @@ const REQUIRED_THEME_KEYS = [
 function applyThemeToDom(theme) {
   const t = theme || DEFAULT_THEME;
   const root = document.documentElement;
-  root.style.setProperty("--bg-primary", t.bgPrimary || "#ffffff");
-  root.style.setProperty("--bg-secondary", t.bgSecondary || "#f9fafb");
-  root.style.setProperty("--text-primary", t.textPrimary || "#111827");
-  root.style.setProperty("--text-secondary", t.textSecondary || "#6b7280");
-  root.style.setProperty("--border", t.border || "#d1d5db");
-  root.style.setProperty("--accent", t.accent || "#3b82f6");
-  root.style.setProperty("--accent-hover", t.accentHover || "#2563eb");
+  root.style.setProperty("--bg-primary", t.bgPrimary || "#fffdf8");
+  root.style.setProperty("--bg-secondary", t.bgSecondary || "#f6f1e7");
+  root.style.setProperty("--text-primary", t.textPrimary || "#211d18");
+  root.style.setProperty("--text-secondary", t.textSecondary || "#6d675c");
+  root.style.setProperty("--border", t.border || "#e4dcc9");
+  root.style.setProperty("--accent", t.accent || "#c62f35");
+  root.style.setProperty("--accent-hover", t.accentHover || "#a92329");
 }
 
 async function saveThemeToPersistence(key, value) {

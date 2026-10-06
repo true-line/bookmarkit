@@ -96,8 +96,9 @@ current.
 | `scheduler` | 0.27.0 | MIT |
 | `string-width` | 4.2.3 | MIT |
 | `strip-ansi` | 6.0.1 | MIT |
+| `three` | 0.186.1 | MIT |
 | `tslib` | 2.8.1 | 0BSD |
-| `undici` | 6.28.0 | MIT |
+| `undici` | 6.29.0 | MIT |
 | `undici-types` | 7.19.2 | MIT |
 | `websocket-driver` | 0.7.5 | Apache-2.0 |
 | `websocket-extensions` | 0.1.4 | Apache-2.0 |
@@ -2535,6 +2536,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---
 
+## three 0.186.1
+
+License: MIT
+
+### LICENSE
+
+```text
+The MIT License
+
+Copyright © 2010-2026 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
+---
+
 ## tslib 2.8.1
 
 License: 0BSD
@@ -2558,7 +2591,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ---
 
-## undici 6.28.0
+## undici 6.29.0
 
 License: MIT
 

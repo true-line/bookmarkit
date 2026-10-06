@@ -59,7 +59,7 @@ const FilterBar = React.memo(function FilterBar({
 
   return (
     <div
-      className="mb-4 p-3 rounded-lg border border-border bg-primary-bg"
+      className="mb-4 p-2 rounded-lg border border-border bg-primary-bg"
       style={style}
       role="search"
       aria-label="Filter bookmarks"
@@ -102,6 +102,7 @@ const FilterBar = React.memo(function FilterBar({
             by the link check, so this stays useful with no LLM and no network. */}
         <Button
           type="button"
+          size="sm"
           intent={filters.brokenOnly ? "primary" : "secondary"}
           onClick={() => onChange({ ...filters, brokenOnly: !filters.brokenOnly })}
           aria-pressed={Boolean(filters.brokenOnly)}
@@ -113,6 +114,7 @@ const FilterBar = React.memo(function FilterBar({
             something a user typed. */}
         <Button
           type="button"
+          size="sm"
           intent={filters.neverOpened ? "primary" : "secondary"}
           onClick={() => onChange({ ...filters, neverOpened: !filters.neverOpened })}
           aria-pressed={Boolean(filters.neverOpened)}
@@ -131,6 +133,7 @@ const FilterBar = React.memo(function FilterBar({
 
         <Button
           type="button"
+          size="sm"
           intent="secondary"
           onClick={() => onChange({ ...filters, order: filters.order === "asc" ? "desc" : "asc" })}
           disabled={!filters.sortBy}
@@ -147,7 +150,7 @@ const FilterBar = React.memo(function FilterBar({
       </div>
 
       {tagFacets.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap mt-3">
+        <div className="flex items-center gap-2 flex-wrap mt-2">
           {visibleTags.map(({ tag, count }) => (
             <TagChip
               key={tag}
@@ -179,7 +182,7 @@ const FilterBar = React.memo(function FilterBar({
       )}
 
       {summary && (
-        <div className="mt-3 pt-3 border-t border-border text-sm text-secondary-text">
+        <div className="mt-2 pt-2 border-t border-border text-sm text-secondary-text">
           {summary}
         </div>
       )}

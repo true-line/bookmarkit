@@ -51,6 +51,13 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - LLM integration (runtime‑configurable)
   - Gemini, OpenAI (ChatGPT), Grok (x.ai), Ollama (local), LM Studio (local)
   - Model discovery (where supported), custom base URLs, stored per provider
+- Appearance
+  - A warm "bookmark shelf" look: paper-tinted surfaces, ink text, and the
+    brand mark's red as the accent; custom themes keep working
+  - Optional 3D effects — a dimensional brand mark in the header and an
+    animated card stack on an empty shelf — on by default in
+    Options → Appearance. They render locally, respect reduced-motion
+    settings, and fall back to static marks when WebGL is unavailable
 - Storage backends
   - Local (browser) by default
   - Optional Firebase (Cloud Firestore) backend

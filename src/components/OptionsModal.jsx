@@ -25,6 +25,8 @@ const OptionsModal = ({
   onThemeUpload,
   remoteFavicons = false,
   onRemoteFaviconsChange,
+  effects = true,
+  onEffectsChange,
   onClose,
 }) => {
   const [models, setModels] = useState([]);
@@ -400,6 +402,24 @@ const OptionsModal = ({
               />
               <p className="text-xs text-secondary-text mt-1">Upload a JSON or YAML theme file.</p>
             </div>
+            {/* Decorative 3D effects: pure presentation, on by default, off in
+                one click. Nothing about the collection changes with them. */}
+            <label className="flex items-start gap-2 text-sm text-primary-text">
+              <input
+                type="checkbox"
+                checked={effects}
+                onChange={(e) => onEffectsChange?.(e.target.checked)}
+                className="mt-0.5 accent-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+              />
+              <span>
+                Show 3D effects
+                <span className="block text-xs text-secondary-text">
+                  A dimensional brand mark in the header and a small animated card stack on an empty
+                  shelf. Both are rendered locally and stay still when your system asks for reduced
+                  motion; turning this off shows the static marks instead.
+                </span>
+              </span>
+            </label>
           </div>
           {/* #39: favicons are a privacy decision, so the choice is explicit and off by default. */}
           <div className="border-t border-border pt-4">

@@ -42,14 +42,22 @@
   --blue-200: #bfdbfe;
   --blue-800: #1e40af;
 
-  /* The only runtime theme inputs. useTheme remains their sole writer. */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --border: #d1d5db;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
+  /* The only runtime theme inputs. useTheme remains their sole writer.
+     Default palette: the "bookmark shelf" — warm paper surfaces, ink text,
+     and the brand mark's bookmark red. Every other token derives from these. */
+  --bg-primary: #fffdf8;
+  --bg-secondary: #f6f1e7;
+  --text-primary: #211d18;
+  --text-secondary: #6d675c;
+  --border: #e4dcc9;
+  --accent: #c62f35;
+  --accent-hover: #a92329;
+
+  /* Derived tokens — never written at runtime, so custom themes keep working. */
+  --accent-strong: var(--accent-hover);
+  --url-text: var(--text-secondary);
+  --shadow-card: 0 1px 2px rgba(33, 29, 24, 0.06), 0 1px 3px rgba(33, 29, 24, 0.07);
+  --shadow-card-hover: 0 6px 16px -4px rgba(33, 29, 24, 0.18), 0 2px 4px rgba(33, 29, 24, 0.08);
 
   --status-success-bg: var(--green-100);
   --status-success-border: var(--green-300);
@@ -97,7 +105,7 @@
   --weight-bold: 700;
   --type-title: var(--weight-semibold) var(--text-xl) / var(--leading-snug) var(--font-sans);
   --type-heading: var(--weight-semibold) var(--text-lg) / var(--leading-snug) var(--font-sans);
-  --type-card-title: var(--weight-medium) var(--text-base) / var(--leading-snug) var(--font-sans);
+  --type-card-title: var(--weight-semibold) 0.9375rem / var(--leading-snug) var(--font-sans);
   --type-body: var(--weight-normal) var(--text-base) / var(--leading-normal) var(--font-sans);
   --type-body-sm: var(--weight-normal) var(--text-sm) / var(--leading-normal) var(--font-sans);
   --type-label: var(--weight-medium) var(--text-sm) / var(--leading-normal) var(--font-sans);
@@ -111,7 +119,8 @@
   --space-6: 1.5rem;
   --radius-sm: 0.125rem;
   --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
   --radius-full: 9999px;
   --border-width: 1px;
   --border-width-2: 2px;
@@ -146,8 +155,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* The header is fixed (so it can be slid away) but its height is content-driven:
+   the app measures it and writes --app-header-height, which the main area's
+   padding follows. The value here is only the pre-measurement fallback. */
 .bookmarkit-header {
-  height: var(--app-header-height);
+  height: auto;
+  min-height: var(--app-header-height);
 }
 
 .bookmarkit-main--header-visible {
@@ -156,12 +169,6 @@ body {
 
 .bookmarkit-main--header-hidden {
   padding-top: var(--space-4);
-}
-
-@media (max-width: 40rem) {
-  :root {
-    --app-header-height: 11.5rem;
-  }
 }
 
 a {
@@ -504,19 +511,23 @@ textarea {
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   cursor: pointer;
   transition:
     border-color var(--duration-normal) var(--ease-standard),
-    box-shadow var(--duration-normal) var(--ease-standard);
+    box-shadow var(--duration-normal) var(--ease-standard),
+    transform var(--duration-normal) var(--ease-standard);
 }
 .ds-bookmark-card:hover {
   border-color: var(--accent);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
 }
 .ds-bookmark-card.is-selected {
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
+  box-shadow: var(--shadow-card-hover);
 }
 .ds-bookmark-card.is-pending-delete {
   color: var(--text-primary);
@@ -532,6 +543,7 @@ textarea {
   justify-content: center;
   overflow: hidden;
   background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
 .is-selected .ds-favicon-tile {
@@ -560,14 +572,19 @@ textarea {
 }
 .ds-bookmark-url {
   margin: 0;
-  color: var(--accent);
-  font: var(--type-body-sm);
+  overflow: hidden;
+  color: var(--url-text);
+  font: var(--type-mono);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .is-selected .ds-bookmark-url {
   color: rgba(255, 255, 255, 0.9);
 }
 .ds-bookmark-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   margin: 0.25rem 0 0;
   color: var(--text-secondary);
   font: var(--type-body-sm);
@@ -692,8 +709,12 @@ textarea {
   cursor: pointer;
 }
 .ds-toast-action {
-  color: var(--accent);
+  /* The accent is too dark to read on the ink-dark toast (2.7:1), so the
+     action is white with weight instead. */
+  color: var(--white);
   font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .ds-toast-dismiss {
   color: var(--gray-400);
@@ -735,7 +756,7 @@ textarea {
 }
 
 .ds-empty-state {
-  padding: 3rem var(--space-4);
+  padding: 2.5rem var(--space-4);
   text-align: center;
 }
 .ds-empty-icon {
@@ -759,6 +780,31 @@ textarea {
   justify-content: center;
   gap: var(--space-3);
 }
+
+/* Decorative 3D effects (header brand mark, empty-state card stack). Never a
+   pointer target, never announced — the scenes read pointer position from the
+   window instead of capturing events on the canvas. */
+.ds-brand-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.ds-effects-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ds-empty-stack {
+  margin: 0 auto var(--space-2);
+  pointer-events: none;
+}
+.ds-empty-stack svg {
+  margin: 0 auto;
+}
+
 .ds-tabs {
   display: flex;
   overflow-x: auto;
