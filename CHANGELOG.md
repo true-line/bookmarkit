@@ -1,5 +1,44 @@
 # bookmarkit
 
+## 0.3.0
+
+### Minor Changes
+
+- 97d1d52: A visual refresh of the app, plus optional 3D effects.
+
+  - The header no longer crops the search bar or overlaps the list: its height is
+    measured from its content at every width, and the action row wraps with
+    proper spacing.
+  - New default palette: warm paper surfaces, ink text, and the brand mark's
+    bookmark red as the accent. Custom themes keep working; URL text now uses a
+    muted mono style that meets WCAG AA contrast.
+  - Bookmark cards gain a subtle resting shadow, a hover lift, and a two-line
+    description clamp; the filter bar takes less vertical space; the options
+    button is a proper gear icon.
+  - New decorative 3D effects, on by default and toggleable in Options →
+    Appearance: a dimensional bookmark-ribbon brand mark in the header that
+    settles and tilts toward the pointer, and a small card stack that assembles
+    on an empty shelf. Both render locally, stay entirely out of the initial
+    bundle and the popup, render a single static frame under
+    prefers-reduced-motion, pause when hidden or offscreen, and fall back to the
+    static marks when WebGL is unavailable.
+
+### Patch Changes
+
+- b82ca62: Mobile layout cleanup (#151): at phone widths the header consumed 262px of a
+  667px screen and the filter bar another 326px.
+
+  - The header's action row is now one horizontally scrollable strip instead of
+    wrapping into four or five stacked rows; it stays centered when it fits.
+  - The keyboard hint line is hidden below 40rem — there is no keyboard to hint
+    at on a touch device.
+  - The filter bar's text filter takes a full-width row below 40rem and the
+    discrete controls (rating, broken-only, never-opened, sort, direction)
+    scroll horizontally as one strip instead of wrapping across six lines; the
+    tag chips keep wrapping.
+  - The folder pane overlays the content area as a full-width sheet below 40rem
+    instead of taking 60% of the viewport and crushing the bookmark list.
+
 ## 0.2.1
 
 ### Patch Changes
