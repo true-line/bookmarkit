@@ -157,3 +157,34 @@ describe("FilterBar (#53)", () => {
     expect(screen.queryByRole("button", { name: /^Tag / })).not.toBeInTheDocument();
   });
 });
+
+describe("FilterBar narrow-viewport structure (#151)", () => {
+  it("groups the text filter apart from the discrete controls", () => {
+    setup();
+
+    const text = document.querySelector(".ds-filter-text");
+    const controls = document.querySelector(".ds-filter-controls");
+    expect(text).not.toBeNull();
+    expect(controls).not.toBeNull();
+
+    // The responsive rules in index.css turn these two classes into a
+    // full-width text row and one scrollable control strip below 40rem, so
+    // the grouping is the contract this test protects.
+    expect(text.querySelector("#filter-text")).not.toBeNull();
+    expect(controls.contains(screen.getByLabelText("Minimum rating"))).toBe(true);
+    expect(controls.contains(screen.getByLabelText("Sort by"))).toBe(true);
+  });
+
+  it("keeps the clear-filters action inside the scrollable control strip", () => {
+    const { onClear } = setup({
+      filters: { ...EMPTY_FILTERS, minRating: 3 },
+    });
+
+    const controls = document.querySelector(".ds-filter-controls");
+    const clear = screen.getByRole("button", { name: /clear filters/i });
+    expect(controls.contains(clear)).toBe(true);
+
+    fireEvent.click(clear);
+    expect(onClear).toHaveBeenCalled();
+  });
+});

@@ -173,6 +173,54 @@ body {
   padding-top: var(--space-4);
 }
 
+/* ─── Narrow viewports ────────────────────────────────────────────────────
+   The desktop header stacks three rows; at phone widths the wrapped action
+   buttons alone reached five rows (262px of a 667px screen). Below 40rem:
+   the action row is one horizontally scrollable strip ("safe center" keeps
+   it centered when it fits and scrollable when it does not; browsers that
+   do not understand it fall back to the plain center on the line above), and
+   the keyboard hint line is hidden — there is no keyboard to hint at. */
+.bookmarkit-header-actions {
+  flex-wrap: nowrap;
+  justify-content: center;
+  justify-content: safe center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bookmarkit-header-actions::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .bookmarkit-hint {
+    display: none;
+  }
+
+  /* The filter bar: the text filter takes a full row, and the discrete
+     controls (rating, broken-only, never-opened, sort, direction) scroll
+     horizontally as one strip instead of wrapping into six lines. The chips
+     row keeps wrapping — chips are small enough to fit. */
+  .ds-filter-text {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .ds-filter-controls {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  /* The strip only scrolls if its contents refuse to shrink: .ds-field and
+     the buttons default to flex-shrink: 1, which on a nowrap row collapses
+     the selects to slivers instead of letting the strip overflow. */
+  .ds-filter-controls > * {
+    flex-shrink: 0;
+  }
+  .ds-filter-controls::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 a {
   color: var(--accent);
   text-decoration: none;
