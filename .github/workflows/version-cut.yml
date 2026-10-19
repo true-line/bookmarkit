@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: qwts/qwts-agent-ci/.github/actions/ci-policy@87c6b301057992f79a723f63c64624bf40c9d06a # qwts-agent-ci 2026-09-15
+      - uses: qwts/qwts-agent-ci/.github/actions/ci-policy@87c6b301057992f79a723f63c64624bf40c9d06a # qwts-agent-ci 2026-10-19
         with:
           authorization-only: "true"
 
@@ -82,7 +82,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        uses: qwts/qwts-agent-ci/.github/actions/bounded-command@87c6b301057992f79a723f63c64624bf40c9d06a # qwts-agent-ci 2026-09-15
+        uses: qwts/qwts-agent-ci/.github/actions/bounded-command@87c6b301057992f79a723f63c64624bf40c9d06a # qwts-agent-ci 2026-10-19
         with:
           task: Install version-cut dependencies
           executable: npm
