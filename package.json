@@ -73,7 +73,7 @@
     "prettier": "^3.9.5",
     "storybook": "^10.5.3",
     "tailwindcss": "^4.3.3",
-    "vite": "^7.3.2",
+    "vite": "^7.3.7",
     "vitest": "^5.0.1"
   }
 }
