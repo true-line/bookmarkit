@@ -34,11 +34,24 @@ concurrency:
 permissions:
   contents: read
 
+# Jobs run on the organisation's own runners: the Linux runner group holds one
+# x86-64 runner, the MacOS group one arm64 runner. A fork's pull request and a
+# merge-queue run keep a hosted runner, because a pull request controls the
+# workflow file it runs and would otherwise execute its own code on the
+# organisation's hardware.
 jobs:
   policy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON((github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork) && '["ubuntu-latest"]' || '["self-hosted", "Linux", "X64"]') }}
     timeout-minutes: 10
     steps:
+      # The organisation's Linux runner does not carry Node on its default PATH.
+      # This step reaches for `node`, or runs an action that does, so the
+      # runtime is installed first, with the same pinned action the rest of
+      # the workflow already uses.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
       - uses: qwts/qwts-agent-ci/.github/actions/ci-policy@87c6b301057992f79a723f63c64624bf40c9d06a # qwts-agent-ci 2026-10-19
         with:
           authorization-only: "true"
@@ -46,7 +59,7 @@ jobs:
   version-pr:
     name: Version packages PR
     needs: policy
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON((github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork) && '["ubuntu-latest"]' || '["self-hosted", "Linux", "X64"]') }}
     timeout-minutes: 30
     permissions:
       contents: write
@@ -106,7 +119,7 @@ jobs:
   tag:
     name: Tag version merges
     needs: [policy, version-pr]
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON((github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork) && '["ubuntu-latest"]' || '["self-hosted", "Linux", "X64"]') }}
     timeout-minutes: 30
     permissions:
       contents: write
