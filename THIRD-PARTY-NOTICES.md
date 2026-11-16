@@ -98,7 +98,7 @@ current.
 | `strip-ansi` | 6.0.1 | MIT |
 | `three` | 0.186.1 | MIT |
 | `tslib` | 2.8.1 | 0BSD |
-| `undici` | 6.29.0 | MIT |
+| `undici` | 6.29.1 | MIT |
 | `undici-types` | 7.19.2 | MIT |
 | `websocket-driver` | 0.7.5 | Apache-2.0 |
 | `websocket-extensions` | 0.1.4 | Apache-2.0 |
@@ -2591,7 +2591,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ---
 
-## undici 6.29.0
+## undici 6.29.1
 
 License: MIT
 
