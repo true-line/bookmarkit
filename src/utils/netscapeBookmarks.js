@@ -4,7 +4,7 @@
 //
 // Folder nesting is expressed the way browsers express it — an <H3> label
 // followed by a sibling <DL> — and maps to the app's slash-separated folderId
-// path. TAGS is the attribute Firefox exports; RATING is a Bookmarkit addition
+// path. TAGS is the attribute Firefox exports; RATING is a BookmarkIt addition
 // that other browsers ignore.
 //
 // Neither direction touches the DOM: the writer builds a string and the reader

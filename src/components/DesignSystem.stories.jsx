@@ -56,12 +56,12 @@ const tagFacets = [
 ];
 
 const meta = {
-  title: "Bookmarkit/Design System",
+  title: "BookmarkIt/Design System",
   parameters: {
     docs: {
       description: {
         component:
-          "The internal Bookmarkit component library, lifted from the supplied design-system source and wired to the app's existing seven theme variables.",
+          "The internal BookmarkIt component library, lifted from the supplied design-system source and wired to the app's existing seven theme variables.",
       },
     },
   },

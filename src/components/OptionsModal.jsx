@@ -434,7 +434,7 @@ const OptionsModal = ({
               <span>
                 Load site icons from the web
                 <span className="block text-xs text-secondary-text">
-                  Off by default: no icon is fetched over the network. Bookmarkit uses your
+                  Off by default: no icon is fetched over the network. BookmarkIt uses your
                   browser&rsquo;s own icon cache when the extension can, and a neutral placeholder
                   otherwise. When on, each visible bookmark fetches its icon &mdash; from the
                   address saved with it, or from google.com by domain when it has none.

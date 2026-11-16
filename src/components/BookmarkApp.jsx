@@ -1011,7 +1011,7 @@ const BookmarkApp = () => {
       >
         <div className="bg-primary-bg shadow-sm border-b border-border">
           <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col gap-2">
-            <h1 className="sr-only">bookmarkit</h1>
+            <h1 className="sr-only">BookmarkIt</h1>
             <div className="flex justify-center items-center gap-3">
               <BrandMark enabled={effects} size={44} />
               <div className="relative w-full max-w-md">
