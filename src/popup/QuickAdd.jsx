@@ -77,7 +77,7 @@ function PopupError({ message, onOpenApp }) {
     <div className="p-4 w-[22rem]" style={shellStyle}>
       <p className="text-sm text-secondary-text mb-3">{message}</p>
       <Button size="sm" onClick={onOpenApp}>
-        Open bookmarkit
+        Open BookmarkIt
       </Button>
     </div>
   );

@@ -118,12 +118,12 @@ describe("omnibox suggestions (#52)", () => {
 
     await suggestionsFor("react");
     expect(chrome.omnibox.setDefaultSuggestion).toHaveBeenLastCalledWith({
-      description: 'bookmarkit — 1 match for "react"',
+      description: 'BookmarkIt — 1 match for "react"',
     });
 
     await suggestionsFor("nothing here");
     expect(chrome.omnibox.setDefaultSuggestion).toHaveBeenLastCalledWith({
-      description: 'bookmarkit — nothing saved matches "nothing here"',
+      description: 'BookmarkIt — nothing saved matches "nothing here"',
     });
   });
 
@@ -192,7 +192,7 @@ describe("context menu quick add (#52)", () => {
 
     expect(chrome.contextMenus.create).toHaveBeenCalledWith({
       id: "bookmarkit-quick-add",
-      title: "Bookmark with bookmarkit",
+      title: "Bookmark with BookmarkIt",
       contexts: ["page", "link"],
     });
   });

@@ -3,7 +3,7 @@ import OptionsModal from "./OptionsModal.jsx";
 const noop = () => undefined;
 
 const meta = {
-  title: "Bookmarkit/Dialogs/Options",
+  title: "BookmarkIt/Dialogs/Options",
   component: OptionsModal,
   parameters: { layout: "fullscreen" },
   args: {

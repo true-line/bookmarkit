@@ -13,7 +13,7 @@ const bookmarks = [
   },
   {
     id: "docs",
-    title: "Bookmarkit Design System",
+    title: "BookmarkIt Design System",
     url: "https://example.com/design-system",
     description: "Components, tokens, and interaction states.",
     rating: 4,
@@ -30,7 +30,7 @@ const bookmarks = [
 ];
 
 const meta = {
-  title: "Bookmarkit/Application/Bookmark list",
+  title: "BookmarkIt/Application/Bookmark list",
   component: BookmarkList,
   parameters: { layout: "fullscreen" },
   decorators: [

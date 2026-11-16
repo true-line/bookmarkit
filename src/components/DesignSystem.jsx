@@ -3,7 +3,7 @@ import React from "react";
 import { FAVICON_PLACEHOLDER, faviconSrc } from "../utils/favicon.js";
 import { useFocusTrap } from "../hooks/useFocusTrap.js";
 
-// Internal Bookmarkit Design System library. Components are lifted from the
+// Internal BookmarkIt Design System library. Components are lifted from the
 // supplied design-system source and keep native React event/ref contracts so
 // the web app and Chrome popup can share presentation without sharing logic.
 

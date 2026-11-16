@@ -1,4 +1,4 @@
-# Contributing to Bookmarkit
+# Contributing to BookmarkIt
 
 The canonical contributor and agent workflow is in [`AGENTS.md`](AGENTS.md).
 Product setup, behavior, and release details are in [`README.md`](README.md),

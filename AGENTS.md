@@ -1,4 +1,4 @@
-# Bookmarkit agent context
+# BookmarkIt agent context
 
 This is the canonical, vendor-neutral orientation for contributors and coding
 agents. Vendor-specific instruction files may point here and add genuinely
@@ -10,7 +10,7 @@ user and setup guidance in [`README.md`](README.md), and release notes in
 
 ## Product invariants
 
-- Bookmarkit ships one React UI as both a Vite web app and a Chrome MV3
+- BookmarkIt ships one React UI as both a Vite web app and a Chrome MV3
   extension. The default local store requires Chrome's bookmarks API; the web
   target is functional only when built for Firebase.
 - Vite has two real HTML entry points: `index.html` for the full app and
