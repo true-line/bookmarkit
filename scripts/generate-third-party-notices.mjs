@@ -119,7 +119,7 @@ function render(packages) {
 
   return `# Third-Party Notices
 
-Bookmarkit bundles the production npm packages listed below in its web and
+BookmarkIt bundles the production npm packages listed below in its web and
 Chrome-extension builds. Each package remains under its own license.
 
 This file is generated from \`package-lock.json\` and the installed package

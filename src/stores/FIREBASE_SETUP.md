@@ -1,4 +1,4 @@
-# Firebase Setup for bookmarkit
+# Firebase Setup for BookmarkIt
 
 ## Required Composite Index
 

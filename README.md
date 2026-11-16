@@ -1,6 +1,6 @@
-# bookmarkit
+# BookmarkIt
 
-**Bookmarkit** is a modern, React‑powered application that helps you organize and query your bookmarks using natural language. It can be used both as a **Vite/React web app** and packaged as a **Chrome extension**.
+**BookmarkIt** is a modern, React‑powered application that helps you organize and query your bookmarks using natural language. It can be used both as a **Vite/React web app** and packaged as a **Chrome extension**.
 
 Key capabilities include:
 
@@ -139,9 +139,9 @@ The extension ships two surfaces from one build:
   bookmark's title or address, so typing more narrows the list. Enter opens the highlighted match, or
   the best match if you never picked one. Matching happens locally against what you have saved — no
   network call and no model, because an address bar that waits feels broken. Tags and ratings live in
-  Bookmarkit's own metadata rather than Chrome's tree, so they are not searched here; use the full
+  BookmarkIt's own metadata rather than Chrome's tree, so they are not searched here; use the full
   app's search for those.
-- **Right-click.** "Bookmark with bookmarkit" on a page saves the page. On a link it saves the
+- **Right-click.** "Bookmark with BookmarkIt" on a page saves the page. On a link it saves the
   **link**, with the link text as the title — quick-add opens in its own small window because a link
   is not the tab you are on.
 - **Keyboard.** `Alt+Shift+B` opens quick-add for the current page. Chrome reserves `Ctrl+Shift+B` /
@@ -286,7 +286,7 @@ are hand-writing or scripting the file:
   - Tags and rating travel in `TAGS` and `RATING` attributes. Other browsers
     ignore `RATING`; Firefox understands `TAGS`
 - Imported folders are created in your real bookmark tree, so `chrome://bookmarks` and your synced
-  devices see the same structure Bookmarkit shows
+  devices see the same structure BookmarkIt shows
 - Replacing all bookmarks writes the new set before removing the old one. If any bookmark cannot be
   written, nothing is replaced and your existing collection is left as it was.
 
@@ -530,7 +530,7 @@ things.
   the organizer for tag suggestions, with the same diff to review.
 
 Opening a bookmark from anywhere in the app records when — this is the only thing
-Bookmarkit observes about a bookmark rather than being told, it stays on your
+BookmarkIt observes about a bookmark rather than being told, it stays on your
 device with the rest of your bookmarks, and it is what “never opened” and the
 **Last opened** sort read. Nothing recorded means never opened, so bookmarks saved
 before this existed all read as never opened until you open them.
@@ -557,7 +557,7 @@ something saved yesterday has not been ignored.
 - API keys you enter in Options are saved to localStorage in your browser
 - LLM calls are made from your browser to providers you select
 - Site icons: no icon is fetched over the network unless you turn on “Load site icons from the web”
-  under Options → Privacy. With it off, Bookmarkit uses your browser’s own favicon cache (extension
+  under Options → Privacy. With it off, BookmarkIt uses your browser’s own favicon cache (extension
   only) or a neutral placeholder. With it on, each visible bookmark fetches the icon address saved
   with it, or asks google.com for one by domain — never by path or query. An icon address saved on a
   bookmark is treated the same as any other: an imported `ICON` attribute can point anywhere.
@@ -640,5 +640,5 @@ repository architecture is documented in [DESIGN.md](DESIGN.md).
 
 ## License
 
-Bookmarkit is available under the [MIT License](LICENSE). Bundled dependencies
+BookmarkIt is available under the [MIT License](LICENSE). Bundled dependencies
 retain their own terms; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

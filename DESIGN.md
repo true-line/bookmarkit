@@ -1,6 +1,6 @@
-# Bookmarkit design
+# BookmarkIt design
 
-Bookmarkit is a client-first bookmark manager delivered as a Vite/React web
+BookmarkIt is a client-first bookmark manager delivered as a Vite/React web
 build and a Chrome Manifest V3 extension. This document records the boundaries
 that are costly to rediscover from individual files; component-level behavior
 belongs beside the code and user-facing behavior belongs in `README.md`.
@@ -17,7 +17,7 @@ Vite builds two HTML entry points from the repository root:
 `scripts/build-chrome.js` runs after the Vite build and copies only extension
 metadata, the background worker, icons, and legal notices into `dist/`. It must
 not overwrite `dist/popup.html`, because that file contains Vite's generated
-asset references. There is no content script and Bookmarkit injects nothing
+asset references. There is no content script and BookmarkIt injects nothing
 into visited pages.
 
 The default local store depends on Chrome extension APIs. The standalone web

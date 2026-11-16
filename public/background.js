@@ -221,8 +221,8 @@ chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
   chrome.omnibox.setDefaultSuggestion({
     description:
       found.length > 0
-        ? `bookmarkit — ${found.length} match${found.length === 1 ? "" : "es"} for "${escapeXml(text)}"`
-        : `bookmarkit — nothing saved matches "${escapeXml(text)}"`,
+        ? `BookmarkIt — ${found.length} match${found.length === 1 ? "" : "es"} for "${escapeXml(text)}"`
+        : `BookmarkIt — nothing saved matches "${escapeXml(text)}"`,
   });
   suggest(
     found.map((bookmark) => ({
@@ -251,7 +251,7 @@ const QUICK_ADD_MENU_ID = "bookmarkit-quick-add";
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: QUICK_ADD_MENU_ID,
-    title: "Bookmark with bookmarkit",
+    title: "Bookmark with BookmarkIt",
     contexts: ["page", "link"],
   });
 });
