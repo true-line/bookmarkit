@@ -12,8 +12,8 @@ const codeql = read(".github/workflows/codeql.yml");
 const release = read(".github/workflows/release.yml");
 const versionCut = read(".github/workflows/version-cut.yml");
 const policyRevision =
-  "qwts/qwts-agent-ci/.github/actions/ci-policy@87c6b301057992f79a723f63c64624bf40c9d06a";
-const runtimeRevision = "87c6b301057992f79a723f63c64624bf40c9d06a";
+  "true-line/trueline-agent-ci/.github/actions/ci-policy@8ec38da39c9b43af2181d1f5e5b7e09226c0bfad";
+const runtimeRevision = "8ec38da39c9b43af2181d1f5e5b7e09226c0bfad";
 
 describe("governed CI lifecycle", () => {
   test("uses lifecycle triggers and PR-scoped cancellation", () => {
