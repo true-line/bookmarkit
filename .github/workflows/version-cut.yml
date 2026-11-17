@@ -17,6 +17,8 @@
 # the version PR gets real pull_request runs, and the tag push starts release.yml directly. It
 # also un-deadlocks review — a PAT opens the version PR as qwts, who cannot approve their own PR,
 # so every cut needed a bypass. chores-dumb[bot] opens it, and a human approves.
+# The version commit is published through the Git Data API (commitMode: github-api) so GitHub
+# signs it; a commit pushed with git is never Verified (#188).
 # Missing or unreadable App credentials fail closed before a repository write.
 name: Version cut
 
@@ -100,6 +102,14 @@ jobs:
           version: npm run changeset:version
           title: "chore: version bookmarkit"
           commit: "chore: version bookmarkit"
+          # The version PR commit is the release commit, and a commit pushed with the git CLI
+          # is never signed by GitHub (the squash merge on main re-signs only its own copy —
+          # the cut itself shipped unverified, e.g. #187). github-api mode publishes through
+          # the Git Data API instead, where GitHub GPG-signs the commit and attributes it to
+          # chores-dumb; qwts/photos does the same for its version branch. The branch stays a
+          # disposable projection of main: the API publish force-updates it, and deletions
+          # (consumed .changeset files) are part of the published diff.
+          commitMode: github-api
         env:
           GITHUB_TOKEN: ${{ steps.chores.outputs.token }}
 
