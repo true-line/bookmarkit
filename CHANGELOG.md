@@ -1,5 +1,12 @@
 # bookmarkit
 
+## 0.3.2
+
+### Patch Changes
+
+- 3c2b9e1: Replace the Vite scaffolding favicon with the BookmarkIt brand mark (bookmark red on warm paper), point index.html at it, and stop shipping vite.svg in the package.
+- 3c2b9e1: Replace the dev-facing manifest description with the store description ("Save, organize, search, filter, and sort your bookmarks in one place."), matching the single-purpose statement filed on the Chrome Web Store privacy form.
+
 ## 0.3.1
 
 ### Patch Changes
