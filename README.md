@@ -627,7 +627,9 @@ Releases are automated; nobody tags or uploads by hand.
 
 Version cut authenticates only as `chores-dumb[bot]`; missing App credentials
 fail closed before a repository write. This keeps the version PR and tag push
-inside the Actions actor policy. `github-actions[bot]` is not on that allow
+inside the Actions actor policy. The version commit itself is published through
+the GitHub Git Data API (`commitMode: github-api` in `changesets/action`), where
+GitHub signs it — a commit pushed with the git CLI is never Verified. `github-actions[bot]` is not on that allow
 list, so a `GITHUB_TOKEN` handoff cannot start Release or CI on the version
 branch.
 

@@ -424,7 +424,8 @@ never be committed.
 ## Release model
 
 Changesets describe user-visible changes. The version-cut workflow maintains a
-reviewable version PR, synchronizes the npm and extension-manifest versions,
+reviewable version PR — published through the GitHub Git Data API so GitHub
+signs the release commit — synchronizes the npm and extension-manifest versions,
 and creates the immutable tag after that PR merges. The release workflow
 revalidates the tagged tree, builds the Chrome extension, and publishes the zip
 and checksum. Manual version edits, tags, or uploads bypass those consistency
