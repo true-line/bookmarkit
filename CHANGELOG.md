@@ -1,5 +1,12 @@
 # bookmarkit
 
+## 0.3.3
+
+### Patch Changes
+
+- 2cf8f53: Use the chosen extension artwork (icon128.png) as the web favicon instead of the placeholder bookmark, and drop the favicon.svg placeholder.
+- 40c7666: Narrow the extension's host permissions from `<all_urls>` to `http://*/*` and `https://*/*`, exactly the two schemes URL checks can ever target. Behavior is unchanged: the same install-time warning applies, and the public-HTTP(S) fetch boundary in the service worker is untouched.
+
 ## 0.3.2
 
 ### Patch Changes
