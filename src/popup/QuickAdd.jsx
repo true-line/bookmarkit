@@ -116,8 +116,10 @@ const QuickAdd = () => {
   // #52: A right-click already knows what to bookmark, and for a link it knows
   // something this popup could not discover — the link's target is not the active
   // tab — so the target arrives in the query string. Otherwise the active tab is
-  // the subject. url/title/favIconUrl are readable under the existing <all_urls>
-  // host permission; no "tabs" permission needed.
+  // the subject. url/title/favIconUrl are readable under the manifest's http(s)
+  // host permissions (`http://*/*`, `https://*/*`); no "tabs" permission needed.
+  // Non-http(s) tabs (file:, chrome:) fall outside those patterns, so their
+  // url/title never arrive — which isSafeHttpUrl rejects anyway.
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search);
     const requestedUrl = requested.get("url");
