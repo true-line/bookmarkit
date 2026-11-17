@@ -410,8 +410,10 @@ never be committed.
   default release.
 - URL reachability checks execute in `public/background.js`, not page context.
   They accept only public HTTP(S) destinations and do not follow redirects, so
-  the extension's broad host permission does not become an internal-network
-  request primitive. `utils/urlStatus.js` applies both rules on the calling side
+  the extension's http(s)-only host permission does not become an internal-network
+  request primitive. The manifest asks for exactly the two schemes the checks can
+  ever target — `http://*/*` and `https://*/*` — and nothing broader.
+  `utils/urlStatus.js` applies both rules on the calling side
   too, which is what keeps the web build's unprivileged fetch inside the same
   boundary: the response may be unreadable there, but the request still leaves the
   browser.

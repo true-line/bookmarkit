@@ -153,10 +153,11 @@ Permissions requested (`public/manifest.json`):
 - `bookmarks` — the default store keeps title/URL in the real Chrome bookmark tree.
 - `storage` — settings, themes, and the per-bookmark metadata layer.
 - `contextMenus` — the right-click entry point above.
-- `<all_urls>` — lets the background service worker run URL reachability checks from a privileged
-  context (bypassing page CORS), and lets the popup read the active tab's title/URL. Requests are
-  restricted to public http(s) hosts; private, loopback, and link-local addresses are blocked, and
-  redirects are not followed.
+- `http://*/*` and `https://*/*` — lets the background service worker run URL reachability checks from
+  a privileged context (bypassing page CORS), and lets the popup read the active tab's title/URL. The
+  manifest asks for no scheme beyond the two the app bookmarks. Check requests are restricted to
+  public http(s) hosts; private, loopback, and link-local addresses are blocked, and redirects are not
+  followed.
 
 ## Configure AI providers
 
