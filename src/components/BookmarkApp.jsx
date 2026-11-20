@@ -1034,7 +1034,11 @@ const BookmarkApp = () => {
         role="banner"
       >
         <div className="bg-primary-bg shadow-sm border-b border-border">
-          <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col gap-2">
+          {/* Full width on purpose: capped at the reading measure, the action
+              strip (Add New through the view selector) overflowed and clipped
+              its last buttons at the window edge. Each row centers its own
+              content, so the search row keeps its old centered look. */}
+          <div className="px-4 py-4 flex flex-col gap-2">
             <h1 className="sr-only">BookmarkIt</h1>
             <div className="flex justify-center items-center gap-3">
               <BrandMark enabled={effects} size={44} />
