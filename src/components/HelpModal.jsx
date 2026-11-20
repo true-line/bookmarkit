@@ -27,17 +27,21 @@ const HelpModal = ({ onClose }) => {
           <h3 className="text-lg font-semibold mb-2 text-primary-text">Keyboard Shortcuts</h3>
           <ul className="list-disc list-inside space-y-1 text-sm">
             <li>
-              <strong>Click</strong> selects a bookmark.
+              <strong>Click</strong> selects a bookmark; clicking it again opens it in a new tab.
+            </li>
+            <li>
+              <strong>Double-click</strong> opens the bookmark in a new tab.
             </li>
             <li>
               <strong>Cmd/Ctrl+Click</strong> toggles multi-select for a bookmark.
             </li>
             <li>
-              <strong>Shift+Click</strong> or press <Kbd>Space</Kbd> opens the bookmark in a new
-              tab.
+              <strong>Enter</strong> or <Kbd>Space</Kbd> selects the focused bookmark, and opens it
+              in a new tab once it is selected.
             </li>
             <li>
-              <strong>Double-click</strong> or press <Kbd>E</Kbd> to edit the selected bookmark.
+              <strong>Shift+Click</strong> or <strong>Shift+Enter</strong> opens the editing modal.
+              Press <Kbd>E</Kbd> to edit the selected bookmark.
             </li>
             <li>
               <strong>Esc</strong> clears selection and any pending deletes.

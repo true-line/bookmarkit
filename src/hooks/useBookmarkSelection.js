@@ -5,8 +5,13 @@
 // shortcut act on, while Ctrl/Cmd+click builds a set. Making a set clears the
 // focused one and vice versa, so the two can never disagree about what "the
 // selection" means — `selectedIds` is that answer.
+//
+// #190: activation is two-stage. The first gesture on an unselected bookmark
+// selects it; the same gesture on the selected bookmark acts — a click, Enter,
+// Space, or double-click opens it in a new tab, while the Shift variants
+// (Shift+click, Shift+Enter) open the editor instead.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // The attribute a region sets to say "clicking me is part of acting on the
 // selection", and the props that set it. Exported together so the marker and the
@@ -15,13 +20,19 @@ const KEEPS_SELECTION = "data-keeps-selection";
 export const keepsSelectionProps = Object.freeze({ [KEEPS_SELECTION]: "" });
 
 /**
- * @param {(bookmark: object) => void} onOpen Shift+click and Shift+Enter open a
- *   bookmark rather than select it. Opening is not this hook's concern, so it is
- *   handed out — but the selection clears either way, since the user has moved on.
+ * @param {(bookmark: object) => void} onOpen Opens a bookmark in a new tab.
+ *   Opening is not this hook's concern, so it is handed out — but the selection
+ *   clears either way, since the user has moved on.
+ * @param {(bookmark: object) => void} [onEdit] Opens the editing modal for a
+ *   bookmark — where the Shift gestures land.
  */
-export function useBookmarkSelection(onOpen) {
+export function useBookmarkSelection(onOpen, onEdit) {
   const [selectedId, setSelectedId] = useState(null);
   const [multiSelectedIds, setMultiSelectedIds] = useState([]);
+  // The bookmark the most recent activation opened, if any. A double-click's
+  // second click is what opens an unselected bookmark, so the trailing dblclick
+  // event must not open the same one again — #190.
+  const openedIdRef = useRef(null);
 
   const clear = useCallback(() => {
     setSelectedId(null);
@@ -47,16 +58,30 @@ export function useBookmarkSelection(onOpen) {
 
   const open = useCallback(
     (bookmark) => {
+      openedIdRef.current = bookmark.id;
       onOpen(bookmark);
       clear();
     },
     [onOpen, clear]
   );
 
+  const edit = useCallback(
+    (bookmark) => {
+      onEdit?.(bookmark);
+    },
+    [onEdit]
+  );
+
   const onBookmarkClick = useCallback(
     (bookmark, event) => {
-      if (event?.shiftKey || event?.key === " ") {
-        open(bookmark);
+      // The second click of a double-click: the dblclick handler below decides
+      // what the whole sequence meant, so this click stays out of its way.
+      if (event?.detail > 1) return;
+      // Shift+click edits, mirroring Shift+Enter. A Shift+double-click still
+      // ends in the editor: the first click's modal takes the second click on
+      // its scrim, and the trailing dblclick re-opens it.
+      if (event?.shiftKey) {
+        edit(bookmark);
         return;
       }
       if (event?.metaKey || event?.ctrlKey) {
@@ -70,25 +95,62 @@ export function useBookmarkSelection(onOpen) {
             : [...seeded, bookmark.id];
         });
         setSelectedId(null);
+        openedIdRef.current = null;
+        return;
+      }
+      // The gesture acts on the selected bookmark and selects an unselected one.
+      if (selectedId === bookmark.id) {
+        open(bookmark);
         return;
       }
       setSelectedId(bookmark.id);
       setMultiSelectedIds([]);
+      openedIdRef.current = null;
     },
-    [selectedId, open]
+    [selectedId, open, edit]
+  );
+
+  const onBookmarkDoubleClick = useCallback(
+    (bookmark, event) => {
+      if (event?.shiftKey) {
+        edit(bookmark);
+        return;
+      }
+      // Multi-select stays a per-click gesture; the sequence's clicks did it.
+      if (event?.metaKey || event?.ctrlKey) return;
+      // Click 1 of this sequence already opened a selected bookmark. Only a
+      // sequence that merely selected — click 1 on an unselected bookmark —
+      // opens here, so a double-click always opens exactly one tab.
+      if (openedIdRef.current === bookmark.id) return;
+      open(bookmark);
+    },
+    [edit, open]
   );
 
   const onBookmarkKeyDown = useCallback(
     (event, bookmark) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      if (!event.shiftKey) {
-        onBookmarkClick(bookmark);
+      // Holding either key auto-repeats into "second" keydowns that would open
+      // a bookmark the user was only holding down on. One press is one gesture.
+      if (event.repeat) return;
+      // The edit gesture is Shift+Enter specifically; Shift+Space stays with
+      // Space's normal two-stage path.
+      if (event.shiftKey && event.key === "Enter") {
+        edit(bookmark);
         return;
       }
-      if (bookmark.url) open(bookmark);
+      // Mirrors the click: activation selects, and repeats on the selected
+      // bookmark open it.
+      if (selectedId === bookmark.id) {
+        open(bookmark);
+        return;
+      }
+      setSelectedId(bookmark.id);
+      setMultiSelectedIds([]);
+      openedIdRef.current = null;
     },
-    [onBookmarkClick, open]
+    [selectedId, open, edit]
   );
 
   /** Whichever selection the user made: the focused bookmark, or the checked set. */
@@ -105,6 +167,7 @@ export function useBookmarkSelection(onOpen) {
     selectAll: setMultiSelectedIds,
     clear,
     onBookmarkClick,
+    onBookmarkDoubleClick,
     onBookmarkKeyDown,
   };
 }

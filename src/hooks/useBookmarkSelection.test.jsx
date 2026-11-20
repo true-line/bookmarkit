@@ -14,8 +14,8 @@ let selection;
 // Cards stop propagation on mousedown, which is how a click on one avoids the
 // click-outside handler that clears the selection. The harness has to do the same
 // or every click would immediately deselect.
-const Probe = ({ onOpen = () => {} }) => {
-  selection = useBookmarkSelection(onOpen);
+const Probe = ({ onOpen = () => {}, onEdit = () => {} }) => {
+  selection = useBookmarkSelection(onOpen, onEdit);
   return (
     <div>
       <span data-testid="focused">{selection.selectedId || "none"}</span>
@@ -28,6 +28,7 @@ const Probe = ({ onOpen = () => {} }) => {
           aria-label={bookmark.id}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => selection.onBookmarkClick(bookmark, e)}
+          onDoubleClick={(e) => selection.onBookmarkDoubleClick(bookmark, e)}
           onKeyDown={(e) => selection.onBookmarkKeyDown(e, bookmark)}
         />
       ))}
@@ -109,18 +110,21 @@ describe("useBookmarkSelection (#26)", () => {
     expect(screen.getByTestId("acting-on")).toHaveTextContent("c");
   });
 
-  it("opens on Shift+click and clears the selection, since the user has moved on", () => {
+  // #190: activation is two-stage. Clicking the selected bookmark acts on it —
+  // it opens — and the selection clears, since the user has moved on.
+  it("opens on a click of the selected bookmark and clears the selection", () => {
     const onOpen = vi.fn();
     render(<Probe onOpen={onOpen} />);
 
     fireEvent.click(card("a"));
-    fireEvent.click(card("b"), { shiftKey: true });
+    fireEvent.click(card("a"));
 
-    expect(onOpen).toHaveBeenCalledWith(BOOKMARKS[1]);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onOpen).toHaveBeenCalledWith(BOOKMARKS[0]);
     expect(screen.getByTestId("acting-on")).toHaveTextContent("none");
   });
 
-  it("selects with Enter and opens with Shift+Enter", () => {
+  it("opens on Enter once the bookmark is selected", () => {
     const onOpen = vi.fn();
     render(<Probe onOpen={onOpen} />);
 
@@ -128,8 +132,106 @@ describe("useBookmarkSelection (#26)", () => {
     expect(screen.getByTestId("focused")).toHaveTextContent("a");
     expect(onOpen).not.toHaveBeenCalled();
 
-    fireEvent.keyDown(card("a"), { key: "Enter", shiftKey: true });
+    fireEvent.keyDown(card("a"), { key: "Enter" });
     expect(onOpen).toHaveBeenCalledWith(BOOKMARKS[0]);
+    expect(screen.getByTestId("focused")).toHaveTextContent("none");
+  });
+
+  it("opens the editor on Shift+Enter instead of the bookmark", () => {
+    const onOpen = vi.fn();
+    const onEdit = vi.fn();
+    render(<Probe onOpen={onOpen} onEdit={onEdit} />);
+
+    fireEvent.click(card("a"));
+    fireEvent.keyDown(card("a"), { key: "Enter", shiftKey: true });
+
+    expect(onEdit).toHaveBeenCalledWith(BOOKMARKS[0]);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  // #191 review: the edit gesture is Shift+Enter specifically — Shift+Space
+  // keeps Space's normal two-stage path rather than opening the editor.
+  it("keeps Shift+Space on Space's activation path", () => {
+    const onOpen = vi.fn();
+    const onEdit = vi.fn();
+    render(<Probe onOpen={onOpen} onEdit={onEdit} />);
+
+    fireEvent.keyDown(card("a"), { key: " ", shiftKey: true });
+    expect(onEdit).not.toHaveBeenCalled();
+    expect(screen.getByTestId("focused")).toHaveTextContent("a");
+
+    fireEvent.keyDown(card("a"), { key: " ", shiftKey: true });
+    expect(onOpen).toHaveBeenCalledWith(BOOKMARKS[0]);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  // Holding a key auto-repeats into keydowns that must not count as the second
+  // gesture, or holding Enter would open the bookmark just selected.
+  it("ignores keyboard auto-repeat", () => {
+    const onOpen = vi.fn();
+    render(<Probe onOpen={onOpen} />);
+
+    fireEvent.keyDown(card("a"), { key: "Enter" });
+    fireEvent.keyDown(card("a"), { key: "Enter", repeat: true });
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(screen.getByTestId("focused")).toHaveTextContent("a");
+
+    fireEvent.keyDown(card("a"), { key: " ", repeat: true });
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  // The second click of a double-click stays out of the way so the dblclick
+  // event can speak for the whole sequence.
+  it("opens an unselected bookmark on a double-click, exactly once", () => {
+    const onOpen = vi.fn();
+    render(<Probe onOpen={onOpen} />);
+
+    fireEvent.click(card("a"));
+    fireEvent.click(card("a"), { detail: 2 });
+    fireEvent.doubleClick(card("a"));
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onOpen).toHaveBeenCalledWith(BOOKMARKS[0]);
+  });
+
+  // The selected bookmark's first click already opened it; the trailing dblclick
+  // must not open a second tab.
+  it("opens a selected bookmark once across its double-click", () => {
+    const onOpen = vi.fn();
+    render(<Probe onOpen={onOpen} />);
+
+    fireEvent.click(card("a"));
+    fireEvent.click(card("a"));
+    fireEvent.click(card("a"), { detail: 2 });
+    fireEvent.doubleClick(card("a"));
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the editor on Shift+double-click without opening the bookmark", () => {
+    const onOpen = vi.fn();
+    const onEdit = vi.fn();
+    render(<Probe onOpen={onOpen} onEdit={onEdit} />);
+
+    fireEvent.click(card("a"));
+    fireEvent.click(card("a"), { detail: 2, shiftKey: true });
+    fireEvent.doubleClick(card("a"), { shiftKey: true });
+
+    expect(onEdit).toHaveBeenCalledWith(BOOKMARKS[0]);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  // Shift+click edits — the mouse twin of Shift+Enter.
+  it("opens the editor on Shift+click", () => {
+    const onOpen = vi.fn();
+    const onEdit = vi.fn();
+    render(<Probe onOpen={onOpen} onEdit={onEdit} />);
+
+    fireEvent.click(card("a"), { shiftKey: true });
+
+    expect(onEdit).toHaveBeenCalledWith(BOOKMARKS[0]);
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(screen.getByTestId("focused")).toHaveTextContent("none");
   });
 
   // Space on a card would otherwise scroll the list under the user.
