@@ -31,11 +31,14 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Import/Export
   - JSON array of bookmarks
   - Netscape Bookmark HTML (compatible with browsers’ export files)
-- Bookmark management
+  - Bookmark management
   - Add, edit, delete, tag, folder, rating, favicon support
-  - Responsive shelf: the list flows into equal-width columns that fit its
-    width — one on small screens, up to five on the largest — reflowing as the
-    window or the folder pane changes
+  - List views, chosen with the header selector and remembered per browser:
+    **Single column** (one full-width card per row), **Flow columns** (the
+    default responsive shelf: the list flows into equal-width columns that fit
+    its width — one on small screens, up to five on the largest — reflowing as
+    the window or the folder pane changes), or **Grid** (the same cards denser,
+    up to eight columns)
   - Multi‑select (Cmd/Ctrl+Click), open in new tab (click the selected bookmark,
     double‑click, or Enter)
   - Detect and remove duplicates by the page they point at, with an optional

@@ -3,6 +3,8 @@
 // #193: A row is as many equal-width cards as the list's width can fit (up to
 // five), so the shelf reflows from one column on small screens to five on
 // large ones while the virtualizer keeps its row-based arithmetic.
+// #198: The view mode selects how that fit math lays out — single column,
+// the responsive flow, or the denser grid.
 // ARCH-10: Renders contextual empty states depending on loading/search/results state.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -258,13 +260,15 @@ const BookmarkList = React.memo(function BookmarkList({
   filterSummary,
   remoteFavicons,
   effectsEnabled,
+  viewMode = "flow",
 }) {
   const listRef = useRef(null);
   const containerRef = useRef(null);
   const rowHeightsRef = useRef(new Map());
   const [listHeight, setListHeight] = useState(500);
   const [filterHeight, setFilterHeight] = useState(136);
-  // #193: how many cards a row holds, decided by the list's own width.
+  // #193: how many cards a row holds, decided by the list's own width and,
+  // since #198, by the view mode.
   const [columns, setColumns] = useState(1);
   const bookmarkOrder = useMemo(
     () => bookmarks.map((bookmark) => bookmark.id).join("\u0000"),
@@ -273,6 +277,8 @@ const BookmarkList = React.memo(function BookmarkList({
 
   // Measure container height so FixedSizeList fills the available space — and
   // its width, which decides how many columns of cards the shelf can hold.
+  // Re-running on a view-mode change re-derives the count from the same width:
+  // observing fires once immediately, so a toggle reflows without a resize.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -280,11 +286,11 @@ const BookmarkList = React.memo(function BookmarkList({
       const h = entry.contentRect.height;
       if (h > 0) setListHeight(h);
       const w = entry.contentRect.width;
-      if (w > 0) setColumns(columnsForWidth(w));
+      if (w > 0) setColumns(columnsForWidth(w, viewMode));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [viewMode]);
 
   // A reflow re-chunks the bookmarks, so every row re-estimates and re-measures
   // under its new key (rowKeyFor folds the column count into the key).

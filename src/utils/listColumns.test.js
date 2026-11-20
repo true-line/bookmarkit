@@ -4,6 +4,8 @@ import {
   columnsForWidth,
   rowKeyFor,
   COLUMN_GAP,
+  GRID_MAX_COLUMNS,
+  GRID_MIN_CARD_WIDTH,
   MAX_COLUMNS,
   MIN_CARD_WIDTH,
 } from "./listColumns.js";
@@ -38,6 +40,41 @@ describe("columnsForWidth (#193)", () => {
   it("caps at five even on a 4K-wide list", () => {
     expect(columnsForWidth(3840 - 32)).toBe(MAX_COLUMNS);
     expect(columnsForWidth(Number.MAX_SAFE_INTEGER)).toBe(MAX_COLUMNS);
+  });
+});
+
+describe("columnsForWidth modes (#198)", () => {
+  // n columns fit exactly when width = n * MIN_CARD_WIDTH + (n - 1) * COLUMN_GAP
+  const atColumns = (n) => n * MIN_CARD_WIDTH + (n - 1) * COLUMN_GAP;
+  // n grid tiles fit exactly when width = n * GRID_MIN_CARD_WIDTH + (n - 1) * COLUMN_GAP
+  const atGridColumns = (n) => n * GRID_MIN_CARD_WIDTH + (n - 1) * COLUMN_GAP;
+
+  it("single is one full-width row at any width", () => {
+    expect(columnsForWidth(3840, "single")).toBe(1);
+    expect(columnsForWidth(0, "single")).toBe(1);
+    expect(columnsForWidth(Number.NaN, "single")).toBe(1);
+  });
+
+  it("flow is the default, keeping the #193 behavior", () => {
+    expect(columnsForWidth(1920 - 32)).toBe(columnsForWidth(1920 - 32, "flow"));
+    expect(columnsForWidth(Number.MAX_SAFE_INTEGER, "flow")).toBe(MAX_COLUMNS);
+  });
+
+  it("grid fits more columns than flow at the same width", () => {
+    const width = atColumns(2); // two flow cards just fit here
+    expect(columnsForWidth(width, "flow")).toBe(2);
+    expect(columnsForWidth(width, "grid")).toBeGreaterThan(2);
+  });
+
+  it("grid follows the same gutter-counting fit as flow", () => {
+    expect(columnsForWidth(atGridColumns(4), "grid")).toBe(4);
+    expect(columnsForWidth(atGridColumns(4) - COLUMN_GAP, "grid")).toBe(3);
+    expect(columnsForWidth(atGridColumns(2) - 1, "grid")).toBe(1);
+  });
+
+  it("caps grid at its own denser ceiling", () => {
+    expect(columnsForWidth(Number.MAX_SAFE_INTEGER, "grid")).toBe(GRID_MAX_COLUMNS);
+    expect(GRID_MAX_COLUMNS).toBeGreaterThan(MAX_COLUMNS);
   });
 });
 
