@@ -20,6 +20,11 @@ export function createOllamaLLM({
     "Content-Type": "application/json",
     ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
   };
+  // Model discovery is a plain GET: Authorization only when a key is set, and
+  // never Content-Type — a JSON content header would make the cross-origin GET
+  // CORS-preflight, which servers permitting the bare GET may refuse
+  // (Codex #215).
+  const listHeaders = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
   return {
     name: "ollama",
     async generate(prompt, signal) {
@@ -46,7 +51,7 @@ export function createOllamaLLM({
     },
     async listModels() {
       try {
-        const res = await fetch(`${baseUrl}/api/tags`, { method: "GET", headers });
+        const res = await fetch(`${baseUrl}/api/tags`, { method: "GET", headers: listHeaders });
         if (!res.ok) return [model];
         const data = await res.json();
         const names = (data?.models || []).map((m) => m?.model || m?.name).filter(Boolean);
