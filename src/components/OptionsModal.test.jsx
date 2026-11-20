@@ -110,6 +110,52 @@ describe("OptionsModal encryption UI (#29)", () => {
   });
 });
 
+describe("OptionsModal clear API key", () => {
+  it("offers Clear for a stored key and empties it through the shared options path", () => {
+    const onChangeOptions = vi.fn();
+    render(
+      <OptionsModal
+        {...baseProps}
+        providerOptions={{ apiKey: "sk-test" }}
+        onChangeOptions={onChangeOptions}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Clear stored API key" }));
+    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "" });
+  });
+
+  it("hides Clear when no key is stored", () => {
+    render(<OptionsModal {...baseProps} providerOptions={{ apiKey: "" }} />);
+    expect(screen.queryByRole("button", { name: "Clear stored API key" })).not.toBeInTheDocument();
+  });
+
+  it("keeps Clear unavailable while the key is locked", () => {
+    render(
+      <OptionsModal
+        {...baseProps}
+        providerOptions={{ apiKey: "sk-test" }}
+        encryption={{ encrypted: true, locked: true }}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Clear stored API key" })).toBeDisabled();
+    expect(screen.getByPlaceholderText(/Locked — unlock below/i)).toBeDisabled();
+  });
+
+  it("clears the optional local-provider key the same way", () => {
+    const onChangeOptions = vi.fn();
+    render(
+      <OptionsModal
+        {...baseProps}
+        provider="ollama"
+        providerOptions={{ apiKey: "proxy-key" }}
+        onChangeOptions={onChangeOptions}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Clear stored API key" }));
+    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "" });
+  });
+});
+
 describe("OptionsModal effects preference", () => {
   it("reports the 3D effects toggle and reflects the persisted state", () => {
     const onEffectsChange = vi.fn();
