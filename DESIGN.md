@@ -417,6 +417,14 @@ never be committed.
   too, which is what keeps the web build's unprivileged fetch inside the same
   boundary: the response may be unreadable there, but the request still leaves the
   browser.
+- WebMCP tools (#212) are a read-only projection of the in-memory list,
+  registered from the full app page only — the popup is too short-lived and the
+  service worker has no document — after an explicit per-user opt-in, and only
+  while that tab stays open. They reuse the manual filters' pure functions, so
+  an agent's query and the UI's filters agree by construction; results are
+  bounded; there is no store write path and no fetch path through them. The
+  service worker's URL checks remain the only fetch route, and browsers that
+  have not enabled WebMCP simply never see the surface.
 - The release archive includes `LICENSE` and generated
   `THIRD-PARTY-NOTICES.md`. The latter is derived from the locked production
   dependency closure and checked for drift in CI.
