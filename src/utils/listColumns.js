@@ -1,6 +1,8 @@
 // #193: Fit-based responsive columns for the virtualized bookmark list. The
 // list measures its own width and shows as many equal-width columns of cards
 // as fit, so the shelf fills large monitors instead of stretching one card.
+// #198: The view modes share this one fit engine — a mode only changes how
+// wide a card must be and how many columns are allowed.
 
 // A card narrower than this stops earning the horizontal space it takes; below
 // the two-card footprint the row is one full-width card, as the list always was.
@@ -11,16 +13,24 @@ export const MAX_COLUMNS = 5;
 // Gutter between the cards of a row, so a card is never counted without the
 // space beside it. Vertical rhythm stays the row's paddingBottom.
 export const COLUMN_GAP = 16;
+// #198: The grid view lays the same cards out denser — a smaller minimum
+// footprint and a higher ceiling — so it reads as many small tiles.
+export const GRID_MIN_CARD_WIDTH = 280;
+export const GRID_MAX_COLUMNS = 8;
 
 /**
- * How many equal columns fit `width` px of list. Each card needs
- * MIN_CARD_WIDTH and every gutter between cards COLUMN_GAP, so the answer is
- * capped by both the fit and MAX_COLUMNS, and never below one.
+ * How many equal columns fit `width` px of list in `mode`. "single" is always
+ * one full-width row; "flow" (the default, the #193 behavior) and "grid" fit
+ * whole cards — each needing the mode's minimum width and every gutter
+ * between them COLUMN_GAP — capped by the mode's ceiling, never below one.
  */
-export function columnsForWidth(width) {
+export function columnsForWidth(width, mode = "flow") {
+  if (mode === "single") return 1;
+  const minCardWidth = mode === "grid" ? GRID_MIN_CARD_WIDTH : MIN_CARD_WIDTH;
+  const maxColumns = mode === "grid" ? GRID_MAX_COLUMNS : MAX_COLUMNS;
   if (!Number.isFinite(width) || width <= 0) return 1;
-  const fit = Math.floor((width + COLUMN_GAP) / (MIN_CARD_WIDTH + COLUMN_GAP));
-  return Math.max(1, Math.min(MAX_COLUMNS, fit));
+  const fit = Math.floor((width + COLUMN_GAP) / (minCardWidth + COLUMN_GAP));
+  return Math.max(1, Math.min(maxColumns, fit));
 }
 
 /**

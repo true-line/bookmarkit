@@ -44,33 +44,45 @@ const meta = {
 
 export default meta;
 
+const baseArgs = {
+  bookmarks,
+  selectedBookmarkId: null,
+  multiSelectedBookmarkIds: [],
+  bookmarksToDelete: [],
+  onBookmarkClick: noop,
+  onBookmarkDoubleClick: noop,
+  onBookmarkKeyDown: noop,
+  isLoading: false,
+  bookmarksTotal: bookmarks.length,
+  searchActive: false,
+  lastAction: null,
+  searchQuery: "",
+  onClearSearch: noop,
+  onAddNew: noop,
+  onImport: noop,
+  filters: { text: "", minRating: 0, sortBy: "", order: "asc", tags: {} },
+  tagFacets: [
+    { tag: "dev", count: 2 },
+    { tag: "docs", count: 2 },
+    { tag: "reference", count: 2 },
+    { tag: "research", count: 1 },
+  ],
+  onFilterChange: noop,
+  onCycleTag: noop,
+  onClearFilters: noop,
+  filterSummary: "3 total bookmarks",
+};
+
 export const WithFilters = {
-  args: {
-    bookmarks,
-    selectedBookmarkId: null,
-    multiSelectedBookmarkIds: [],
-    bookmarksToDelete: [],
-    onBookmarkClick: noop,
-    onBookmarkDoubleClick: noop,
-    onBookmarkKeyDown: noop,
-    isLoading: false,
-    bookmarksTotal: bookmarks.length,
-    searchActive: false,
-    lastAction: null,
-    searchQuery: "",
-    onClearSearch: noop,
-    onAddNew: noop,
-    onImport: noop,
-    filters: { text: "", minRating: 0, sortBy: "", order: "asc", tags: {} },
-    tagFacets: [
-      { tag: "dev", count: 2 },
-      { tag: "docs", count: 2 },
-      { tag: "reference", count: 2 },
-      { tag: "research", count: 1 },
-    ],
-    onFilterChange: noop,
-    onCycleTag: noop,
-    onClearFilters: noop,
-    filterSummary: "3 total bookmarks",
-  },
+  args: baseArgs,
+};
+
+// #198: The other two views at the same width — single keeps one full-width
+// row, grid lays the same cards out denser than the flow default.
+export const SingleColumn = {
+  args: { ...baseArgs, viewMode: "single" },
+};
+
+export const GridView = {
+  args: { ...baseArgs, viewMode: "grid" },
 };

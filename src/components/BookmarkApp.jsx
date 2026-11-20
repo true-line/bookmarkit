@@ -28,6 +28,7 @@ import { isSafeHttpUrl } from "../utils/url.js";
 import { parseNetscapeHtml } from "../utils/netscapeBookmarks.js";
 import { remoteFaviconsEnabled, setRemoteFaviconsEnabled } from "../utils/favicon.js";
 import { effectsEnabled, setEffectsEnabled } from "../utils/effects.js";
+import { listViewMode, setListViewMode } from "../utils/listView.js";
 import { readImportedBookmarks } from "../utils/importedBookmarks.js";
 import { useAgentEngine } from "../hooks/useAgentEngine.js";
 import { useBookmarkSelection, keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
@@ -53,6 +54,7 @@ import ImportExportContent from "./ImportExportContent";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import OptionsModal from "./OptionsModal";
 import BookmarkList from "./BookmarkList.jsx";
+import ViewSelector from "./ViewSelector.jsx";
 import BulkEditBar from "./BulkEditBar.jsx";
 import DigestModal from "./DigestModal.jsx";
 import FolderTree, { DRAG_BOOKMARKS } from "./FolderTree.jsx";
@@ -144,6 +146,9 @@ const BookmarkApp = () => {
   const [remoteFavicons, setRemoteFavicons] = useState(remoteFaviconsEnabled);
   // Decorative 3D effects, on by default and opted out in Options.
   const [effects, setEffects] = useState(effectsEnabled);
+  // #198: the list's view mode — single column, flow columns, grid — a
+  // display preference persisted like the other display toggles.
+  const [viewMode, setViewMode] = useState(listViewMode);
   const [searchQuery, setSearchQuery] = useState("");
   // The agent's accumulated plan. It stays here rather than inside the engine
   // because the view, the manual filters and a persisted reorder all read it.
@@ -1118,6 +1123,15 @@ const BookmarkApp = () => {
                   Clear Search
                 </Button>
               )}
+              {/* #198: pick the list's layout; the choice persists like the
+                  other display toggles. */}
+              <ViewSelector
+                value={viewMode}
+                onChange={(mode) => {
+                  setListViewMode(mode);
+                  setViewMode(mode);
+                }}
+              />
               <IconButton label="Options" variant="bordered" onClick={() => setIsOptionsOpen(true)}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -1246,6 +1260,7 @@ const BookmarkApp = () => {
                 onImport={handleImportExportOpen}
                 remoteFavicons={remoteFavicons}
                 effectsEnabled={effects}
+                viewMode={viewMode}
                 filters={manualFilters}
                 tagFacets={tagFacets}
                 onFilterChange={setManualFilters}
