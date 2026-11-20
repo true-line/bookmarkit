@@ -718,6 +718,11 @@ const BookmarkApp = () => {
         event.preventDefault();
         confirmDeleteSelection();
       },
+      // macOS's delete key reports "Backspace"; forward-delete reports "Delete".
+      "Mod+Backspace": (event) => {
+        event.preventDefault();
+        confirmDeleteSelection();
+      },
       d: (event) => {
         event.preventDefault();
         confirmDeleteSelection();

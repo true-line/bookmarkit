@@ -68,17 +68,18 @@ describe("useKeyboardShortcuts (#27)", () => {
     expect(plain).not.toHaveBeenCalled();
   });
 
-  // Delete has no single-character key, so the combo keeps the key's own name.
-  it("matches named keys like Delete inside a Mod combo", () => {
+  // macOS's delete key reports "Backspace" (forward-delete reports "Delete"),
+  // and named keys keep the key's own name inside a Mod combo.
+  it("matches named keys like Backspace and Delete inside a Mod combo", () => {
     const handler = vi.fn();
     asMac(true);
-    render(<Harness bindings={{ "Mod+Delete": handler }} />);
+    render(<Harness bindings={{ "Mod+Delete": handler, "Mod+Backspace": handler }} />);
+
+    fireEvent.keyDown(window, { key: "Backspace", metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
 
     fireEvent.keyDown(window, { key: "Delete", metaKey: true });
-    expect(handler).toHaveBeenCalledTimes(1);
-
-    fireEvent.keyDown(window, { key: "Delete", ctrlKey: true });
-    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledTimes(2);
   });
 
   it("stays out of the way while the user is typing", () => {
