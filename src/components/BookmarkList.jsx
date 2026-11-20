@@ -176,7 +176,7 @@ function BookmarkRow({ index, style, data }) {
           isPendingDelete={bookmarksToDelete.includes(bookmark.id)}
           remoteFavicons={remoteFavicons}
           onClick={(e) => onBookmarkClick(bookmark, e)}
-          onDoubleClick={() => onBookmarkDoubleClick(bookmark)}
+          onDoubleClick={(e) => onBookmarkDoubleClick(bookmark, e)}
           onKeyDown={(e) => onBookmarkKeyDown(e, bookmark)}
           onDragStart={onBookmarkDragStart && ((e) => onBookmarkDragStart(e, bookmark))}
         />
