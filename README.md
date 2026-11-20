@@ -188,7 +188,8 @@ Supported providers:
 Options per provider:
 
 - API key (required for remote providers; optional for Ollama/LM Studio — set it only when the
-  server sits behind an authenticating proxy)
+  server sits behind an authenticating proxy) — a stored key can be removed with the Clear button
+  next to the field
 - Base URL (OpenAI/Grok optional; Ollama/LM Studio required, e.g., http://localhost:11434 or http://localhost:1234)
 - Model: auto‑discovery where supported, or type manually
 
