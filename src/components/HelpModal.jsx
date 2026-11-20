@@ -50,8 +50,8 @@ const HelpModal = ({ onClose }) => {
               <strong>Cmd/Ctrl+A</strong> selects all visible bookmarks.
             </li>
             <li>
-              Press <Kbd>D</Kbd> or <strong>Cmd/Ctrl+D</strong> to delete selected (opens
-              confirmation).
+              Press <Kbd>D</Kbd>, <strong>Cmd/Ctrl+D</strong>, <strong>Cmd/Ctrl+Backspace</strong>,
+              or <strong>Cmd/Ctrl+Delete</strong> to delete selected (opens confirmation).
             </li>
           </ul>
         </div>
