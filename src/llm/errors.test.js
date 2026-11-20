@@ -10,6 +10,19 @@ describe("classifyLLMError", () => {
     expect(categoryOf(new Error("Invalid API key provided"))).toBe("api_key");
   });
 
+  // #224: the AI SDK reports HTTP status as `statusCode`; the message must
+  // still classify, and a provider without a chosen model says so plainly.
+  it("reads the SDK's statusCode and recognizes a missing model", () => {
+    expect(categoryOf({ statusCode: 429, message: "" })).toBe("rate_limit");
+    const noModel = classifyLLMError(
+      new Error("No model is selected for this provider. Open Options and choose one."),
+      "gemini"
+    );
+    expect(noModel.category).toBe("no_model");
+    expect(noModel.message).toMatch(/choose one/i);
+    expect(noModel.message).not.toMatch(/API key/i);
+  });
+
   it("recognizes rate limiting", () => {
     expect(categoryOf({ status: 429 })).toBe("rate_limit");
     expect(categoryOf(new Error("You exceeded your quota"))).toBe("rate_limit");
