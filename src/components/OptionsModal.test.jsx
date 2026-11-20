@@ -4,7 +4,7 @@ import OptionsModal from "./OptionsModal.jsx";
 
 // Avoid real LLM/model-fetch side effects.
 vi.mock("../llm/index.js", () => ({
-  LLM_PROVIDERS: { GEMINI: "gemini", OPENAI: "openai" },
+  LLM_PROVIDERS: { GEMINI: "gemini", OPENAI: "openai", OLLAMA: "ollama", LMSTUDIO: "lmstudio" },
   createLLM: () => ({ listModels: async () => [] }),
 }));
 
@@ -125,5 +125,41 @@ describe("OptionsModal effects preference", () => {
 
     rerender(<OptionsModal {...baseProps} effects={false} onEffectsChange={onEffectsChange} />);
     expect(screen.getByRole("checkbox", { name: /show 3d effects/i })).not.toBeChecked();
+  });
+});
+
+// Local providers need no key, but a server behind an authenticating proxy may
+// ask for one; the field is offered for both and stays optional.
+describe("OptionsModal local provider API key (optional)", () => {
+  it("offers an optional key field for Ollama and reports what is typed", () => {
+    const onChangeOptions = vi.fn();
+    render(
+      <OptionsModal
+        {...baseProps}
+        provider="ollama"
+        providerOptions={{}}
+        onChangeOptions={onChangeOptions}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("API Key (optional)"), {
+      target: { value: "proxy-key" },
+    });
+    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "proxy-key" });
+  });
+
+  it("offers the same field for LM Studio and locks it with the session", () => {
+    render(
+      <OptionsModal
+        {...baseProps}
+        provider="lmstudio"
+        providerOptions={{}}
+        encryption={{ encrypted: true, locked: true }}
+      />
+    );
+
+    const field = screen.getByLabelText("API Key (optional)");
+    expect(field).toBeDisabled();
+    expect(screen.getByPlaceholderText(/Locked — unlock below/i)).toBe(field);
   });
 });
