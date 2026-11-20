@@ -1,5 +1,11 @@
 # bookmarkit
 
+## 0.5.1
+
+### Patch Changes
+
+- d1214b2: The header toolbar reads correctly again: the action strip (Add New, Folders, Import/Export, Remove Duplicates, Digest, Check Links, and the view selector) no longer clips its last buttons at the window edge — the header rows run full width, so the strip fits on desktop and only scrolls horizontally when the window is genuinely too narrow — and the provider-gated search box, which is disabled until a provider is configured, now actually looks disabled (muted background and text) instead of an opacity fade that vanished against the header.
+
 ## 0.5.0
 
 ### Minor Changes
