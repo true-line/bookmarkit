@@ -1,5 +1,7 @@
 // Ollama local provider
-// Expects options: { model?: string, baseUrl?: string }
+// Expects options: { model?: string, baseUrl?: string, apiKey?: string }
+// apiKey is optional: Ollama itself needs none, but a server placed behind an
+// authenticating proxy may require one. Sent as a Bearer header only when set.
 // ARCH-02: generate() uses fetchWithRetry (30s timeout, up to 3 attempts).
 // ARCH-05: generate() accepts an optional AbortSignal for ARCH-04 cancellation.
 
@@ -8,9 +10,16 @@ import { fetchWithRetry } from "../retry.js";
 export function createOllamaLLM({
   model = "llama3.1",
   baseUrl = "http://localhost:11434",
+  apiKey = "",
   temperature,
   enableTemperature = false,
 } = {}) {
+  // Only include Authorization when apiKey is non-empty, so the default local
+  // setup keeps the keyless request it always worked with.
+  const headers = {
+    "Content-Type": "application/json",
+    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+  };
   return {
     name: "ollama",
     async generate(prompt, signal) {
@@ -18,7 +27,7 @@ export function createOllamaLLM({
         `${baseUrl}/api/generate`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             model,
             prompt,
@@ -37,7 +46,7 @@ export function createOllamaLLM({
     },
     async listModels() {
       try {
-        const res = await fetch(`${baseUrl}/api/tags`, { method: "GET" });
+        const res = await fetch(`${baseUrl}/api/tags`, { method: "GET", headers });
         if (!res.ok) return [model];
         const data = await res.json();
         const names = (data?.models || []).map((m) => m?.model || m?.name).filter(Boolean);

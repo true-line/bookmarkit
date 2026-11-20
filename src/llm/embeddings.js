@@ -111,12 +111,14 @@ const EMBEDDERS = {
     ),
 
   // Ollama embeds one text per call, so a batch is a batch of calls. It runs
-  // locally, which is what makes that acceptable.
-  async [LLM_PROVIDERS.OLLAMA]({ model, baseUrl }, texts, signal) {
+  // locally, which is what makes that acceptable. The key is optional, as in
+  // chat: sent only when a proxied server was given one to require.
+  async [LLM_PROVIDERS.OLLAMA]({ apiKey, model, baseUrl }, texts, signal) {
     const url = `${trimSlash(baseUrl || "http://localhost:11434")}/api/embeddings`;
+    const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
     const vectors = [];
     for (const text of texts) {
-      const data = await jsonPost(url, {}, { model, prompt: text }, signal);
+      const data = await jsonPost(url, headers, { model, prompt: text }, signal);
       vectors.push(data?.embedding || []);
     }
     return vectors;

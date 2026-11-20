@@ -1,6 +1,8 @@
 // LM Studio local server provider
-// Expects options: { model?: string, baseUrl?: string }
+// Expects options: { model?: string, baseUrl?: string, apiKey?: string }
 // Default LM Studio server (REST): http://localhost:1234
+// apiKey is optional: LM Studio itself needs none, but a server placed behind
+// an authenticating proxy may require one. Sent as a Bearer header only when set.
 // ARCH-02: generate() uses fetchWithRetry (30s timeout, up to 3 attempts).
 // ARCH-05: generate() accepts an optional AbortSignal for ARCH-04 cancellation.
 
@@ -9,11 +11,18 @@ import { fetchWithRetry } from "../retry.js";
 export function createLMStudioLLM({
   model = "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF",
   baseUrl = "http://localhost:1234",
+  apiKey = "",
   temperature,
   enableTemperature = false,
 } = {}) {
   // LM Studio exposes OpenAI-compatible /v1 endpoints
   const base = baseUrl.replace(/\/$/, "");
+  // Only include Authorization when apiKey is non-empty, so the default local
+  // setup keeps the keyless request it always worked with.
+  const headers = {
+    "Content-Type": "application/json",
+    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+  };
   return {
     name: "lmstudio",
     async generate(prompt, signal) {
@@ -21,7 +30,7 @@ export function createLMStudioLLM({
         `${base}/v1/chat/completions`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             model,
             messages: [
@@ -41,7 +50,7 @@ export function createLMStudioLLM({
     },
     async listModels() {
       try {
-        const res = await fetch(`${base}/v1/models`, { method: "GET" });
+        const res = await fetch(`${base}/v1/models`, { method: "GET", headers });
         if (!res.ok) return [model];
         const data = await res.json();
         const names = (data?.data || []).map((m) => m?.id).filter(Boolean);
