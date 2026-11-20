@@ -1,5 +1,8 @@
 // ARCH-06, PERF-06: Virtualized bookmark list using react-window FixedSizeList.
 // Only renders visible rows, allowing 1000+ bookmarks without DOM bloat.
+// #193: A row is as many equal-width cards as the list's width can fit (up to
+// five), so the shelf reflows from one column on small screens to five on
+// large ones while the virtualizer keeps its row-based arithmetic.
 // ARCH-10: Renders contextual empty states depending on loading/search/results state.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -8,9 +11,11 @@ import BookmarkCard from "./BookmarkCard.jsx";
 import FilterBar from "./FilterBar.jsx";
 import EmptyStack from "./effects/EmptyStack.jsx";
 import { Button, EmptyState as DesignEmptyState } from "./DesignSystem.jsx";
+import { chunkIntoRows, columnsForWidth, rowKeyFor, COLUMN_GAP } from "../utils/listColumns.js";
 
 const ITEM_HEIGHT = 104; // px — initial card-row estimate before measurement
 const FILTER_ROW_GAP = 16; // px — mirrors the filter panel's mb-4 spacing
+const ROW_GAP = 8; // px — vertical gap under a card row, as the single-column list had
 
 // ARCH-10: Three distinct empty states
 function EmptyState({
@@ -139,10 +144,15 @@ function FilterRow({ style, data }) {
   );
 }
 
+// #193: A row is `columns` cards in an equal-width grid — the virtualizer's
+// unit of measurement is the row, so its height is the tallest card in it.
+// Grid stretch keeps the row's cards even, and the full column count (not the
+// row's size) keeps a short last row as wide as every other card.
 function BookmarkRow({ index, style, data }) {
   const measureRef = useRef(null);
   const {
-    bookmarks,
+    rows,
+    columns,
     selectedBookmarkId,
     multiSelectedBookmarkIds,
     bookmarksToDelete,
@@ -153,33 +163,44 @@ function BookmarkRow({ index, style, data }) {
     onRowHeightChange,
     remoteFavicons,
   } = data;
-  const bookmark = bookmarks[index - 1];
+  const row = rows[index - 1];
+  const key = rowKeyFor(columns, row);
 
   useEffect(() => {
     const element = measureRef.current;
     if (!element) return;
-    const updateHeight = () =>
-      onRowHeightChange(index, bookmark.id, Math.ceil(element.scrollHeight));
+    const updateHeight = () => onRowHeightChange(index, key, Math.ceil(element.scrollHeight));
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [bookmark.id, index, onRowHeightChange]);
+  }, [key, index, onRowHeightChange]);
 
   return (
     <div style={style}>
-      <div ref={measureRef} style={{ paddingBottom: 8 }}>
-        <BookmarkCard
-          bookmark={bookmark}
-          isSelected={selectedBookmarkId === bookmark.id}
-          isMultiSelected={multiSelectedBookmarkIds.includes(bookmark.id)}
-          isPendingDelete={bookmarksToDelete.includes(bookmark.id)}
-          remoteFavicons={remoteFavicons}
-          onClick={(e) => onBookmarkClick(bookmark, e)}
-          onDoubleClick={() => onBookmarkDoubleClick(bookmark)}
-          onKeyDown={(e) => onBookmarkKeyDown(e, bookmark)}
-          onDragStart={onBookmarkDragStart && ((e) => onBookmarkDragStart(e, bookmark))}
-        />
+      <div ref={measureRef} style={{ paddingBottom: ROW_GAP }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+            columnGap: COLUMN_GAP,
+          }}
+        >
+          {row.map((bookmark) => (
+            <BookmarkCard
+              key={bookmark.id}
+              bookmark={bookmark}
+              isSelected={selectedBookmarkId === bookmark.id}
+              isMultiSelected={multiSelectedBookmarkIds.includes(bookmark.id)}
+              isPendingDelete={bookmarksToDelete.includes(bookmark.id)}
+              remoteFavicons={remoteFavicons}
+              onClick={(e) => onBookmarkClick(bookmark, e)}
+              onDoubleClick={() => onBookmarkDoubleClick(bookmark)}
+              onKeyDown={(e) => onBookmarkKeyDown(e, bookmark)}
+              onDragStart={onBookmarkDragStart && ((e) => onBookmarkDragStart(e, bookmark))}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -191,10 +212,6 @@ function renderRow({ index, style, data }) {
   ) : (
     <BookmarkRow index={index} style={style} data={data} />
   );
-}
-
-function itemKey(index, data) {
-  return index === 0 ? "bookmark-filters" : data.bookmarks[index - 1].id;
 }
 
 const VirtualizedListInner = React.forwardRef(function VirtualizedListInner(
@@ -247,41 +264,52 @@ const BookmarkList = React.memo(function BookmarkList({
   const rowHeightsRef = useRef(new Map());
   const [listHeight, setListHeight] = useState(500);
   const [filterHeight, setFilterHeight] = useState(136);
+  // #193: how many cards a row holds, decided by the list's own width.
+  const [columns, setColumns] = useState(1);
   const bookmarkOrder = useMemo(
     () => bookmarks.map((bookmark) => bookmark.id).join("\u0000"),
     [bookmarks]
   );
 
-  // Measure container height so FixedSizeList fills the available space.
+  // Measure container height so FixedSizeList fills the available space — and
+  // its width, which decides how many columns of cards the shelf can hold.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
       const h = entry.contentRect.height;
       if (h > 0) setListHeight(h);
+      const w = entry.contentRect.width;
+      if (w > 0) setColumns(columnsForWidth(w));
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
+  // A reflow re-chunks the bookmarks, so every row re-estimates and re-measures
+  // under its new key (rowKeyFor folds the column count into the key).
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [bookmarkOrder, filterHeight]);
+  }, [bookmarkOrder, filterHeight, columns]);
+
+  // #193: the virtualizer's rows are chunks of cards, not single cards.
+  const bookmarkRows = useMemo(() => chunkIntoRows(bookmarks, columns), [bookmarks, columns]);
 
   const handleFilterHeightChange = useCallback((height) => {
     setFilterHeight((current) => (current === height ? current : height));
   }, []);
 
-  const handleRowHeightChange = useCallback((index, bookmarkId, height) => {
-    if (rowHeightsRef.current.get(bookmarkId) === height) return;
-    rowHeightsRef.current.set(bookmarkId, height);
+  const handleRowHeightChange = useCallback((index, key, height) => {
+    if (rowHeightsRef.current.get(key) === height) return;
+    rowHeightsRef.current.set(key, height);
     listRef.current?.resetAfterIndex(index);
   }, []);
 
   // Pack all row-level state into itemData so renderRow (stable ref) can read it.
   const itemData = useMemo(
     () => ({
-      bookmarks,
+      rows: bookmarkRows,
+      columns,
       selectedBookmarkId,
       multiSelectedBookmarkIds,
       bookmarksToDelete,
@@ -300,7 +328,8 @@ const BookmarkList = React.memo(function BookmarkList({
       onRowHeightChange: handleRowHeightChange,
     }),
     [
-      bookmarks,
+      bookmarkRows,
+      columns,
       selectedBookmarkId,
       multiSelectedBookmarkIds,
       bookmarksToDelete,
@@ -352,14 +381,16 @@ const BookmarkList = React.memo(function BookmarkList({
         ref={listRef}
         height={listHeight}
         innerElementType={VirtualizedListInner}
-        itemCount={bookmarks.length + 1}
+        itemCount={bookmarkRows.length + 1}
         itemSize={(index) =>
           index === 0
             ? filterHeight
-            : rowHeightsRef.current.get(bookmarks[index - 1].id) || ITEM_HEIGHT
+            : rowHeightsRef.current.get(rowKeyFor(columns, bookmarkRows[index - 1])) || ITEM_HEIGHT
         }
         itemData={itemData}
-        itemKey={itemKey}
+        itemKey={(index, data) =>
+          index === 0 ? "bookmark-filters" : rowKeyFor(data.columns, data.rows[index - 1])
+        }
         width="100%"
         overscanCount={5}
         style={{ overflowX: "hidden" }}
