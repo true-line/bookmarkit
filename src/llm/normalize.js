@@ -66,7 +66,7 @@ const ORGANIZE_FIELD_ALIASES = new Map([
   ["descriptions", "description"],
 ]);
 
-// ─── The schema a plan is requested against ──────────────────────────────────
+// ─── The schema a plan is requested against ───────────────────────────────────
 //
 // Strict-friendly (every property required, nothing additional) so providers
 // with native structured output can enforce it server-side. `parameters` is
