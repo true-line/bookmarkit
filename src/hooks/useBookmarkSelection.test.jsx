@@ -221,18 +221,17 @@ describe("useBookmarkSelection (#26)", () => {
     expect(onOpen).not.toHaveBeenCalled();
   });
 
-  // Shift belongs to the double-click it may be starting: opening the editor on
-  // Shift+click would close it again when the next click hit the modal's scrim.
-  it("leaves a lone Shift+click alone", () => {
+  // Shift+click edits — the mouse twin of Shift+Enter.
+  it("opens the editor on Shift+click", () => {
     const onOpen = vi.fn();
     const onEdit = vi.fn();
     render(<Probe onOpen={onOpen} onEdit={onEdit} />);
 
     fireEvent.click(card("a"), { shiftKey: true });
 
-    expect(screen.getByTestId("focused")).toHaveTextContent("none");
+    expect(onEdit).toHaveBeenCalledWith(BOOKMARKS[0]);
     expect(onOpen).not.toHaveBeenCalled();
-    expect(onEdit).not.toHaveBeenCalled();
+    expect(screen.getByTestId("focused")).toHaveTextContent("none");
   });
 
   // Space on a card would otherwise scroll the list under the user.

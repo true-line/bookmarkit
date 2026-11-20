@@ -40,8 +40,8 @@ const HelpModal = ({ onClose }) => {
               in a new tab once it is selected.
             </li>
             <li>
-              <strong>Shift+Enter</strong> or <strong>Shift+double-click</strong> opens the editing
-              modal. Press <Kbd>E</Kbd> to edit the selected bookmark.
+              <strong>Shift+Click</strong> or <strong>Shift+Enter</strong> opens the editing modal.
+              Press <Kbd>E</Kbd> to edit the selected bookmark.
             </li>
             <li>
               <strong>Esc</strong> clears selection and any pending deletes.

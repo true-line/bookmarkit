@@ -9,7 +9,7 @@
 // #190: activation is two-stage. The first gesture on an unselected bookmark
 // selects it; the same gesture on the selected bookmark acts — a click, Enter,
 // Space, or double-click opens it in a new tab, while the Shift variants
-// (Shift+Enter, Shift+double-click) open the editor instead.
+// (Shift+click, Shift+Enter) open the editor instead.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -77,11 +77,13 @@ export function useBookmarkSelection(onOpen, onEdit) {
       // The second click of a double-click: the dblclick handler below decides
       // what the whole sequence meant, so this click stays out of its way.
       if (event?.detail > 1) return;
-      // Shift belongs to the double-click it may be starting. A lone Shift+click
-      // does nothing, and Shift+double-click reaches the dblclick handler intact
-      // — opening the editor here would close it again when the next click
-      // landed on the modal's scrim.
-      if (event?.shiftKey) return;
+      // Shift+click edits, mirroring Shift+Enter. A Shift+double-click still
+      // ends in the editor: the first click's modal takes the second click on
+      // its scrim, and the trailing dblclick re-opens it.
+      if (event?.shiftKey) {
+        edit(bookmark);
+        return;
+      }
       if (event?.metaKey || event?.ctrlKey) {
         setMultiSelectedIds((prev) => {
           // A single click before the first Ctrl+click set `selectedId`; carry it
@@ -105,7 +107,7 @@ export function useBookmarkSelection(onOpen, onEdit) {
       setMultiSelectedIds([]);
       openedIdRef.current = null;
     },
-    [selectedId, open]
+    [selectedId, open, edit]
   );
 
   const onBookmarkDoubleClick = useCallback(

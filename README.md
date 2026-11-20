@@ -67,7 +67,7 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
     a new tab
   - Cmd/Ctrl+Click multi‑selects
   - Enter or Space selects the focused bookmark, and opens it once selected
-  - Shift+Enter or Shift+double‑click edits (E also edits the selected bookmark)
+  - Shift+Click or Shift+Enter edits (E also edits the selected bookmark)
   - Esc clears selection
   - Cmd/Ctrl+A select all, Cmd/Ctrl+D delete selected
   - D deletes (with confirmation)
@@ -403,7 +403,7 @@ button. A slice the model fumbles costs only its own suggestions.
 - Cmd/Ctrl+Click: toggle multi‑select
 - Double‑click: open in a new tab
 - Enter or Space: select the focused bookmark; when it is already selected, open it
-- Shift+Enter or Shift+double‑click: edit (E also edits the selected bookmark)
+- Shift+Click or Shift+Enter: edit (E also edits the selected bookmark)
 - Esc: clear selection
 - Cmd/Ctrl+A: select all visible
 - Cmd/Ctrl+D or D: delete selected (with confirmation)
