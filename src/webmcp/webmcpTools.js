@@ -23,9 +23,6 @@ import { UNFILED, buildFolderTree, findInFolder } from "../utils/folderTree.js";
 export const DEFAULT_RESULT_LIMIT = 20;
 export const MAX_RESULT_LIMIT = 100;
 
-/** The folder value the wire schema uses for "bookmarks in no folder at all". */
-export const UNFILED_FOLDER_VALUE = "unfiled";
-
 const clampLimit = (value) => {
   const n = Number(value);
   if (!Number.isFinite(n) || n < 1) return DEFAULT_RESULT_LIMIT;
@@ -58,26 +55,25 @@ const envelope = (items, total, limit) => ({
 
 /**
  * `search_bookmarks`: free text over title/URL/description/tags, narrowed by
- * tag, folder (subfolders included, per `findInFolder`), and minimum rating.
- * Every filter is optional; none means browse, in the user's own order.
+ * tag, folder (subfolders included, per `findInFolder`), the unfiled flag, and
+ * minimum rating. Every filter is optional; none means browse, in the user's
+ * own order.
  */
 export function executeSearchBookmarks(args, list = []) {
   const input = args ?? {};
   const query = typeof input.query === "string" ? input.query : "";
   const tags = Array.isArray(input.tags) ? input.tags : [];
   const folder = typeof input.folder === "string" ? input.folder.trim() : "";
+  // "No folder" is its own flag, never a magic folder name: a folder names
+  // whatever the user typed, and one really called "unfiled" must stay
+  // reachable by that name. Contradicting filters resolve in the flag's favor.
+  const unfiled = input.unfiled === true;
   const minRating = Number.isFinite(input.minRating) ? input.minRating : null;
 
   let results = searchBookmarks(query, list);
   if (tags.length > 0) results = findWithTags(tags, [], results);
-  if (folder) {
-    // The sentinel travels as a plain word because the app's own control
-    // character would be a strange thing to ask a model to type.
-    results = findInFolder(
-      folder.toLowerCase() === UNFILED_FOLDER_VALUE ? UNFILED : folder,
-      results
-    );
-  }
+  if (unfiled) results = findInFolder(UNFILED, results);
+  else if (folder) results = findInFolder(folder, results);
   if (minRating !== null) results = filterByRating({ minRating }, results);
 
   const limit = clampLimit(input.limit);
@@ -120,10 +116,11 @@ export const searchBookmarksTool = {
   description:
     "Search this browser's saved bookmarks. Free text matches the title, URL, " +
     "description, and tags of each bookmark (case-insensitive). Narrow further " +
-    'with tags (all must match), folder (subfolders included; "unfiled" means ' +
-    "no folder), or minRating (0-5). Omit every filter to browse. Results keep " +
-    "the user's own order — this tool cannot sort or change anything — and are " +
-    "truncated to limit, with the true match count in total.",
+    'with tags (all must match), folder (a path like "Work/ML", subfolders ' +
+    "included), unfiled: true (only bookmarks with no folder; takes precedence " +
+    "over folder), or minRating (0-5). Omit every filter to browse. Results " +
+    "keep the user's own order — this tool cannot sort or change anything — " +
+    "and are truncated to limit, with the true match count in total.",
   annotations: { readOnlyHint: true },
   inputSchema: {
     type: "object",
@@ -136,7 +133,11 @@ export const searchBookmarksTool = {
       },
       folder: {
         type: "string",
-        description: 'Folder path like "Work/ML", or "unfiled". Subfolders included.',
+        description: 'Folder path like "Work/ML". Subfolders included.',
+      },
+      unfiled: {
+        type: "boolean",
+        description: "Only bookmarks that have no folder. Takes precedence over folder.",
       },
       minRating: { type: "integer", minimum: 0, maximum: 5 },
       limit: { type: "integer", minimum: 1, maximum: MAX_RESULT_LIMIT },
@@ -151,7 +152,8 @@ export const listFoldersTool = {
     'List the folder paths this bookmark collection implies, separated by "/". ' +
     "A folder exists because bookmarks point at it: count is what sits directly " +
     "in it, total what sits anywhere beneath it, and unfiled is how many " +
-    "bookmarks have no folder at all. Read-only.",
+    "bookmarks have no folder at all — search those with search_bookmarks " +
+    "({unfiled: true}). Read-only.",
   annotations: { readOnlyHint: true },
   inputSchema: {
     type: "object",
