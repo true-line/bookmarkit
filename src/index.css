@@ -56,6 +56,8 @@
   /* Derived tokens — never written at runtime, so custom themes keep working. */
   --accent-strong: var(--accent-hover);
   --url-text: var(--text-secondary);
+  --input-disabled-bg: color-mix(in srgb, var(--bg-secondary) 85%, black);
+  --input-disabled-border: color-mix(in srgb, var(--border) 65%, black);
   --shadow-card: 0 1px 2px rgba(33, 29, 24, 0.06), 0 1px 3px rgba(33, 29, 24, 0.07);
   --shadow-card-hover: 0 6px 16px -4px rgba(33, 29, 24, 0.18), 0 2px 4px rgba(33, 29, 24, 0.08);
 
@@ -494,10 +496,12 @@ textarea {
 /* Disabled must read as disabled: the themed input's custom colors would
    otherwise keep it looking editable in every browser that skips native
    disabled styling, and bare opacity vanishes on a white-on-white input —
-   so the disabled state swaps in the muted palette outright. */
+   so the disabled state darkens the muted palette outright (bg-secondary
+   alone is nearly indistinguishable from the editable surface). Mixing
+   toward black keeps the darkening proportional in custom themes too. */
 .ds-search-bar--disabled input {
-  background: var(--bg-secondary);
-  border-color: var(--border);
+  background: var(--input-disabled-bg);
+  border-color: var(--input-disabled-border);
   color: var(--text-secondary);
   cursor: not-allowed;
 }

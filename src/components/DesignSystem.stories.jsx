@@ -120,6 +120,15 @@ export const Forms = {
           size="lg"
         />
       </div>
+      {/* No-provider state: must read as disabled, not merely muted (#210). */}
+      <div className="md:col-span-2">
+        <SearchBar
+          aria-label="Natural language search, disabled"
+          placeholder="Set up a provider in Options to search"
+          size="lg"
+          disabled
+        />
+      </div>
     </div>
   ),
 };
