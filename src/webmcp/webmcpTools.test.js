@@ -69,21 +69,52 @@ describe("executeSearchBookmarks (#212)", () => {
     ]);
   });
 
-  it("includes subfolders in a folder filter, and treats unfiled as a folder", () => {
+  it("includes subfolders in a folder filter", () => {
     expect(executeSearchBookmarks({ folder: "Work" }, LIST).items.map((i) => i.id)).toEqual([
       "1",
       "3",
       "4",
     ]);
-    expect(executeSearchBookmarks({ folder: "unfiled" }, LIST).items.map((i) => i.id)).toEqual([
-      "2",
-    ]);
+  });
+
+  it("selects bookmarks with no folder via the unfiled flag, not a magic folder name", () => {
+    expect(executeSearchBookmarks({ unfiled: true }, LIST).items.map((i) => i.id)).toEqual(["2"]);
+    expect(
+      executeSearchBookmarks({ unfiled: true, folder: "Work" }, LIST).items.map((i) => i.id)
+    ).toEqual(["2"]);
   });
 
   it("combines filters and applies minRating", () => {
     expect(
       executeSearchBookmarks({ folder: "Work", minRating: 4 }, LIST).items.map((i) => i.id)
     ).toEqual(["1", "3"]);
+  });
+
+  it("keeps a real folder named 'unfiled' reachable by its own name", () => {
+    // Folder names are whatever the user typed, so no name may be reserved:
+    // the flag decides "no folder", the path decides the folder (P2 review
+    // finding on #213).
+    const colliding = [
+      ...LIST,
+      {
+        id: "5",
+        title: "Actually in a folder called unfiled",
+        url: "https://example.com/in-unfiled",
+        tags: [],
+        rating: 0,
+        folderId: "unfiled",
+      },
+    ];
+    expect(executeSearchBookmarks({ folder: "unfiled" }, colliding).items.map((i) => i.id)).toEqual(
+      ["5"]
+    );
+    expect(executeSearchBookmarks({ unfiled: true }, colliding).items.map((i) => i.id)).toEqual([
+      "2",
+    ]);
+    const { items, unfiled } = executeListFolders({}, colliding);
+    expect(items).toContainEqual({ path: "unfiled", name: "unfiled", count: 1, total: 1 });
+    expect(items).toHaveLength(4);
+    expect(unfiled).toBe(1);
   });
 
   it("keeps the store's order — browsing with no filters is the list, not a re-sort", () => {
