@@ -41,6 +41,7 @@ import { useArchiveRecovery } from "../hooks/useArchiveRecovery.js";
 import { useDigest } from "../hooks/useDigest.js";
 import { useSemanticSearch } from "../hooks/useSemanticSearch.js";
 import { useLLMSettings } from "../hooks/useLLMSettings.js";
+import { useWebMcpTools } from "../hooks/useWebMcpTools.js";
 import { useTheme } from "../hooks/useTheme.js";
 import { useDebounce } from "../hooks/useDebounce.js";
 import { useSmartViews } from "../hooks/useSmartViews.js";
@@ -140,6 +141,17 @@ const BookmarkApp = () => {
     disableEncryption,
     unlock,
   } = useLLMSettings(showCustomMessage);
+
+  // ─── WebMCP agent tools (#212) ──────────────────────────────────────────────
+  // A read-only projection of this same list, offered to browser agents while
+  // this tab is open. Registered only once the store opened cleanly, and only
+  // after the user opts in — an agent asking is one thing; who may ask is the
+  // user's call.
+  const { webMcpEnabled, setWebMcpEnabled, webMcpAvailable } = useWebMcpTools({
+    bookmarks,
+    isLoading,
+    loadError,
+  });
 
   // ─── UI state ───────────────────────────────────────────────────────────────
   // #39: Off by default — fetching favicons from a third party would report the
@@ -1325,7 +1337,10 @@ const BookmarkApp = () => {
               setEffectsEnabled(enabled);
               setEffects(enabled);
             }}
-            onClose={() => setIsOptionsOpen(false)}
+            webMcpEnabled={webMcpEnabled}
+            webMcpAvailable={webMcpAvailable}
+            onWebMcpEnabledChange={setWebMcpEnabled}
+            onClose={() => setIsOptionsOpen(false)}}
           />
         )}
         {isMessageModalOpen && (
