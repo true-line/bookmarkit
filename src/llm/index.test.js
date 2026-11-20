@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect } from "vitest";
 
-import { isProviderReady, resolveProviderOptions } from "./index.js";
+import { isProviderReady, isSearchEnabled, resolveProviderOptions } from "./index.js";
 
 describe("isProviderReady", () => {
   // A provider name is not consent: `gemini` is the default before anything is
@@ -41,5 +41,21 @@ describe("resolveProviderOptions", () => {
     globalThis.__llm_options__ = undefined;
     expect(resolveProviderOptions({ apiKey: "k", model: "" })).toEqual({ apiKey: "k" });
     expect(resolveProviderOptions()).toEqual({});
+  });
+});
+
+describe("isSearchEnabled", () => {
+  it("mirrors provider readiness while the key is readable", () => {
+    expect(isSearchEnabled("gemini", { apiKey: "" }, false)).toBe(false);
+    expect(isSearchEnabled("gemini", { apiKey: "k" }, false)).toBe(true);
+    expect(isSearchEnabled("ollama", {}, false)).toBe(true);
+  });
+
+  // #29: a locked session has nothing readable, so readiness alone would
+  // disable the box and strand the user before the unlock prompt — reached by
+  // submitting a query.
+  it("stays open while the options are encrypted and locked", () => {
+    expect(isSearchEnabled("gemini", {}, true)).toBe(true);
+    expect(isSearchEnabled(null, {}, true)).toBe(true);
   });
 });

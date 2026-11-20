@@ -18,7 +18,7 @@ import {
   renameFolderPatches,
 } from "../utils/folderTree.js";
 import { recoverable } from "../utils/archiveRecovery.js";
-import { isProviderReady, resolveProviderOptions } from "../llm/index.js";
+import { isSearchEnabled } from "../llm/index.js";
 import { isBroken } from "../utils/linkHealth.js";
 import { fetchUrlStatus } from "../utils/urlStatus.js";
 import { acceptedPatches } from "../utils/changeReview.js";
@@ -859,12 +859,9 @@ const BookmarkApp = () => {
 
   // The natural-language box fronts the provider, so it is enabled only when a
   // provider can actually be asked something — the same readiness rule the
-  // dedupe and embedding paths apply (#86). A locked key still allows typing:
-  // the engine's message is what tells the user to unlock it.
-  const isAgentConfigured = useMemo(
-    () => isProviderReady(runtimeProvider, resolveProviderOptions(providerOptions)),
-    [runtimeProvider, providerOptions]
-  );
+  // dedupe and embedding paths apply (#86). A locked key keeps the box open:
+  // submitting a query is how the user reaches the engine's unlock prompt.
+  const isAgentConfigured = isSearchEnabled(runtimeProvider, providerOptions, encryption.locked);
 
   const { isProcessing, run: runAgent } = useAgentEngine({
     provider: runtimeProvider,
