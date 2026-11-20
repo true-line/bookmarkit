@@ -1,5 +1,11 @@
 # bookmarkit
 
+## 0.6.1
+
+### Patch Changes
+
+- 9056f33: Add a Clear button next to the stored API key in Options — for remote providers and the optional local-provider key — so a key can be removed without retyping the field.
+
 ## 0.6.0
 
 ### Minor Changes
