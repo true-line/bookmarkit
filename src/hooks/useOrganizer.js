@@ -177,10 +177,11 @@ const refuseReason = ({ locked, chosen, options }) => {
   return null;
 };
 
-// An invalid key, a rate limit, or a keyless local server that refused or cannot
-// be reached (#197) will fail the next slice too — continuing means twenty more
-// identical failures. A hosted provider's network error is worth trying past.
+// An invalid key, a rate limit, a missing model (#224), or a keyless local
+// server that refused or cannot be reached (#197) will fail the next slice too
+// — continuing means twenty more identical failures. A hosted provider's
+// network error is worth trying past.
 const isFatal = (error, chosen) =>
-  ["api_key", "rate_limit", "local_refused", "local_unreachable"].includes(
+  ["api_key", "rate_limit", "local_refused", "local_unreachable", "no_model"].includes(
     classifyLLMError(error, chosen).category
   );

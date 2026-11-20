@@ -6,11 +6,11 @@
 //
 // The load path is the interesting half. What comes back out of storage may have
 // been hand-edited, imported, or written by a newer version, so a stored plan is
-// read the same way a model's answer is: as untrusted text, through
-// `parseAgentResponse`, which drops any action not on its whitelist. Nothing here
+// read the same way a model's answer is: as untrusted data, through
+// `normalizeSteps`, which drops any action not on its whitelist. Nothing here
 // can put an unknown action into `applyAgentPlan`.
 
-import { parseAgentResponse } from "../llm/parser.js";
+import { normalizeSteps } from "../llm/normalize.js";
 import { DISPLAY_ACTIONS } from "./bookmarkFilters.js";
 import { UNFILED, normalizeFolderPath } from "./folderTree.js";
 import { EMPTY_FILTERS, hasActiveFilters, isSortableField } from "./manualFilters.js";
@@ -53,9 +53,9 @@ function sanitizeFilters(raw) {
 /**
  * A stored plan, back through the whitelist it came in by.
  *
- * `parseAgentResponse` takes text, which is exactly what this is: the plan is
- * re-serialized so an object smuggled into storage gets no shortcut past the
- * validation an LLM's answer goes through.
+ * `normalizeSteps` takes the plan as data, which is exactly what this is: an
+ * object smuggled into storage gets no shortcut past the validation a model's
+ * answer goes through.
  *
  * Only the steps that shape the list survive. A view is a lens, so importing,
  * exporting, de-duplicating and persisting an order have no business in one:
@@ -66,9 +66,7 @@ function sanitizeFilters(raw) {
 function sanitizePlan(raw) {
   if (!Array.isArray(raw) || raw.length === 0) return [];
   try {
-    return parseAgentResponse(JSON.stringify(raw)).filter((step) =>
-      DISPLAY_ACTIONS.has(step.action)
-    );
+    return normalizeSteps(raw).filter((step) => DISPLAY_ACTIONS.has(step.action));
   } catch {
     return [];
   }
