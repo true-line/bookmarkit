@@ -208,6 +208,13 @@ const BookmarkApp = () => {
     [storeRef]
   );
 
+  // #190: where the selection hook's Shift gestures land — Shift+Enter and
+  // Shift+double-click edit the bookmark instead of opening it.
+  const handleEditBookmark = useCallback((bookmark) => {
+    setEditingBookmark(bookmark);
+    setIsModalOpen(true);
+  }, []);
+
   const {
     selectedId: selectedBookmarkId,
     multiSelectedIds: multiSelectedBookmarkIds,
@@ -215,8 +222,9 @@ const BookmarkApp = () => {
     selectAll,
     clear: clearSelectedBookmarks,
     onBookmarkClick: handleBookmarkClick,
+    onBookmarkDoubleClick: handleBookmarkDoubleClick,
     onBookmarkKeyDown: handleBookmarkKeyDown,
-  } = useBookmarkSelection(openBookmark);
+  } = useBookmarkSelection(openBookmark, handleEditBookmark);
 
   // Read by an effect that must not resubscribe when the list changes.
   const bookmarksRef = useRef(bookmarks);
@@ -513,11 +521,6 @@ const BookmarkApp = () => {
 
   const handleImportExportOpen = useCallback(() => setIsImportExportModalOpen(true), []);
   const handleImportExportClose = useCallback(() => setIsImportExportModalOpen(false), []);
-
-  const handleBookmarkDoubleClick = useCallback((bookmark) => {
-    setEditingBookmark(bookmark);
-    setIsModalOpen(true);
-  }, []);
 
   // #44: A tidy-up is a proposal. The model answers, the diff is reviewed, and
   // only what the user keeps is written — through the bulk-edit path, so the whole

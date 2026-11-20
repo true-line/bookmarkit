@@ -33,7 +33,8 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Netscape Bookmark HTML (compatible with browsers’ export files)
 - Bookmark management
   - Add, edit, delete, tag, folder, rating, favicon support
-  - Multi‑select (Cmd/Ctrl+Click), open in new tab (Shift+Click)
+  - Multi‑select (Cmd/Ctrl+Click), open in new tab (click the selected bookmark,
+    double‑click, or Enter)
   - Detect and remove duplicates by the page they point at, with an optional
     second opinion from your LLM on the same article saved under two URLs
   - Bulk edit a multi-selection: add or remove tags, move to a folder, set or
@@ -62,11 +63,14 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Local (browser) by default
   - Optional Firebase (Cloud Firestore) backend
 - Keyboard shortcuts
-  - Click selects; Cmd/Ctrl+Click multi‑selects; Shift+Click opens
-  - Double‑click or E to edit
+  - Click selects; clicking the selected bookmark or double‑clicking opens it in
+    a new tab
+  - Cmd/Ctrl+Click multi‑selects
+  - Enter or Space selects the focused bookmark, and opens it once selected
+  - Shift+Click or Shift+Enter edits (E also edits the selected bookmark)
   - Esc clears selection
   - Cmd/Ctrl+A select all, Cmd/Ctrl+D delete selected
-  - D deletes (with confirmation), Space opens selected
+  - D deletes (with confirmation)
 
 ## Demo (quick tour)
 
@@ -395,14 +399,14 @@ button. A slice the model fumbles costs only its own suggestions.
 
 ## Keyboard shortcuts
 
-- Click: select a bookmark
+- Click: select a bookmark; click it again to open it in a new tab
 - Cmd/Ctrl+Click: toggle multi‑select
-- Shift+Click: open in new tab
-- Double‑click or E: edit selected
+- Double‑click: open in a new tab
+- Enter or Space: select the focused bookmark; when it is already selected, open it
+- Shift+Click or Shift+Enter: edit (E also edits the selected bookmark)
 - Esc: clear selection
 - Cmd/Ctrl+A: select all visible
 - Cmd/Ctrl+D or D: delete selected (with confirmation)
-- Space (on focused tile): select/open depending on context
 - Cmd/Ctrl+Z: undo the last change
 
 ## Saved views
