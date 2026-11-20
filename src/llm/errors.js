@@ -4,7 +4,7 @@
 import { LLM_PROVIDERS } from "./index.js";
 
 /**
- * @typedef {'api_key' | 'rate_limit' | 'network' | 'parse' | 'local_refused' | 'generic'} LLMErrorCategory
+ * @typedef {'api_key' | 'rate_limit' | 'network' | 'parse' | 'local_refused' | 'local_unreachable' | 'generic'} LLMErrorCategory
  */
 
 // #28: A TypeError only means "network" when it is the one fetch throws. Browsers
@@ -93,8 +93,9 @@ const GENERIC = {
  *
  * The provider is optional. Without it the hosted-provider reading applies; with
  * a keyless local provider (Ollama, LM Studio) a refusal or outage keeps its own
- * category (`local_refused` / `network`) but says what actually went wrong at the
- * local server, because there is no key for the hosted advice to point at (#197).
+ * category (`local_refused` / `local_unreachable`) but says what actually went
+ * wrong at the local server, because there is no key for the hosted advice to
+ * point at (#197).
  *
  * @param {Error} error
  * @param {string} [provider]
@@ -114,7 +115,10 @@ export function classifyLLMError(error, provider) {
       };
     }
     if (isNetworkFailure({ name, msg })) {
-      return { category: "network", message: local.unreachable };
+      // Its own category rather than `network`: a local outage repeats for every
+      // request until the server is back, where a hosted provider's network
+      // error may pass on a retry — callers reason about fatality off this.
+      return { category: "local_unreachable", message: local.unreachable };
     }
   }
 

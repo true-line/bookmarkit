@@ -63,7 +63,9 @@ describe("classifyLLMError", () => {
     const chrome = new TypeError("Failed to fetch");
     const { category, message } = classifyLLMError(chrome, "ollama");
 
-    expect(category).toBe("network");
+    // Not `network`: unlike a hosted provider's drop-out, a local outage repeats
+    // until the server is back, and callers treat that as a stop, not a skip.
+    expect(category).toBe("local_unreachable");
     expect(message).toMatch(/running/u);
     expect(message).not.toMatch(/internet connection/u);
   });
