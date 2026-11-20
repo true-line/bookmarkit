@@ -5,8 +5,8 @@ import { useAgentEngine } from "./useAgentEngine.js";
 
 const generate = vi.fn();
 
-vi.mock("../llm/index.js", () => ({
-  LLM_PROVIDERS: { GEMINI: "gemini", OPENAI: "openai" },
+vi.mock("../llm/index.js", async (importOriginal) => ({
+  ...(await importOriginal()),
   createLLM: (provider, options) => ({
     provider,
     options,

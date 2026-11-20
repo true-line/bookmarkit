@@ -493,6 +493,13 @@ textarea {
   font-size: var(--text-lg);
   box-shadow: var(--shadow-sm);
 }
+/* Disabled must read as disabled: the themed input's custom colors would
+   otherwise keep it looking editable in every browser that skips native
+   disabled styling. */
+.ds-search-bar--disabled input {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .ds-search-spinner {
   position: absolute;
   top: 50%;

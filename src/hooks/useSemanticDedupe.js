@@ -11,7 +11,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { contained } from "../llm/containment.js";
-import { createLLM, isProviderReady, LLM_PROVIDERS } from "../llm/index.js";
+import { createLLM, isProviderReady, LLM_PROVIDERS, resolveProviderOptions } from "../llm/index.js";
 import {
   findNearDuplicateCandidates,
   parseDuplicateVerdicts,
@@ -42,13 +42,6 @@ ${described}
 Answer with ONLY a JSON array, one entry per pair you are confident about: [{"pair": number, "same": boolean, "reason": string}]. The reason must be one short phrase explaining the verdict. Omit pairs you are unsure about.`;
 };
 
-/** Provider options with empty values dropped, so provider defaults apply. */
-const optionsFor = (providerOptions) => {
-  const configured = (typeof __llm_options__ !== "undefined" && __llm_options__) || {};
-  const merged = { ...configured, ...(providerOptions || {}) };
-  return Object.fromEntries(Object.entries(merged).filter(([, v]) => v !== "" && v != null));
-};
-
 /**
  * @param {object} params
  * @param {string} params.provider
@@ -65,7 +58,7 @@ export function useSemanticDedupe({ provider, providerOptions, locked }) {
     const { provider, providerOptions, locked } = latest.current;
     const chosen =
       provider || (typeof __llm_provider__ !== "undefined" && __llm_provider__) || null;
-    const options = optionsFor(providerOptions);
+    const options = resolveProviderOptions(providerOptions);
     // `gemini` is the default before anything is configured, so the name alone is
     // not permission to send this collection's titles to a remote API.
     if (locked || !isProviderReady(chosen, options)) return NOTHING;

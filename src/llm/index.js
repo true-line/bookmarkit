@@ -50,6 +50,22 @@ export function isProviderReady(provider, options = {}) {
   return String(options?.apiKey ?? "").trim().length > 0;
 }
 
+/**
+ * The options a request would actually go out with: build-time options are the
+ * base layer, the caller's stored settings override them, and empty values are
+ * dropped so provider defaults apply. Readiness checks and the requests
+ * themselves read this same merge, so what the UI treats as configured is what
+ * a call would use.
+ *
+ * @param {object} [providerOptions] The stored options for the chosen provider.
+ * @returns {object}
+ */
+export function resolveProviderOptions(providerOptions = {}) {
+  const configured = (typeof __llm_options__ !== "undefined" && __llm_options__) || {};
+  const merged = { ...configured, ...(providerOptions || {}) };
+  return Object.fromEntries(Object.entries(merged).filter(([, v]) => v !== "" && v != null));
+}
+
 export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
   const p = (provider || "").toString().toLowerCase();
   switch (p) {

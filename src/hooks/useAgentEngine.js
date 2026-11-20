@@ -10,7 +10,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { contained } from "../llm/containment.js";
-import { createLLM, LLM_PROVIDERS } from "../llm/index.js";
+import { createLLM, LLM_PROVIDERS, resolveProviderOptions } from "../llm/index.js";
 import { classifyLLMError } from "../llm/errors.js";
 import { parseAgentResponse } from "../llm/parser.js";
 import { mergeAgentPlan } from "../utils/bookmarkFilters.js";
@@ -58,13 +58,6 @@ const promptFor = (userQuery) =>
 
     Output schema: [{"action": string, "parameters": object, "priority": number}]
     Respond with ONLY a JSON object or array wrapped in a markdown code block.`;
-
-/** Provider options with empty values dropped, so provider defaults apply. */
-const optionsFor = (provider, providerOptions) => {
-  const configured = (typeof __llm_options__ !== "undefined" && __llm_options__) || {};
-  const merged = { ...configured, ...(providerOptions || {}) };
-  return Object.fromEntries(Object.entries(merged).filter(([, v]) => v !== "" && v != null));
-};
 
 /**
  * Turn natural-language queries into an accumulated action plan.
@@ -136,7 +129,7 @@ export function useAgentEngine({
       LLM_PROVIDERS.GEMINI;
 
     try {
-      const llm = createLLM(chosen, optionsFor(chosen, providerOptions));
+      const llm = createLLM(chosen, resolveProviderOptions(providerOptions));
       const responseText = await llm.generate(promptFor(userQuery), controller.signal);
       if (requestId !== requestIdRef.current) return;
       if (!responseText) throw new Error("No valid response from LLM.");

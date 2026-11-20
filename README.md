@@ -77,8 +77,9 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 
 ## Demo (quick tour)
 
-- Top search bar: type natural language queries and hit Enter.
-- Options: type “options” in the search bar to open provider settings.
+- Top search bar: type natural language queries and hit Enter. The bar enables once an LLM provider is
+  configured in Options; until then it is visibly disabled.
+- Options: button in the header. Typing “options” in the search bar works too, once the bar is enabled.
 - Import/Export: button in the header for JSON/HTML.
 - Remove Duplicates: button in the header or type “remove duplicates”.
 
@@ -168,7 +169,10 @@ Permissions requested (`public/manifest.json`):
 
 ## Configure AI providers
 
-You can configure everything at runtime in the Options dialog (type “options” in the search bar). Settings persist per browser in localStorage.
+You can configure everything at runtime in the Options dialog (the header button; once a provider is
+set up, typing “options” in the search bar opens it too). Settings persist per browser in
+localStorage. Until a remote provider has a key — or you pick a local one — the natural-language
+search bar stays disabled.
 
 Supported providers:
 
