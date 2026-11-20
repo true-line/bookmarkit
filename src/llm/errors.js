@@ -23,22 +23,23 @@ const isNetworkFailure = ({ name, msg }) =>
   msg.includes("timed out") ||
   msg.includes("cors");
 
-// #197: Ollama and LM Studio run on the user's own machine, where no API key
-// field exists in Options and nothing for one to authenticate. Their refusals are
-// permission problems at the local server — Ollama rejects browser origins not
-// listed in OLLAMA_ORIGINS with 403, LM Studio gates requests behind its CORS
-// switch — and their outages are about the machine they run on. Neither may be
-// answered with the hosted advice to enter a key or check the internet.
+// #197: Ollama and LM Studio run on the user's own machine, where a key is
+// optional and usually absent. Their refusals are permission problems at the
+// local server — Ollama rejects browser origins not listed in OLLAMA_ORIGINS
+// with 403, LM Studio gates requests behind its CORS switch — and their outages
+// are about the machine they run on. Neither may be answered with the hosted
+// advice to enter a key or check the internet; a key set for a proxied server
+// is only worth checking first, not the thing the user must go get.
 const LOCAL_PROVIDERS = {
   [LLM_PROVIDERS.OLLAMA]: {
     refused:
-      "Ollama refused the request (HTTP {status}). No API key is needed — make sure Ollama is running and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
+      "Ollama refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure Ollama is running and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
     unreachable:
       "Could not reach Ollama. Make sure it is running locally and that the server address in Options matches it.",
   },
   [LLM_PROVIDERS.LMSTUDIO]: {
     refused:
-      'LM Studio refused the request (HTTP {status}). No API key is needed — make sure its local server is running with "Enable CORS" turned on in its Developer settings.',
+      'LM Studio refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure its local server is running with "Enable CORS" turned on in its Developer settings.',
     unreachable:
       "Could not reach LM Studio. Make sure its local server is running and that the server address in Options matches it.",
   },
