@@ -124,6 +124,6 @@ export function classifyLLMError(error, provider) {
 }
 
 function extractHttpStatus(msg) {
-  const m = msg.match(/\b(4\d\d|5\d\d)\b/u);
+  const m = msg.match(/\b(4\d\d|5\d\d)\b/);
   return m ? parseInt(m[1], 10) : null;
 }
