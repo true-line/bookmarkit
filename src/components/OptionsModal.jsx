@@ -113,6 +113,43 @@ const OptionsModal = ({
     return true;
   };
 
+  // #224: the picker shows what the endpoint actually serves, and nothing else.
+  // No placeholder names, and no phantom selection: an unset model renders as an
+  // explicit empty choice, because displaying the first fetched entry would
+  // suggest requests will use a model they were never given. A stored model that
+  // has since disappeared from the endpoint stays selectable — it is still the
+  // user's choice — and the field below always accepts a typed id for servers
+  // that do not implement model listing at all.
+  const modelPicker = (id) => {
+    if (models && models.length > 0) {
+      const choices = models.map((m) => ({ value: m, label: m }));
+      const chosen = providerOptions.model;
+      if (chosen && !models.includes(chosen)) choices.unshift({ value: chosen, label: chosen });
+      return (
+        <Select
+          id={id}
+          value={providerOptions.model || ""}
+          onChange={(e) => onChangeOptions?.({ model: e.target.value })}
+          options={[{ value: "", label: "Select a model…" }, ...choices]}
+        />
+      );
+    }
+    return (
+      <Input
+        id={id}
+        type="text"
+        placeholder="Type a model id, or load the list"
+        value={providerOptions.model || ""}
+        onChange={(e) => onChangeOptions?.({ model: e.target.value })}
+        hint={
+          modelsError
+            ? undefined
+            : "The endpoint returned no models. Enter the key above (or start the local server), then Refresh — or type the model id."
+        }
+      />
+    );
+  };
+
   return (
     <>
       <Modal title="Options" closeLabel="Close options" onClose={onClose} size="lg">
@@ -189,28 +226,7 @@ const OptionsModal = ({
                     {isLoadingModels ? "Loading…" : "Refresh"}
                   </Button>
                 </div>
-                {models && models.length > 0 ? (
-                  <Select
-                    id="model"
-                    value={providerOptions.model || models[0] || ""}
-                    onChange={(e) => onChangeOptions?.({ model: e.target.value })}
-                    options={models}
-                  />
-                ) : (
-                  <Input
-                    id="model"
-                    type="text"
-                    placeholder={
-                      provider === LLM_PROVIDERS.GEMINI
-                        ? "gemini-2.0-flash"
-                        : provider === LLM_PROVIDERS.OPENAI
-                          ? "gpt-4o-mini"
-                          : "grok-beta"
-                    }
-                    value={providerOptions.model || ""}
-                    onChange={(e) => onChangeOptions?.({ model: e.target.value })}
-                  />
-                )}
+                {modelPicker("model")}
                 {modelsError && (
                   <Banner tone="error" className="mt-1">
                     {modelsError}
@@ -297,26 +313,7 @@ const OptionsModal = ({
                     {isLoadingModels ? "Loading…" : "Refresh"}
                   </Button>
                 </div>
-                {models && models.length > 0 ? (
-                  <Select
-                    id="ollama-model"
-                    value={providerOptions.model || models[0] || ""}
-                    onChange={(e) => onChangeOptions?.({ model: e.target.value })}
-                    options={models}
-                  />
-                ) : (
-                  <Input
-                    id="ollama-model"
-                    type="text"
-                    placeholder={
-                      provider === LLM_PROVIDERS.OLLAMA
-                        ? "llama3.1"
-                        : "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF"
-                    }
-                    value={providerOptions.model || ""}
-                    onChange={(e) => onChangeOptions?.({ model: e.target.value })}
-                  />
-                )}
+                {modelPicker("ollama-model")}
                 {modelsError && (
                   <Banner tone="error" className="mt-1">
                     {modelsError}

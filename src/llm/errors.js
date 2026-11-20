@@ -4,7 +4,7 @@
 import { LLM_PROVIDERS } from "./index.js";
 
 /**
- * @typedef {'api_key' | 'rate_limit' | 'network' | 'parse' | 'local_refused' | 'local_unreachable' | 'generic'} LLMErrorCategory
+ * @typedef {'api_key' | 'rate_limit' | 'network' | 'parse' | 'local_refused' | 'local_unreachable' | 'no_model' | 'generic'} LLMErrorCategory
  */
 
 // #28: A TypeError only means "network" when it is the one fetch throws. Browsers
@@ -47,6 +47,14 @@ const LOCAL_PROVIDERS = {
 
 // Ordered most specific first; the first match wins.
 const CATEGORY_RULES = [
+  {
+    // #224: a provider without a chosen model is one decision away from
+    // working, and the message must say so rather than read as a failure.
+    category: "no_model",
+    message:
+      'No model is selected. Open Options (type "options" in the search bar) and choose one from the list, or type its id.',
+    matches: ({ msg }) => msg.includes("no model is selected"),
+  },
   {
     category: "api_key",
     message:
@@ -105,7 +113,9 @@ const GENERIC = {
 export function classifyLLMError(error, provider) {
   const msg = (error?.message || "").toLowerCase();
   const name = error?.name;
-  const status = error?.status || extractHttpStatus(msg);
+  // The AI SDK's APICallError reports `statusCode`; the hand-rolled adapters
+  // threw plain Errors with `status`. Either is honored here.
+  const status = error?.status || error?.statusCode || extractHttpStatus(msg);
   const local = LOCAL_PROVIDERS[String(provider ?? "").toLowerCase()];
 
   if (local) {
