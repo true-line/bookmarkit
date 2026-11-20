@@ -1,5 +1,11 @@
 # bookmarkit
 
+## 0.4.1
+
+### Patch Changes
+
+- 49b7c3c: Delete the selected bookmarks with Cmd/Ctrl+Delete in addition to D and Cmd/Ctrl+D.
+
 ## 0.4.0
 
 ### Minor Changes
