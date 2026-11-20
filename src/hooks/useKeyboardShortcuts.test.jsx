@@ -68,6 +68,20 @@ describe("useKeyboardShortcuts (#27)", () => {
     expect(plain).not.toHaveBeenCalled();
   });
 
+  // macOS's delete key reports "Backspace" (forward-delete reports "Delete"),
+  // and named keys keep the key's own name inside a Mod combo.
+  it("matches named keys like Backspace and Delete inside a Mod combo", () => {
+    const handler = vi.fn();
+    asMac(true);
+    render(<Harness bindings={{ "Mod+Delete": handler, "Mod+Backspace": handler }} />);
+
+    fireEvent.keyDown(window, { key: "Backspace", metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(window, { key: "Delete", metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(2);
+  });
+
   it("stays out of the way while the user is typing", () => {
     const handler = vi.fn();
     render(<Harness bindings={{ d: handler, Escape: handler }} />);
