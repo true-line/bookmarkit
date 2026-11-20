@@ -149,6 +149,37 @@ describe("useBookmarkSelection (#26)", () => {
     expect(onOpen).not.toHaveBeenCalled();
   });
 
+  // #191 review: the edit gesture is Shift+Enter specifically — Shift+Space
+  // keeps Space's normal two-stage path rather than opening the editor.
+  it("keeps Shift+Space on Space's activation path", () => {
+    const onOpen = vi.fn();
+    const onEdit = vi.fn();
+    render(<Probe onOpen={onOpen} onEdit={onEdit} />);
+
+    fireEvent.keyDown(card("a"), { key: " ", shiftKey: true });
+    expect(onEdit).not.toHaveBeenCalled();
+    expect(screen.getByTestId("focused")).toHaveTextContent("a");
+
+    fireEvent.keyDown(card("a"), { key: " ", shiftKey: true });
+    expect(onOpen).toHaveBeenCalledWith(BOOKMARKS[0]);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  // Holding a key auto-repeats into keydowns that must not count as the second
+  // gesture, or holding Enter would open the bookmark just selected.
+  it("ignores keyboard auto-repeat", () => {
+    const onOpen = vi.fn();
+    render(<Probe onOpen={onOpen} />);
+
+    fireEvent.keyDown(card("a"), { key: "Enter" });
+    fireEvent.keyDown(card("a"), { key: "Enter", repeat: true });
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(screen.getByTestId("focused")).toHaveTextContent("a");
+
+    fireEvent.keyDown(card("a"), { key: " ", repeat: true });
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
   // The second click of a double-click stays out of the way so the dblclick
   // event can speak for the whole sequence.
   it("opens an unselected bookmark on a double-click, exactly once", () => {

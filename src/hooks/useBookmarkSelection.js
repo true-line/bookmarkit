@@ -129,7 +129,12 @@ export function useBookmarkSelection(onOpen, onEdit) {
     (event, bookmark) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      if (event.shiftKey) {
+      // Holding either key auto-repeats into "second" keydowns that would open
+      // a bookmark the user was only holding down on. One press is one gesture.
+      if (event.repeat) return;
+      // The edit gesture is Shift+Enter specifically; Shift+Space stays with
+      // Space's normal two-stage path.
+      if (event.shiftKey && event.key === "Enter") {
         edit(bookmark);
         return;
       }
