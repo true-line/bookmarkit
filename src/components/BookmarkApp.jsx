@@ -18,6 +18,7 @@ import {
   renameFolderPatches,
 } from "../utils/folderTree.js";
 import { recoverable } from "../utils/archiveRecovery.js";
+import { isSearchEnabled } from "../llm/index.js";
 import { isBroken } from "../utils/linkHealth.js";
 import { fetchUrlStatus } from "../utils/urlStatus.js";
 import { acceptedPatches } from "../utils/changeReview.js";
@@ -861,6 +862,12 @@ const BookmarkApp = () => {
     ]
   );
 
+  // The natural-language box fronts the provider, so it is enabled only when a
+  // provider can actually be asked something — the same readiness rule the
+  // dedupe and embedding paths apply (#86). A locked key keeps the box open:
+  // submitting a query is how the user reaches the engine's unlock prompt.
+  const isAgentConfigured = isSearchEnabled(runtimeProvider, providerOptions, encryption.locked);
+
   const { isProcessing, run: runAgent } = useAgentEngine({
     provider: runtimeProvider,
     providerOptions,
@@ -1035,11 +1042,16 @@ const BookmarkApp = () => {
                 <SearchBar
                   id="search-input"
                   type="text"
-                  placeholder="Type natural language queries (e.g., 'find github')"
+                  placeholder={
+                    isAgentConfigured
+                      ? "Type natural language queries (e.g., 'find github')"
+                      : "Set up a provider in Options to search"
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchInputKeyDown}
                   processing={isProcessing}
+                  disabled={!isAgentConfigured}
                   size="lg"
                   aria-label="Natural language search"
                 />

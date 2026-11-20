@@ -50,6 +50,39 @@ export function isProviderReady(provider, options = {}) {
   return String(options?.apiKey ?? "").trim().length > 0;
 }
 
+/**
+ * The options a request would actually go out with: build-time options are the
+ * base layer, the caller's stored settings override them, and empty values are
+ * dropped so provider defaults apply. Readiness checks and the requests
+ * themselves read this same merge, so what the UI treats as configured is what
+ * a call would use.
+ *
+ * @param {object} [providerOptions] The stored options for the chosen provider.
+ * @returns {object}
+ */
+export function resolveProviderOptions(providerOptions = {}) {
+  const configured = (typeof __llm_options__ !== "undefined" && __llm_options__) || {};
+  const merged = { ...configured, ...(providerOptions || {}) };
+  return Object.fromEntries(Object.entries(merged).filter(([, v]) => v !== "" && v != null));
+}
+
+/**
+ * Whether the natural-language search box should take input. Request readiness,
+ * with one deliberate exception: a locked session keeps the box open. With the
+ * options encrypted there is nothing to read, so readiness would say no and
+ * strand the user one step before the engine's unlock prompt (#29) — which is
+ * reached by submitting a query.
+ *
+ * @param {string} provider
+ * @param {object} [providerOptions] The stored options for the chosen provider.
+ * @param {boolean} [locked] Encrypted options not unlocked this session.
+ * @returns {boolean}
+ */
+export function isSearchEnabled(provider, providerOptions = {}, locked = false) {
+  if (locked) return true;
+  return isProviderReady(provider, resolveProviderOptions(providerOptions));
+}
+
 export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
   const p = (provider || "").toString().toLowerCase();
   switch (p) {
