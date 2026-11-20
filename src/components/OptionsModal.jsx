@@ -27,6 +27,9 @@ const OptionsModal = ({
   onRemoteFaviconsChange,
   effects = true,
   onEffectsChange,
+  webMcpEnabled = false,
+  webMcpAvailable = false,
+  onWebMcpEnabledChange,
   onClose,
 }) => {
   const [models, setModels] = useState([]);
@@ -453,6 +456,33 @@ const OptionsModal = ({
                   browser&rsquo;s own icon cache when the extension can, and a neutral placeholder
                   otherwise. When on, each visible bookmark fetches its icon &mdash; from the
                   address saved with it, or from google.com by domain when it has none.
+                </span>
+              </span>
+            </label>
+          </div>
+          {/* #212: agent access — who may read the collection is the user's
+                call, so like favicons it is a choice, made explicitly, and off
+                until made. */}
+          <div className="border-t border-border pt-4">
+            <h3 className="text-lg font-semibold text-primary-text mb-2">Agent access</h3>
+            <label
+              className={`flex items-start gap-2 text-sm ${
+                webMcpAvailable ? "text-primary-text" : "text-secondary-text"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={webMcpEnabled}
+                disabled={!webMcpAvailable}
+                onChange={(e) => onWebMcpEnabledChange?.(e.target.checked)}
+                className="mt-0.5 accent-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed"
+              />
+              <span>
+                Let browser agents search my bookmarks
+                <span className="block text-xs text-secondary-text">
+                  {webMcpAvailable
+                    ? "Off by default. When on, this tab offers two read-only tools — search and folder listing — to AI agents running in this browser, for as long as it stays open. Agents can look, never change or fetch anything. Requires a browser with WebMCP enabled."
+                    : "This browser does not expose WebMCP, so there is nothing to turn on here yet."}
                 </span>
               </span>
             </label>
