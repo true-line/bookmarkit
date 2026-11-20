@@ -34,7 +34,7 @@ describe("createLMStudioLLM", () => {
     expect(init.headers.Authorization).toBe("Bearer proxy-key");
   });
 
-  it("authenticates model discovery with the same key", async () => {
+  it("authenticates model discovery with the same key, without a JSON content header", async () => {
     globalThis.fetch.mockResolvedValue(ok({ data: [{ id: "m" }] }));
 
     await createLMStudioLLM({ apiKey: "proxy-key" }).listModels();
@@ -42,5 +42,17 @@ describe("createLMStudioLLM", () => {
     const [url, init] = globalThis.fetch.mock.calls[0];
     expect(url).toContain("/v1/models");
     expect(init.headers.Authorization).toBe("Bearer proxy-key");
+    // Content-Type on the GET would force a CORS preflight on cross-origin
+    // discovery; the key is enough (Codex #215).
+    expect(init.headers["Content-Type"]).toBeUndefined();
+  });
+
+  it("keeps keyless model discovery a bare preflight-free GET", async () => {
+    globalThis.fetch.mockResolvedValue(ok({ data: [{ id: "m" }] }));
+
+    await createLMStudioLLM({ model: "m" }).listModels();
+
+    const [, init] = globalThis.fetch.mock.calls[0];
+    expect(init.headers).toEqual({});
   });
 });
