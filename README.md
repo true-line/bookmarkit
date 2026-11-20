@@ -189,6 +189,13 @@ Local providers:
 - Ollama: install and run, pull a model (e.g., llama3.1), set base URL: http://localhost:11434
 - LM Studio: run the local server, set base URL (default is often http://localhost:1234)
 
+Local providers take no API key. Ollama only accepts requests from origins it
+trusts: if it answers with an error (HTTP 403), set `OLLAMA_ORIGINS` to include
+this app's origin (for the extension, e.g. `chrome-extension://*`) and restart
+Ollama. In LM Studio, enable the server's CORS option. No key is ever needed for
+either, and errors from these providers point at the server rather than at an
+API key.
+
 Tip: If an LLM call fails or returns invalid output, the app gracefully falls back to a general search.
 
 ## Optional: Build‑time defaults
@@ -576,6 +583,9 @@ something saved yesterday has not been ignored.
   - Ensure API key and base URL (if applicable) are set in Options
   - Try the “Refresh” button next to Model
   - Use a smaller model or local provider for testing
+  - Ollama/LM Studio: no API key is involved — check the local server is running
+    and reachable at the base URL in Options (Ollama may also need `OLLAMA_ORIGINS`
+    to allow this app, LM Studio its CORS option)
 - Extension shows blank page:
   - Confirm manifest.json exists in dist
   - Load unpacked pointing to the dist folder after a build

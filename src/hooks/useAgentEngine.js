@@ -152,7 +152,9 @@ export function useAgentEngine({
     } catch (error) {
       if (error.name === "AbortError") return;
       console.error("Agent engine error:", error);
-      const { message } = classifyLLMError(error);
+      // #197: the provider decides the advice — a local server's refusal must not
+      // read as a missing key it has no field for.
+      const { message } = classifyLLMError(error, chosen);
       showMessage(message, "error");
       // A failed request still leaves the user with something: treat what they
       // typed as a plain search rather than dropping the query. The step goes
