@@ -1139,11 +1139,12 @@ const BookmarkApp = () => {
         className={`bookmarkit-main flex-1 overflow-hidden flex flex-col transition-all duration-300 ${isHeaderVisible ? "bookmarkit-main--header-visible" : "bookmarkit-main--header-hidden"}`}
         role="main"
       >
-        <div
-          className={`relative flex-1 min-h-0 w-full mx-auto px-4 flex gap-4 ${
-            isFolderPaneOpen ? "max-w-6xl" : "max-w-4xl"
-          }`}
-        >
+        {/* #193: the shelf may run past the old reading-measure caps so the
+            list's fit-based columns have room; past 2752px of viewport it
+            centers at its 2720px ceiling rather than stretching five cards
+            across a 4K screen. The folder pane narrows the list and the list
+            itself decides whether that still earns another column. */}
+        <div className="relative flex-1 min-h-0 w-full mx-auto px-4 flex gap-4 max-w-none min-[2752px]:max-w-[2720px]">
           {isFolderPaneOpen && (
             <FolderTree
               bookmarks={bookmarks}
