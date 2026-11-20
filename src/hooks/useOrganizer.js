@@ -121,10 +121,12 @@ export function useOrganizer({ provider, providerOptions, locked, showMessage })
       const llm = createLLM(chosen || LLM_PROVIDERS.GEMINI, options);
       for (const chunk of chunks) {
         if (!runningRef.current) break;
-        const { rows: slice, fatal } = await askSlice(llm, chunk, folders, fields);
+        const { rows: slice, fatal } = await askSlice(llm, chunk, folders, fields, chosen);
         rows.push(...slice);
         if (fatal) {
-          showMessage?.(classifyLLMError(fatal).message, "error");
+          // #197: classified with the provider, so a local refusal says what to
+          // fix at the server rather than asking for a key it does not have.
+          showMessage?.(classifyLLMError(fatal, chosen).message, "error");
           break;
         }
         setProgress((prev) => ({ ...prev, done: prev.done + 1 }));
@@ -146,14 +148,14 @@ export function useOrganizer({ provider, providerOptions, locked, showMessage })
  * out of twenty should not lose the other nineteen — so only an error that will
  * repeat comes back as `fatal`.
  */
-async function askSlice(llm, chunk, folders, fields) {
+async function askSlice(llm, chunk, folders, fields, chosen) {
   try {
     const answer = await llm.generate(promptFor(chunk, folders, fields));
     const proposals = parseOrganizeProposals(answer, chunk, { folders });
     return { rows: organizeRows(chunk, proposals, { fields }), fatal: null };
   } catch (error) {
     console.warn("Organize slice failed:", error);
-    return { rows: [], fatal: isFatal(error) ? error : null };
+    return { rows: [], fatal: isFatal(error, chosen) ? error : null };
   }
 }
 
@@ -175,6 +177,10 @@ const refuseReason = ({ locked, chosen, options }) => {
   return null;
 };
 
-// An invalid key or a rate limit will fail the next slice too, so continuing
-// means twenty more identical failures. Anything else is worth trying past.
-const isFatal = (error) => ["api_key", "rate_limit"].includes(classifyLLMError(error).category);
+// An invalid key, a rate limit, or a keyless local server that refused or cannot
+// be reached (#197) will fail the next slice too — continuing means twenty more
+// identical failures. A hosted provider's network error is worth trying past.
+const isFatal = (error, chosen) =>
+  ["api_key", "rate_limit", "local_refused", "local_unreachable"].includes(
+    classifyLLMError(error, chosen).category
+  );

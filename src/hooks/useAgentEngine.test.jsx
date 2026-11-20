@@ -6,7 +6,7 @@ import { useAgentEngine } from "./useAgentEngine.js";
 const generate = vi.fn();
 
 vi.mock("../llm/index.js", () => ({
-  LLM_PROVIDERS: { GEMINI: "gemini", OPENAI: "openai" },
+  LLM_PROVIDERS: { GEMINI: "gemini", OPENAI: "openai", OLLAMA: "ollama" },
   createLLM: (provider, options) => ({
     provider,
     options,
@@ -21,13 +21,14 @@ let engine;
 
 const Probe = ({
   locked = false,
+  provider = "gemini",
   providerOptions = {},
   onSteps = () => {},
   showMessage = () => {},
 }) => {
   const [plan, setPlan] = useState(null);
   engine = useAgentEngine({
-    provider: "gemini",
+    provider,
     providerOptions,
     locked,
     plan,
@@ -165,6 +166,22 @@ describe("useAgentEngine (#26)", () => {
     expect(showMessage).toHaveBeenCalledWith(expect.any(String), "error");
     expect(screen.getByTestId("plan")).toHaveTextContent("find github");
     expect(screen.getByTestId("processing")).toHaveTextContent("idle");
+  });
+
+  // #197: Ollama refuses browser origins it does not trust, and the error must
+  // not read as a missing key the provider has no field for.
+  it("tells an Ollama refusal what to fix at the server, not for an API key", async () => {
+    const showMessage = vi.fn();
+    generate.mockRejectedValue(new Error("Ollama API error 403"));
+    render(<Probe provider="ollama" showMessage={showMessage} />);
+
+    await act(async () => engine.run("find github"));
+
+    expect(showMessage).toHaveBeenCalledWith(expect.stringMatching(/OLLAMA_ORIGINS/i), "error");
+    expect(showMessage).not.toHaveBeenCalledWith(
+      expect.stringMatching(/enter your API key/i),
+      "error"
+    );
   });
 
   it("treats an uninterpretable reply as a failure, not an empty plan", async () => {

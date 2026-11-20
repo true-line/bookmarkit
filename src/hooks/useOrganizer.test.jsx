@@ -131,6 +131,41 @@ describe("useOrganizer (#44)", () => {
     expect(showMessage).toHaveBeenCalledWith(expect.stringContaining("API key"), "error");
   });
 
+  // #197: a local server's origin refusal would repeat for every slice too, and
+  // its fix is at the server — there is no key to enter for it anywhere.
+  it("stops at a local provider's refusal and points at the server, not a key", async () => {
+    const list = Array.from({ length: 60 }, (_, i) => bookmark(String(i)));
+    const showMessage = vi.fn();
+    generate.mockRejectedValue(new Error("Ollama API error 403"));
+    setup({ provider: "ollama", providerOptions: {}, showMessage });
+
+    await act(async () => {
+      await organizer.run(list);
+    });
+
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(showMessage).toHaveBeenCalledWith(expect.stringMatching(/OLLAMA_ORIGINS/i), "error");
+  });
+
+  // #197: an unreachable local server fails every slice just as surely as a
+  // refusal, so it stops the run and says what to check rather than skipping on.
+  it("stops at an unreachable local server and says what to check", async () => {
+    const list = Array.from({ length: 60 }, (_, i) => bookmark(String(i)));
+    const showMessage = vi.fn();
+    generate.mockRejectedValue(new TypeError("Failed to fetch"));
+    setup({ provider: "ollama", providerOptions: {}, showMessage });
+
+    await act(async () => {
+      await organizer.run(list);
+    });
+
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(showMessage).toHaveBeenCalledWith(
+      expect.stringContaining("Could not reach Ollama"),
+      "error"
+    );
+  });
+
   it("asks nothing at all with no provider configured", async () => {
     const showMessage = vi.fn();
     setup({ provider: "", showMessage });

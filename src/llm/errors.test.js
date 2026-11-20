@@ -45,4 +45,42 @@ describe("classifyLLMError", () => {
     const { message } = classifyLLMError(new Error("secret-token-abc123 rejected"));
     expect(message).not.toContain("secret-token-abc123");
   });
+
+  // #197: a local server has no key field in Options and needs no key; its 403 is
+  // an origin refusal, so the hosted advice would send the user in circles.
+  it("reads a keyless local provider's refusal as the server, not a missing key", () => {
+    const { category, message } = classifyLLMError(new Error("Ollama API error 403"), "ollama");
+
+    expect(category).toBe("local_refused");
+    expect(message).toMatch(/OLLAMA_ORIGINS/u);
+    expect(message).not.toMatch(/enter your API key/u);
+    expect(classifyLLMError(new Error("LM Studio API error 401"), "lmstudio").category).toBe(
+      "local_refused"
+    );
+  });
+
+  it("blames a local outage on the machine, not the internet", () => {
+    const chrome = new TypeError("Failed to fetch");
+    const { category, message } = classifyLLMError(chrome, "ollama");
+
+    // Not `network`: unlike a hosted provider's drop-out, a local outage repeats
+    // until the server is back, and callers treat that as a stop, not a skip.
+    expect(category).toBe("local_unreachable");
+    expect(message).toMatch(/running/u);
+    expect(message).not.toMatch(/internet connection/u);
+  });
+
+  it("keeps the hosted-provider reading where a key can actually help", () => {
+    expect(classifyLLMError(new Error("Gemini API error 403"), "gemini").category).toBe("api_key");
+    expect(classifyLLMError(new Error("OpenAI API error 401"), "openai").message).toMatch(
+      /API key/u
+    );
+    // The default reading, provider unknown, is unchanged too.
+    expect(classifyLLMError(new Error("Ollama API error 403")).category).toBe("api_key");
+  });
+
+  it("classifies a local provider's other errors as before", () => {
+    expect(classifyLLMError(new Error("Ollama API error 500"), "ollama").category).toBe("generic");
+    expect(classifyLLMError(new Error("HTTP 429"), "lmstudio").category).toBe("rate_limit");
+  });
 });
