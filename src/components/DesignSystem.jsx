@@ -249,12 +249,22 @@ export function StarRating({
 }
 
 export const SearchBar = React.forwardRef(function SearchBar(
-  { processing = false, size = "md", className = "", wrapperClassName = "", ...props },
+  {
+    processing = false,
+    disabled = false,
+    size = "md",
+    className = "",
+    wrapperClassName = "",
+    ...props
+  },
   ref
 ) {
+  const isDisabled = processing || disabled;
   return (
-    <div className={`ds-search-bar ds-search-bar--${size} ${wrapperClassName}`}>
-      <input ref={ref} className={`themed-input ${className}`} disabled={processing} {...props} />
+    <div
+      className={`ds-search-bar ds-search-bar--${size} ${isDisabled ? "ds-search-bar--disabled" : ""} ${wrapperClassName}`}
+    >
+      <input ref={ref} className={`themed-input ${className}`} disabled={isDisabled} {...props} />
       {processing && <span className="ds-spinner ds-search-spinner" aria-hidden="true" />}
     </div>
   );

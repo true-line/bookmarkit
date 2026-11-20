@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { StarRating } from "./DesignSystem.jsx";
+import { SearchBar, StarRating } from "./DesignSystem.jsx";
 
 const stars = () => screen.getAllByRole("radio");
 
@@ -128,5 +128,30 @@ describe("StarRating toggle-button variant (#24)", () => {
     fireEvent.keyDown(buttons[1], { key: "ArrowRight" });
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("SearchBar disabled state", () => {
+  it("stays editable by default", () => {
+    render(<SearchBar aria-label="search" />);
+    expect(screen.getByLabelText("search")).toBeEnabled();
+    expect(screen.getByLabelText("search").closest(".ds-search-bar")).not.toHaveClass(
+      "ds-search-bar--disabled"
+    );
+  });
+
+  it("processing disables the bar as before", () => {
+    render(<SearchBar processing aria-label="search" />);
+    expect(screen.getByLabelText("search")).toBeDisabled();
+    expect(screen.getByLabelText("search").closest(".ds-search-bar")).toHaveClass(
+      "ds-search-bar--disabled"
+    );
+  });
+
+  it("an unconfigured agent disables the input and marks the wrapper", () => {
+    render(<SearchBar disabled aria-label="search" />);
+    const input = screen.getByLabelText("search");
+    expect(input).toBeDisabled();
+    expect(input.closest(".ds-search-bar")).toHaveClass("ds-search-bar--disabled");
   });
 });
