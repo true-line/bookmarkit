@@ -26,7 +26,8 @@ export const LLM_PROVIDERS = {
 
 /**
  * Providers that reach a third party, and need a key to be asked anything.
- * Ollama and LM Studio run on the user's own machine and need nothing.
+ * Ollama and LM Studio run on the user's own machine and work without a key;
+ * one set for them is optional, for a server behind an authenticating proxy.
  */
 const KEY_REQUIRED = new Set([LLM_PROVIDERS.GEMINI, LLM_PROVIDERS.OPENAI, LLM_PROVIDERS.GROK]);
 

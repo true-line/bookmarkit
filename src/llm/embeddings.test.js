@@ -83,6 +83,18 @@ describe("embedTexts", () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 
+  it("sends Ollama's optional key as a Bearer token on every embed call", async () => {
+    globalThis.fetch
+      .mockResolvedValueOnce(ok({ embedding: [1] }))
+      .mockResolvedValueOnce(ok({ embedding: [2] }));
+
+    await embedTexts("ollama", { apiKey: "proxy-key" }, ["a", "b"]);
+
+    for (const [, init] of globalThis.fetch.mock.calls) {
+      expect(init.headers.Authorization).toBe("Bearer proxy-key");
+    }
+  });
+
   it("takes the model it is given", async () => {
     globalThis.fetch.mockResolvedValue(ok({ data: [{ embedding: [1] }] }));
 

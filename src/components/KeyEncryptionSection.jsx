@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Banner, Button, Input } from "./DesignSystem.jsx";
 
 // #29: passphrase encryption-at-rest controls. Rendered regardless of the
-// selected provider so a locked key can always be unlocked (a keyless provider
-// like ollama/lmstudio must not strand the user with no unlock UI — Codex #36).
+// selected provider so a locked key can always be unlocked (a provider that
+// needs no key, like ollama/lmstudio, must not strand the user with no unlock
+// UI — Codex #36).
 const KeyEncryptionSection = ({
   encryption = { encrypted: false, locked: false },
   onEnableEncryption,

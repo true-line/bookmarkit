@@ -219,6 +219,20 @@ const OptionsModal = ({
           )}
           {(provider === LLM_PROVIDERS.OLLAMA || provider === LLM_PROVIDERS.LMSTUDIO) && (
             <div className="space-y-3">
+              <Input
+                label="API Key (optional)"
+                id="local-api-key"
+                type="password"
+                placeholder={
+                  encryption.locked
+                    ? "Locked — unlock below to edit"
+                    : "Only if the server requires one"
+                }
+                value={providerOptions.apiKey || ""}
+                disabled={encryption.locked}
+                onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
+                hint="Neither provider needs a key. Set one only when your server sits behind an authenticating proxy; it is sent as a Bearer token."
+              />
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label
@@ -345,7 +359,8 @@ const OptionsModal = ({
             );
           })()}
           {/* #29: encryption controls — shown for every provider so a locked key
-                can always be unlocked, even on keyless providers (ollama/lmstudio). */}
+                can always be unlocked, even on providers that need no key
+                (ollama/lmstudio, whose optional proxy key is protected too). */}
           <KeyEncryptionSection
             encryption={encryption}
             onEnableEncryption={onEnableEncryption}

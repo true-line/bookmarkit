@@ -46,13 +46,15 @@ describe("classifyLLMError", () => {
     expect(message).not.toContain("secret-token-abc123");
   });
 
-  // #197: a local server has no key field in Options and needs no key; its 403 is
-  // an origin refusal, so the hosted advice would send the user in circles.
+  // #197: a local server's 403 is usually an origin refusal, not a missing key,
+  // so the hosted advice would send the user in circles. The optional proxy key
+  // gets a mention first, where it can actually be the cause.
   it("reads a keyless local provider's refusal as the server, not a missing key", () => {
     const { category, message } = classifyLLMError(new Error("Ollama API error 403"), "ollama");
 
     expect(category).toBe("local_refused");
     expect(message).toMatch(/OLLAMA_ORIGINS/u);
+    expect(message).toMatch(/If you set an API key/u);
     expect(message).not.toMatch(/enter your API key/u);
     expect(classifyLLMError(new Error("LM Studio API error 401"), "lmstudio").category).toBe(
       "local_refused"
