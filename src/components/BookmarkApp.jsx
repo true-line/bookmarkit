@@ -714,6 +714,10 @@ const BookmarkApp = () => {
         event.preventDefault();
         confirmDeleteSelection();
       },
+      "Mod+Delete": (event) => {
+        event.preventDefault();
+        confirmDeleteSelection();
+      },
       d: (event) => {
         event.preventDefault();
         confirmDeleteSelection();

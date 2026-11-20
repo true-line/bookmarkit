@@ -68,6 +68,19 @@ describe("useKeyboardShortcuts (#27)", () => {
     expect(plain).not.toHaveBeenCalled();
   });
 
+  // Delete has no single-character key, so the combo keeps the key's own name.
+  it("matches named keys like Delete inside a Mod combo", () => {
+    const handler = vi.fn();
+    asMac(true);
+    render(<Harness bindings={{ "Mod+Delete": handler }} />);
+
+    fireEvent.keyDown(window, { key: "Delete", metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(window, { key: "Delete", ctrlKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   it("stays out of the way while the user is typing", () => {
     const handler = vi.fn();
     render(<Harness bindings={{ d: handler, Escape: handler }} />);
