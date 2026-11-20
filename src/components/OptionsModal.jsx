@@ -40,6 +40,9 @@ const OptionsModal = ({
 
   const debouncedApiKey = useDebounce(providerOptions.apiKey || "", 600);
   const debouncedBaseUrl = useDebounce(providerOptions.baseUrl || "", 600);
+  // A locked session reads no key value, so the clear affordance follows the
+  // same visibility as the field's contents.
+  const hasApiKey = Boolean(providerOptions.apiKey);
 
   const isValidBaseUrl = (url) => {
     if (!url) return true; // empty = use provider default, always OK
@@ -140,15 +143,35 @@ const OptionsModal = ({
             provider === LLM_PROVIDERS.OPENAI ||
             provider === LLM_PROVIDERS.GROK) && (
             <div className="space-y-3">
-              <Input
-                label="API Key"
-                id="api-key"
-                type="password"
-                placeholder={encryption.locked ? "Locked — unlock below to edit" : "Enter API key"}
-                value={providerOptions.apiKey || ""}
-                disabled={encryption.locked}
-                onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
-              />
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="api-key" className="block text-sm font-medium text-primary-text">
+                    API Key
+                  </label>
+                  {hasApiKey && (
+                    <Button
+                      type="button"
+                      intent="ghost"
+                      size="sm"
+                      onClick={() => onChangeOptions?.({ apiKey: "" })}
+                      disabled={encryption.locked}
+                      aria-label="Clear stored API key"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <Input
+                  id="api-key"
+                  type="password"
+                  placeholder={
+                    encryption.locked ? "Locked — unlock below to edit" : "Enter API key"
+                  }
+                  value={providerOptions.apiKey || ""}
+                  disabled={encryption.locked}
+                  onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
+                />
+              </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label htmlFor="model" className="block text-sm font-medium text-primary-text">
@@ -219,20 +242,41 @@ const OptionsModal = ({
           )}
           {(provider === LLM_PROVIDERS.OLLAMA || provider === LLM_PROVIDERS.LMSTUDIO) && (
             <div className="space-y-3">
-              <Input
-                label="API Key (optional)"
-                id="local-api-key"
-                type="password"
-                placeholder={
-                  encryption.locked
-                    ? "Locked — unlock below to edit"
-                    : "Only if the server requires one"
-                }
-                value={providerOptions.apiKey || ""}
-                disabled={encryption.locked}
-                onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
-                hint="Neither provider needs a key. Set one only when your server sits behind an authenticating proxy; it is sent as a Bearer token."
-              />
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label
+                    htmlFor="local-api-key"
+                    className="block text-sm font-medium text-primary-text"
+                  >
+                    API Key (optional)
+                  </label>
+                  {hasApiKey && (
+                    <Button
+                      type="button"
+                      intent="ghost"
+                      size="sm"
+                      onClick={() => onChangeOptions?.({ apiKey: "" })}
+                      disabled={encryption.locked}
+                      aria-label="Clear stored API key"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <Input
+                  id="local-api-key"
+                  type="password"
+                  placeholder={
+                    encryption.locked
+                      ? "Locked — unlock below to edit"
+                      : "Only if the server requires one"
+                  }
+                  value={providerOptions.apiKey || ""}
+                  disabled={encryption.locked}
+                  onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
+                  hint="Neither provider needs a key. Set one only when your server sits behind an authenticating proxy; it is sent as a Bearer token."
+                />
+              </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label
