@@ -187,7 +187,8 @@ Supported providers:
 
 Options per provider:
 
-- API key (remote providers)
+- API key (required for remote providers; optional for Ollama/LM Studio — set it only when the
+  server sits behind an authenticating proxy)
 - Base URL (OpenAI/Grok optional; Ollama/LM Studio required, e.g., http://localhost:11434 or http://localhost:1234)
 - Model: auto‑discovery where supported, or type manually
 
@@ -196,12 +197,12 @@ Local providers:
 - Ollama: install and run, pull a model (e.g., llama3.1), set base URL: http://localhost:11434
 - LM Studio: run the local server, set base URL (default is often http://localhost:1234)
 
-Local providers take no API key. Ollama only accepts requests from origins it
-trusts: if it answers with an error (HTTP 403), set `OLLAMA_ORIGINS` to include
-this app's origin (for the extension, e.g. `chrome-extension://*`) and restart
-Ollama. In LM Studio, enable the server's CORS option. No key is ever needed for
-either, and errors from these providers point at the server rather than at an
-API key.
+Local providers need no API key. If your Ollama or LM Studio server sits behind an authenticating
+proxy, set a key in Options and the app sends it as a Bearer token. Ollama only accepts requests
+from origins it trusts: if it answers with an error (HTTP 403), set `OLLAMA_ORIGINS` to include
+this app's origin (for the extension, e.g. `chrome-extension://*`) and restart Ollama. In LM
+Studio, enable the server's CORS option. Errors from these providers point at the server rather
+than at a missing API key.
 
 Tip: If an LLM call fails or returns invalid output, the app gracefully falls back to a general search.
 
