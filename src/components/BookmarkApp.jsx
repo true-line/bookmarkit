@@ -1340,7 +1340,7 @@ const BookmarkApp = () => {
             webMcpEnabled={webMcpEnabled}
             webMcpAvailable={webMcpAvailable}
             onWebMcpEnabledChange={setWebMcpEnabled}
-            onClose={() => setIsOptionsOpen(false)}}
+            onClose={() => setIsOptionsOpen(false)}
           />
         )}
         {isMessageModalOpen && (
