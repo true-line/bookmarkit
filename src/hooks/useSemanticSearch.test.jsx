@@ -162,4 +162,77 @@ describe("useSemanticSearch (#46)", () => {
 
     expect(embedTexts).not.toHaveBeenCalled();
   });
+
+  // Codex-review P1: with the search box unlocked, a second query can arrive
+  // while the first is still rebuilding the index. The rebuilds serialize —
+  // the second waits for the first to commit and then re-checks what is still
+  // missing — so the collection is never embedded twice.
+  it("re-embeds the collection once for concurrent searches", async () => {
+    const list = [bookmark("0"), bookmark("1")];
+    let releaseCollection;
+    let collectionStarted;
+    const started = new Promise((resolve) => {
+      collectionStarted = resolve;
+    });
+    embedTexts
+      .mockImplementationOnce(() => {
+        collectionStarted();
+        return new Promise((resolve) => {
+          releaseCollection = resolve;
+        });
+      })
+      .mockResolvedValue([axis(0)]);
+    setup();
+
+    await act(async () => {
+      const first = semantic.search("first", list);
+      const second = semantic.search("second", list);
+      await started; // the first rebuild is now mid-embed
+      releaseCollection([axis(0), axis(1)]);
+      await Promise.all([first, second]);
+    });
+
+    // One collection batch (both bookmarks), one query vector per search.
+    expect(embedTexts.mock.calls.filter((call) => call[2].length === 2)).toHaveLength(1);
+    expect(embedTexts).toHaveBeenCalledTimes(3);
+  });
+
+  it("commits a mid-rebuild snapshot's fresh text over the older one", async () => {
+    const original = bookmark("0");
+    const edited = { ...original, title: "A different title entirely" };
+    let releaseFirst;
+    let firstStarted;
+    const started = new Promise((resolve) => {
+      firstStarted = resolve;
+    });
+    embedTexts
+      .mockImplementationOnce(() => {
+        firstStarted();
+        return new Promise((resolve) => {
+          releaseFirst = resolve;
+        });
+      })
+      .mockResolvedValue([axis(0)]);
+    setup();
+
+    await act(async () => {
+      const first = semantic.search("q", [original]); // slow refresh, old text
+      const second = semantic.search("q", [edited]); // arrives mid-rebuild
+      await started;
+      releaseFirst([axis(0)]);
+      await Promise.all([first, second]);
+    });
+
+    // The second search waited out the first rebuild, saw the stored hash no
+    // longer matched the edited text, and earned its own vector for it.
+    expect(embedTexts.mock.calls.map((call) => call[2])).toEqual([
+      [embeddingText(original)],
+      ["q"],
+      [embeddingText(edited)],
+      ["q"],
+    ]);
+    expect(JSON.parse(localStorage.getItem(INDEX_KEY))["0"].hash).toBe(
+      contentHash(embeddingText(edited))
+    );
+  });
 });
