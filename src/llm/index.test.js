@@ -17,6 +17,14 @@ vi.mock("ai", async (importOriginal) => ({
   generateText: (options) => generateText(options),
 }));
 
+// Counts vendor-chunk loads so tests can pin that refusing a request never
+// pays for the lazy import.
+const vendorState = vi.hoisted(() => ({ loads: 0 }));
+vi.mock("./aiVendor.js", async (importOriginal) => {
+  vendorState.loads += 1;
+  return importOriginal();
+});
+
 beforeEach(() => {
   generateText.mockReset();
   generateText.mockResolvedValue({ text: "ok", output: { steps: [] } });
@@ -87,9 +95,12 @@ describe("isSearchEnabled", () => {
 describe("createLLM generation (#224)", () => {
   it("refuses to generate without a chosen model — there are no defaults", async () => {
     const llm = createLLM("gemini", { apiKey: "k" });
+    const vendorLoads = vendorState.loads;
     await expect(llm.generate("hi")).rejects.toThrow(MODEL_NOT_SELECTED);
     await expect(llm.generatePlan("hi")).rejects.toThrow(MODEL_NOT_SELECTED);
     expect(generateText).not.toHaveBeenCalled();
+    // The refusal is local: the lazy vendor chunk is not fetched for it.
+    expect(vendorState.loads).toBe(vendorLoads);
   });
 
   it("sends the prompt through the SDK and reads the text back", async () => {
@@ -138,6 +149,35 @@ describe("createLLM generation (#224)", () => {
   });
 });
 
+// #225 review: the transport a provider rides on is part of the contract —
+// Chat Completions is what configurable endpoints advertise, and strict schema
+// validation cannot express the plan schema's open `parameters` object.
+describe("provider transports", () => {
+  it("addresses OpenAI on Chat Completions with the plan schema as non-strict guidance", async () => {
+    const llm = createLLM("openai", { apiKey: "k", model: "m" });
+    await llm.generatePlan("hi");
+    expect(generateText.mock.calls[0][0].model.provider).toBe("openai.chat");
+  });
+
+  it("keeps Grok on the Chat Completions path through the compatible provider", async () => {
+    const llm = createLLM("grok", { apiKey: "k", model: "m" });
+    await llm.generatePlan("hi");
+    expect(generateText.mock.calls[0][0].model.provider).toBe("grok.chat");
+  });
+
+  it("hands the plan schema to the local servers, which take JSON-schema response formats", async () => {
+    await createLLM("ollama", { model: "m" }).generatePlan("hi");
+    const ollamaOptions = generateText.mock.calls[0][0];
+    expect(ollamaOptions.model.provider).toBe("ollama.chat");
+    expect(ollamaOptions.model.supportsStructuredOutputs).toBe(true);
+
+    await createLLM("lmstudio", { model: "m" }).generatePlan("hi");
+    const lmstudioOptions = generateText.mock.calls[1][0];
+    expect(lmstudioOptions.model.provider).toBe("lmstudio.chat");
+    expect(lmstudioOptions.model.supportsStructuredOutputs).toBe(true);
+  });
+});
+
 describe("createLLM model discovery (#224)", () => {
   it("lists what Gemini serves, chat-capable only, without the models/ prefix", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
@@ -154,7 +194,9 @@ describe("createLLM model discovery (#224)", () => {
 
     const models = await createLLM("gemini", { apiKey: "k" }).listModels();
 
-    expect(models).toEqual(["gemini-chat", "gemini-unmarked"]);
+    // An unmarked model has not said it can chat, so it stays out of the picker
+    // exactly like the one that named itself an embedder.
+    expect(models).toEqual(["gemini-chat"]);
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://generativelanguage.googleapis.com/v1beta/models"
     );
