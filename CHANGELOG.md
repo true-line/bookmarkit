@@ -1,5 +1,24 @@
 # bookmarkit
 
+## 0.7.1
+
+### Patch Changes
+
+- 48975d5: Ghost buttons (the quiet, text-style ones — "Clear Search" in the header action strip, "Clear search" in the empty states, "Clear filters" in the filter bar, and their siblings) now show an underline whenever they are enabled, so they read as clickable at rest instead of blending in with plain secondary text. Disabled ghost buttons keep the plain look, and hover behavior is unchanged.
+- 3e1bce3: Options no longer shows a 403 when opened before an API key exists.
+
+  Endpoint-driven discovery (#225) made the model list load on open fire a real request. For a hosted provider with no key yet, that request could only come back refused — Gemini answers 403 — so entering Options read as an error before anything was configured. The picker now waits for a key on hosted providers and lists keylessly as before on local servers; the typed-id field and its guidance stay available in the meantime.
+
+- 92d2cd5: Stop holding the natural-language search box shut while the semantic widening
+  runs: the list already shows the plain search the moment the plan lands, and the
+  vector-index pass now widens those results in the background instead of keeping
+  the box disabled and searching for as long as a cold or stale index takes to
+  embed (previously 15–20s after, for example, organizing or de-duplicating had
+  changed many bookmarks). Concurrent searches share one rebuild: a query that
+  arrives while the index is being rebuilt waits for that rebuild to commit and
+  then re-checks what is still missing, so the collection is never embedded
+  twice and a refresh can never commit out of order.
+
 ## 0.7.0
 
 ### Minor Changes
