@@ -397,7 +397,11 @@ and `generatePlan(prompt)` for the agent engine, which requests the plan
 against `PLAN_JSON_SCHEMA` (`llm/normalize.js`) so the answer arrives as JSON or
 an error — there is no response-text reconstruction. What comes back is still
 normalized through the same per-action whitelist before anything applies it,
-because the schema describes a shape, not a permission. Model discovery queries
+because the schema describes a shape, not a permission. The schema travels as
+non-strict JSON schema — the open `parameters` object is deliberate, and strict
+schema modes cannot express it — and hosted providers are addressed on the Chat
+Completions contract their configurable endpoints speak, not a newer endpoint an
+OpenAI-compatible proxy may not implement. Model discovery queries
 the endpoint and shows only what it serves; no model name is hardcoded, so a
 provider without a chosen model refuses locally with a message instead of
 failing on a request. The SDK itself is reached only through a dynamic import

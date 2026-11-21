@@ -68,11 +68,10 @@ const ORGANIZE_FIELD_ALIASES = new Map([
 
 // ─── The schema a plan is requested against ───────────────────────────────────
 //
-// Strict-friendly (every property required, nothing additional) so providers
-// with native structured output can enforce it server-side. `parameters` is
-// typed loosely on purpose: the per-action validators below are the authority
-// on what each action accepts, and a schema per action would model every
-// parameter as required under strict mode.
+// Sent as guidance, not as a strict server-side contract: `parameters` is typed
+// loosely on purpose — the per-action validators below are the authority on
+// what each action accepts — and strict schema modes cannot express an
+// open-ended object, so requests that carry this schema opt out of them.
 
 export const PLAN_JSON_SCHEMA = {
   type: "object",

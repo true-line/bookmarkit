@@ -196,13 +196,14 @@ export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
     });
     if (!res.ok) throw new Error(`Model list failed with status ${res.status}`);
     const data = await res.json();
-    return (data?.models || [])
-      .filter(
-        (m) =>
-          !m?.supportedGenerationMethods || m.supportedGenerationMethods.includes("generateContent")
-      )
-      .map((m) => String(m?.name || "").replace(/^models\//u, ""))
-      .filter(Boolean);
+    return (
+      (data?.models || [])
+        // The marker is required, not assumed: an unlisted model has not said it
+        // can chat, and serving it would put an embedding model in the picker.
+        .filter((m) => m?.supportedGenerationMethods?.includes("generateContent"))
+        .map((m) => String(m?.name || "").replace(/^models\//u, ""))
+        .filter(Boolean)
+    );
   };
 
   // The local servers' discovery stays on each server's own endpoint, because
@@ -220,9 +221,12 @@ export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
     listOpenAICompatibleModels(`${trimSlash(base)}/models`, apiKey);
 
   const generateWith = (buildModel) => async (prompt, signal) => {
+    // The model guard runs first, so refusing a request costs neither the
+    // vendor chunk nor anything else the lazy load brings.
+    const id = model();
     const vendor = await loadVendor();
     const result = await runGeneration(vendor, {
-      model: buildModel(vendor, model()),
+      model: buildModel(vendor, id),
       prompt,
       signal,
       temperature: options?.temperature,
@@ -232,9 +236,10 @@ export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
   };
 
   const generatePlanWith = (buildModel) => async (prompt, signal) => {
+    const id = model();
     const vendor = await loadVendor();
     const result = await runGeneration(vendor, {
-      model: buildModel(vendor, model()),
+      model: buildModel(vendor, id),
       prompt,
       signal,
       temperature: options?.temperature,
@@ -251,8 +256,14 @@ export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
   switch (p) {
     case LLM_PROVIDERS.OPENAI: {
       const base = trimSlash(options?.baseUrl || "https://api.openai.com/v1");
+      // Chat Completions, for two reasons: a configurable endpoint may be an
+      // OpenAI-compatible proxy that only implements that contract, and strict
+      // schema validation cannot express the plan schema's open `parameters`
+      // object — the whitelist, not the schema, is the permission.
       const buildModel = (vendor, id) =>
-        vendor.createOpenAI({ ...(apiKey ? { apiKey } : {}), baseURL: base })(id);
+        vendor
+          .createOpenAI({ ...(apiKey ? { apiKey } : {}), baseURL: base })
+          .chat(id, { strictJsonSchema: false });
       return {
         name: p,
         generate: generateWith(buildModel),
@@ -262,8 +273,16 @@ export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
     }
     case LLM_PROVIDERS.GROK: {
       const base = trimSlash(options?.baseUrl || "https://api.x.ai/v1");
+      // Grok is addressed on the Chat Completions contract its API is served
+      // through, via the compatible provider — the xAI SDK's only language
+      // model posts to /responses with schema validation that the open
+      // `parameters` object cannot satisfy.
       const buildModel = (vendor, id) =>
-        vendor.createXai({ ...(apiKey ? { apiKey } : {}), baseURL: base })(id);
+        vendor.createOpenAICompatible({
+          name: p,
+          baseURL: base,
+          ...(apiKey ? { apiKey } : {}),
+        })(id);
       return {
         name: p,
         generate: generateWith(buildModel),
@@ -273,12 +292,14 @@ export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
     }
     case LLM_PROVIDERS.OLLAMA: {
       const host = trimSlash(options?.baseUrl || "http://localhost:11434");
-      // The local servers take the OpenAI-compatible chat path for generation,
-      // which is what carries structured output.
+      // The local servers take the OpenAI-compatible chat path, and both
+      // implement JSON-schema response formats — this is what actually puts
+      // PLAN_JSON_SCHEMA in front of the model instead of bare JSON mode.
       const buildModel = (vendor, id) =>
         vendor.createOpenAICompatible({
           name: p,
           baseURL: `${host}/v1`,
+          supportsStructuredOutputs: true,
           ...(apiKey ? { apiKey } : {}),
         })(id);
       return {
@@ -296,6 +317,7 @@ export function createLLM(provider = LLM_PROVIDERS.GEMINI, options = {}) {
         vendor.createOpenAICompatible({
           name: p,
           baseURL: `${host}/v1`,
+          supportsStructuredOutputs: true,
           ...(apiKey ? { apiKey } : {}),
         })(id);
       return {

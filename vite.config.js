@@ -47,7 +47,6 @@ export default defineConfig(({ mode }) => ({
             "zod",
             "@ai-sdk/google",
             "@ai-sdk/openai",
-            "@ai-sdk/xai",
             "@ai-sdk/openai-compatible",
           ],
         },
