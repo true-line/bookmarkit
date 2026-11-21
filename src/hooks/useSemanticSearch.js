@@ -56,6 +56,14 @@ const chunk = (list, size) => {
 export function useSemanticSearch({ provider, providerOptions, locked }) {
   const [indexing, setIndexing] = useState(false);
   const indexRef = useRef(null);
+  // The refresh slot (codex-review P1): a search that arrives while the index
+  // is being rebuilt waits for that rebuild to commit instead of starting its
+  // own. `updateIndex` replaces entries by id, so a refresh that started on an
+  // older snapshot and finished last would commit stale text vectors over
+  // fresh ones, and two overlapping rebuilds would embed the same collection
+  // twice. Waiting, then re-checking what is still missing for this search's
+  // source, spends nothing extra and orders every commit.
+  const refreshingRef = useRef(null);
 
   const latest = useRef(null);
   latest.current = { provider, providerOptions, locked };
@@ -76,7 +84,17 @@ export function useSemanticSearch({ provider, providerOptions, locked }) {
 
     try {
       if (!indexRef.current) indexRef.current = readIndex(await readSetting(INDEX_KEY));
-      await refresh({ provider: chosen, options, source }, bookmarks, indexRef, setIndexing);
+      const priorRefresh = refreshingRef.current || Promise.resolve();
+      const mine = priorRefresh.then(() =>
+        refresh({ provider: chosen, options, source }, bookmarks, indexRef, setIndexing)
+      );
+      // The slot frees whether this refresh committed or failed; the failure
+      // itself belongs to this search's own catch below.
+      refreshingRef.current = mine.then(
+        () => {},
+        () => {}
+      );
+      await mine;
       const [queryVector] = await embedTexts(chosen, options, [term]);
       return rankBySimilarity(queryVector, bookmarks, indexRef.current, { source });
     } catch (error) {
