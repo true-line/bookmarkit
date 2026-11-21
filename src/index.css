@@ -317,6 +317,15 @@ textarea {
   color: var(--text-secondary);
   background: transparent;
 }
+/* Ghost's muted text on transparent is the same palette as plain secondary
+   text, so at rest it reads as a label, not a control — the hover fill never
+   helps touch users. The underline is the resting "this is clickable" cue;
+   disabled keeps it off so a disabled ghost doesn't pose as an active link. */
+.ds-button--ghost:not(:disabled) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
 .ds-button--ghost:hover:not(:disabled) {
   color: var(--text-primary);
   background: var(--bg-secondary);
