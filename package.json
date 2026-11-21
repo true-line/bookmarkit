@@ -48,9 +48,11 @@
     "three": "^0.186.1"
   },
   "overrides": {
+    "@grpc/grpc-js": "^1.14.5",
     "firebase": {
       "undici": "^6.27.0"
-    }
+    },
+    "glob": "^14.0.2"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.0",
@@ -62,7 +64,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
-    "@vitest/coverage-v8": "^5.0.1",
+    "@vitest/coverage-v8": "^5.1.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.33.0",
     "eslint-config-prettier": "^10.1.8",
@@ -78,6 +80,6 @@
     "storybook": "^10.6.7",
     "tailwindcss": "^3.4.14",
     "vite": "^7.3.7",
-    "vitest": "^5.0.1"
+    "vitest": "^5.1.1"
   }
 }
