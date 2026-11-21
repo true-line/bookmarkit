@@ -1,12 +1,19 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import OptionsModal from "./OptionsModal.jsx";
 
-// Avoid real LLM/model-fetch side effects.
-vi.mock("../llm/index.js", () => ({
-  LLM_PROVIDERS: { GEMINI: "gemini", OPENAI: "openai", OLLAMA: "ollama", LMSTUDIO: "lmstudio" },
-  createLLM: () => ({ listModels: async () => [] }),
+const { createLLM } = vi.hoisted(() => ({ createLLM: vi.fn() }));
+
+// Only the network seam is faked; the real provider-readiness gate stays in the
+// test, because that gate is what keeps a keyless hosted provider quiet.
+vi.mock("../llm/index.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  createLLM,
 }));
+
+beforeEach(() => {
+  createLLM.mockReset().mockImplementation(() => ({ listModels: async () => [] }));
+});
 
 const baseProps = {
   provider: "gemini",
@@ -207,5 +214,49 @@ describe("OptionsModal local provider API key (optional)", () => {
     const field = screen.getByLabelText("API Key (optional)");
     expect(field).toBeDisabled();
     expect(screen.getByPlaceholderText(/Locked — unlock below/i)).toBe(field);
+  });
+});
+
+describe("OptionsModal model refresh gating", () => {
+  it("sends no model request when a hosted provider has no key yet", async () => {
+    render(<OptionsModal {...baseProps} />);
+    await act(async () => {});
+    expect(createLLM).not.toHaveBeenCalled();
+    // No doomed request, so no error banner from one.
+    expect(screen.queryByText(/Model list failed/i)).toBeNull();
+  });
+
+  it("ignores the Refresh button while a hosted provider has no key", async () => {
+    render(<OptionsModal {...baseProps} />);
+    fireEvent.click(screen.getByRole("button", { name: "Refresh model list" }));
+    await act(async () => {});
+    expect(createLLM).not.toHaveBeenCalled();
+  });
+
+  // The positive paths go through the Refresh button, whose forceRefresh
+  // bypasses the module-level models cache — earlier tests in this file warm
+  // it, so a mount assertion here would be order-dependent, not informative.
+  it("fetches once a hosted provider has a key", async () => {
+    render(<OptionsModal {...baseProps} providerOptions={{ apiKey: "sk-test" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Refresh model list" }));
+    await waitFor(() =>
+      expect(createLLM).toHaveBeenCalledWith("gemini", {
+        apiKey: "sk-test",
+        model: "",
+        baseUrl: undefined,
+      })
+    );
+  });
+
+  it("still lists models keylessly for a local server", async () => {
+    render(<OptionsModal {...baseProps} provider="ollama" providerOptions={{}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Refresh model list" }));
+    await waitFor(() =>
+      expect(createLLM).toHaveBeenCalledWith("ollama", {
+        apiKey: "",
+        model: "",
+        baseUrl: undefined,
+      })
+    );
   });
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { LLM_PROVIDERS, createLLM } from "../llm/index.js";
+import { LLM_PROVIDERS, createLLM, isProviderReady } from "../llm/index.js";
 import { useDebounce } from "../hooks/useDebounce.js";
 import KeyEncryptionSection from "./KeyEncryptionSection.jsx";
 import { Banner, Button, IconButton, Input, Modal, Select } from "./DesignSystem.jsx";
@@ -55,6 +55,16 @@ const OptionsModal = ({
   };
 
   const fetchModels = async (forceRefresh = false) => {
+    // A hosted provider without a key has no request worth sending — the
+    // endpoint refuses it (Gemini answers 403) — so opening Options must not
+    // read as an error. Discovery waits for the key; the local servers stay
+    // always ready because their listing needs none.
+    if (!isProviderReady(provider, { apiKey: providerOptions.apiKey || "" })) {
+      setModels([]);
+      setModelsError("");
+      return;
+    }
+
     // ARCH-04: Check module-level cache before making a network request
     const cacheKey = `${provider}|${providerOptions.apiKey || ""}|${providerOptions.baseUrl || ""}`;
     if (!forceRefresh) {
