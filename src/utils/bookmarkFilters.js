@@ -160,6 +160,36 @@ export const mergeAgentPlan = (previous = [], steps = []) => {
 };
 
 /**
+ * Upgrade the search step a widening answered, in place.
+ *
+ * #46: a widened search is the same search wearing better recall, so the
+ * `searchBookmarks` step that asked for the term becomes the `semanticMatches`
+ * step that answered it — whatever else the plan holds stays untouched. The
+ * widening runs after the plan landed, though, and the user may have moved on:
+ * re-searched another term, or cleared the plan. When nothing in the plan asks
+ * for `searchTerm` any more, the caller's plan is returned as-is — the same
+ * reference, so a state update on it bails out and the late widening clobbers
+ * nothing.
+ *
+ * @param {object|object[]|null} plan The accumulated plan.
+ * @param {string} searchTerm The query the widening answered.
+ * @param {string[]} ids Ranked bookmark ids that matched semantically.
+ * @returns {object|object[]|null} The widened plan, or the plan that came in.
+ */
+export const widenPlanSearch = (plan, searchTerm, ids) => {
+  const steps = Array.isArray(plan) ? plan : plan ? [plan] : [];
+  let matched = false;
+  const widened = steps.map((step) => {
+    if (step.action !== "searchBookmarks" || step.parameters?.searchTerm !== searchTerm)
+      return step;
+    matched = true;
+    return { ...step, action: "semanticMatches", parameters: { searchTerm, ids } };
+  });
+  if (!matched) return plan;
+  return widened;
+};
+
+/**
  * The actions that shape what the list shows. Everything else a plan can contain
  * — importing, exporting, de-duplicating, persisting an order — is a side effect
  * the app carries out once, and contributes nothing to the projection.

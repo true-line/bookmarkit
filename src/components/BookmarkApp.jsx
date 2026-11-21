@@ -1,6 +1,6 @@
 // ARCH-06: Slimmed BookmarkApp — orchestration only. Logic delegated to hooks/utils.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applyAgentPlan, sortStepsByPriority } from "../utils/bookmarkFilters.js";
+import { applyAgentPlan, sortStepsByPriority, widenPlanSearch } from "../utils/bookmarkFilters.js";
 import {
   EMPTY_FILTERS,
   applyManualFilters,
@@ -819,18 +819,18 @@ const BookmarkApp = () => {
   // that asked — `semanticMatches` carries the query with it, because widening has
   // to see what substring matching filtered out. With no index and no provider this
   // returns nothing and the plain search stands.
+  //
+  // The widening is an upgrade to results the user is already looking at, not a
+  // gate in front of them, so it is not awaited: `semantic.search` re-embeds every
+  // stale bookmark on a cold index, and holding the loop for it pinned the search
+  // box shut long after the list had filtered down. A widening that answers late
+  // is harmless — `widenPlanSearch` only touches the plan that still asks for its
+  // term — and `semantic.search` answers [] on failure rather than rejecting.
   const widenSearch = useCallback(
     async (searchTerm) => {
       const ids = await semantic.search(searchTerm, bookmarks);
       if (ids.length === 0) return;
-      setLastAction((plan) => {
-        const steps = Array.isArray(plan) ? plan : plan ? [plan] : [];
-        return steps.map((step) =>
-          step.action === "searchBookmarks" && step.parameters?.searchTerm === searchTerm
-            ? { ...step, action: "semanticMatches", parameters: { searchTerm, ids } }
-            : step
-        );
-      });
+      setLastAction((plan) => widenPlanSearch(plan, searchTerm, ids));
     },
     [bookmarks, semantic]
   );
@@ -855,7 +855,7 @@ const BookmarkApp = () => {
           else showCustomMessage("No duplicate bookmarks found in the current view.", "info");
         }
         if (step.action === "searchBookmarks" && step.parameters?.searchTerm)
-          await widenSearch(step.parameters.searchTerm);
+          widenSearch(step.parameters.searchTerm);
         if (step.action === "weeklyDigest") await showDigest();
         if (step.action === "organizeBookmarks")
           await handleOrganize(inView(), step.parameters?.fields);

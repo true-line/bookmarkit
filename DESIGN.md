@@ -311,7 +311,10 @@ Two consequences worth stating:
   from a local ranking, never by a model. It shares `searchBookmarks`'s slot in
   `mergeAgentPlan` — a widened search is still that search, and a second query has
   to displace it — and saving a view turns it back into the query it came from,
-  since a ranking describes one moment and would go stale.
+  since a ranking describes one moment and would go stale. The rewrite lands
+  whenever the widening finishes: the plan applies and the search box unlocks
+  first, and a cold or stale index spends as long as embedding takes widening the
+  results in the background rather than holding the view shut.
 
 Each provider's embedding call follows that provider's own contract for a configured
 base URL, which the chat providers disagree about: OpenAI's base is the `/v1` root,

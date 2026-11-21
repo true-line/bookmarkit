@@ -4,6 +4,7 @@ import {
   mergeAgentPlan,
   applyAgentPlan,
   findWithTags,
+  widenPlanSearch,
 } from "./bookmarkFilters.js";
 
 describe("sortStepsByPriority (#21)", () => {
@@ -196,6 +197,47 @@ describe("mergeAgentPlan with a widened search (#46)", () => {
     );
 
     expect(merged.map((step) => step.action)).toEqual(["filterByRating", "searchBookmarks"]);
+  });
+});
+
+// #46: the widening answers after the plan landed, and the user may have moved
+// on — a late widening may only touch a plan that still asks for its term.
+describe("widenPlanSearch (#46)", () => {
+  it("upgrades the search step that asked for the term", () => {
+    const widened = widenPlanSearch(
+      { action: "searchBookmarks", parameters: { searchTerm: "pinecone" } },
+      "pinecone",
+      ["3", "1"]
+    );
+
+    expect(widened).toEqual([
+      { action: "semanticMatches", parameters: { searchTerm: "pinecone", ids: ["3", "1"] } },
+    ]);
+  });
+
+  it("upgrades only the matching step of an array plan", () => {
+    const plan = [
+      { action: "filterByRating", parameters: { minRating: 4 } },
+      { action: "searchBookmarks", parameters: { searchTerm: "pinecone" } },
+    ];
+    const widened = widenPlanSearch(plan, "pinecone", ["3"]);
+
+    expect(widened.map((step) => step.action)).toEqual(["filterByRating", "semanticMatches"]);
+    expect(widened[0]).toBe(plan[0]);
+    expect(widened[1].parameters).toEqual({ searchTerm: "pinecone", ids: ["3"] });
+  });
+
+  it("returns the plan as-is when nothing asks for the term any more", () => {
+    const plan = [{ action: "searchBookmarks", parameters: { searchTerm: "sourdough" } }];
+
+    // A late widening for a displaced term must not hand back a copy: the
+    // reference staying equal is what lets the state update bail out.
+    expect(widenPlanSearch(plan, "pinecone", ["3"])).toBe(plan);
+  });
+
+  it("leaves a cleared plan cleared", () => {
+    expect(widenPlanSearch(null, "pinecone", ["3"])).toBe(null);
+    expect(widenPlanSearch([], "pinecone", ["3"])).toEqual([]);
   });
 });
 
