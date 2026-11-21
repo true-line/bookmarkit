@@ -307,7 +307,7 @@ Two consequences worth stating:
 - **The ranking is a display step, not a query.** The app rewrites its own
   `searchBookmarks` step into `semanticMatches`, carrying the query and the ranked
   ids, because widening has to see what substring matching filtered out. That
-  action is deliberately absent from the parser whitelist: it is written by the app
+  action is deliberately absent from the normalize whitelist: it is written by the app
   from a local ranking, never by a model. It shares `searchBookmarks`'s slot in
   `mergeAgentPlan` — a widened search is still that search, and a second query has
   to displace it — and saving a view turns it back into the query it came from,
@@ -391,11 +391,23 @@ need nothing.
 
 ## LLM boundary
 
-Provider adapters in `src/llm/providers/` expose `generate(prompt)` through the
-factory in `src/llm/index.js`. The app asks a provider for structured action
-steps, parses them, and applies the resulting plan to the in-memory bookmark
-list. Provider failure falls back to ordinary bookmark search; persistence is
-still performed only by a store operation initiated by application behavior.
+The factory in `src/llm/index.js` exposes each provider on the Vercel AI SDK:
+`generate(prompt)` for plain text (digest, organizer, dedupe, form suggestions)
+and `generatePlan(prompt)` for the agent engine, which requests the plan
+against `PLAN_JSON_SCHEMA` (`llm/normalize.js`) so the answer arrives as JSON or
+an error — there is no response-text reconstruction. What comes back is still
+normalized through the same per-action whitelist before anything applies it,
+because the schema describes a shape, not a permission. The schema travels as
+non-strict JSON schema — the open `parameters` object is deliberate, and strict
+schema modes cannot express it — and hosted providers are addressed on the Chat
+Completions contract their configurable endpoints speak, not a newer endpoint an
+OpenAI-compatible proxy may not implement. Model discovery queries
+the endpoint and shows only what it serves; no model name is hardcoded, so a
+provider without a chosen model refuses locally with a message instead of
+failing on a request. The SDK itself is reached only through a dynamic import
+of `llm/aiVendor.js` on the first generation call, so startup never parses it.
+Provider failure falls back to ordinary bookmark search; persistence is still
+performed only by a store operation initiated by application behavior.
 
 Runtime provider settings override build-time defaults and remain in browser
 storage. They are user configuration, not repository configuration, and must

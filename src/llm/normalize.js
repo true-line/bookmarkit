@@ -1,13 +1,19 @@
-// ARCH-01: Centralized LLM response parser — provider-specific wrapper unwrapping,
-// JSON extraction from fenced code blocks, and per-step validation.
+// ARCH-01: Centralized plan normalization — per-step validation and parameter
+// sanitization for agent plans, wherever they come from: a model's structured
+// output, or a stored view read back from storage (both untrusted).
 //
 // ARCH-03: Lightweight hand-written validators (no Zod) to keep bundle size
 // minimal for the Chrome extension. Each validator coerces types and returns
 // sanitized parameters so applyAgentPlan() can trust the data it receives.
+//
+// The JSON-extraction half the old parser needed — fence unwrapping,
+// balanced-brace scanning, provider-envelope unwrapping — is gone: the plan is
+// now requested against PLAN_JSON_SCHEMA (#224), so what arrives is JSON or an
+// error, and this module only judges the shape of what arrived.
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const KNOWN_ACTIONS = new Set([
+export const KNOWN_ACTIONS = [
   "searchBookmarks",
   "showAllBookmarks",
   "resetSearch",
@@ -31,7 +37,7 @@ const KNOWN_ACTIONS = new Set([
   "reorderAscending",
   "reorderDescending",
   "persistSortedOrder",
-]);
+];
 
 const FIELD_VALUES = new Set(["title", "url", "description", "tags"]);
 const SORT_BY_VALUES = new Set([
@@ -59,6 +65,34 @@ const ORGANIZE_FIELD_ALIASES = new Map([
   ["tag", "tags"],
   ["descriptions", "description"],
 ]);
+
+// ─── The schema a plan is requested against ───────────────────────────────────
+//
+// Sent as guidance, not as a strict server-side contract: `parameters` is typed
+// loosely on purpose — the per-action validators below are the authority on
+// what each action accepts — and strict schema modes cannot express an
+// open-ended object, so requests that carry this schema opt out of them.
+
+export const PLAN_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    steps: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          action: { type: "string", enum: KNOWN_ACTIONS },
+          parameters: { type: "object", additionalProperties: true },
+          priority: { type: "number" },
+        },
+        required: ["action", "parameters", "priority"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["steps"],
+  additionalProperties: false,
+};
 
 // ─── Utility coercions ────────────────────────────────────────────────────────
 
@@ -268,168 +302,44 @@ const ACTION_SCHEMAS = {
   },
 };
 
-// ─── Provider-specific wrapper unwrapping (ARCH-01, ARCH-05) ─────────────────
-// Maps provider name → function that extracts the text string from a raw API wrapper object.
-// Used as a fallback when the provider returns an API envelope instead of plain text.
-
-const PROVIDER_UNWRAPPERS = {
-  gemini: (raw) => raw?.candidates?.[0]?.content?.parts?.[0]?.text || "",
-  openai: (raw) => raw?.choices?.[0]?.message?.content || "",
-  grok: (raw) => raw?.choices?.[0]?.message?.content || "",
-  lmstudio: (raw) => raw?.choices?.[0]?.message?.content || "",
-  ollama: (raw) => raw?.response || "",
-};
-
-// ─── JSON extraction ──────────────────────────────────────────────────────────
-
-// The index just past the value opening at `start`, or -1 if it never closes.
-// Quotes and escapes are tracked, otherwise a brace inside a search term would
-// end the scan early.
-function balancedEnd(text, start) {
-  const open = text[start];
-  const close = open === "{" ? "}" : "]";
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  for (let i = start; i < text.length; i++) {
-    const char = text[i];
-    if (inString) {
-      if (escaped) escaped = false;
-      else if (char === "\\") escaped = true;
-      else if (char === '"') inString = false;
-    } else if (char === '"') {
-      inString = true;
-    } else if (char === open) {
-      depth++;
-    } else if (char === close && --depth === 0) {
-      return i + 1;
-    }
-  }
-  return -1;
-}
-
-// #28: The next balanced {...} or [...] at or after `from`, so a model that
-// wraps its JSON in prose still yields steps. An opener that never closes is
-// skipped rather than ending the search, since the real value may follow it.
-function nextBalancedJson(text, from) {
-  let cursor = from;
-  while (cursor < text.length) {
-    const offset = text.slice(cursor).search(/[[{]/u);
-    if (offset === -1) return null;
-    const start = cursor + offset;
-    const end = balancedEnd(text, start);
-    if (end !== -1) return { json: text.slice(start, end), end };
-    cursor = start + 1;
-  }
-  return null;
-}
-
-// #28: Every shape the JSON might arrive in, most explicit first. Fenced blocks
-// and brace-balanced regions are each offered in turn, not just the first,
-// because a model that describes the format before answering — or explains
-// itself in one fence and answers in the next — used to be read as an empty plan.
-function* jsonCandidates(text) {
-  for (const [, body] of text.matchAll(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/giu)) {
-    const fenced = body.trim();
-    if (fenced) yield fenced;
-  }
-  const trimmed = text.trim();
-  if (trimmed) yield trimmed;
-  for (let at = 0; at < text.length;) {
-    const found = nextBalancedJson(text, at);
-    if (!found) break;
-    yield found.json;
-    at = found.end;
-  }
-}
-
-/**
- * The candidate most likely to be the plan: the first that looks like one, else
- * the first that parses at all — a provider envelope has to survive this step so
- * it can be unwrapped. Wrapped in an object so a response of literal `null` is
- * distinguishable from failure; null when nothing parses.
- */
-function parseBestJson(text) {
-  if (!text) return null;
-  let firstParsed = null;
-  for (const candidate of jsonCandidates(text)) {
-    let value;
-    try {
-      value = JSON.parse(candidate);
-    } catch {
-      continue; // Not this shape — try the next.
-    }
-    if (looksLikePlan(value)) return { value };
-    firstParsed ??= { value };
-  }
-  return firstParsed;
-}
-
-// A usable plan is a step we can act on, or a list containing one. Requiring a
-// known action, not merely an `action` string, is what separates the plan from a
-// format example the model wrote out first — and from a provider API envelope.
-function looksLikePlan(value) {
-  const steps = Array.isArray(value) ? value : [value];
-  return steps.some((step) => step && typeof step === "object" && KNOWN_ACTIONS.has(step.action));
-}
+const KNOWN_ACTION_SET = new Set(KNOWN_ACTIONS);
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Parse a raw LLM response string into a validated, sanitized array of agent steps.
+ * Normalize an untrusted plan value into validated, sanitized steps.
  *
- * Handles:
- *  1. JSON extraction from fenced blocks, bare output, or output wrapped in prose
- *  2. Provider-specific API wrapper unwrapping (ARCH-01) using `providerName`
- *  3. Step validation and parameter sanitization (ARCH-03)
+ * Handles the schema-shaped `{steps: [...]}` payload the structured path
+ * delivers, a bare array of steps, or a single step object; anything else, and
+ * any step with a missing or unknown action, yields nothing — an unknown action
+ * must never reach applyAgentPlan, whether it arrived from a model or from
+ * storage.
  *
- * @param {string} responseText - Raw string from llm.generate()
- * @param {string} [providerName] - Provider key (e.g. 'gemini', 'openai', 'ollama')
+ * @param {unknown} value - A parsed plan: `{steps}`, a step array, a step object, or anything else.
  * @returns {Array<{ action: string, parameters: object, priority?: number }>}
  */
-export function parseAgentResponse(responseText, providerName) {
-  if (!responseText) return [];
+export function normalizeSteps(value) {
+  const plan = value && !Array.isArray(value) && Array.isArray(value.steps) ? value.steps : value;
+  const stepsArray = Array.isArray(plan) ? plan : [plan];
 
-  // Step 1: Read the JSON out of the response, whether it is fenced, bare, or
-  // surrounded by prose.
-  let result = parseBestJson(responseText);
-
-  // Step 2: What parsed may be a provider API envelope rather than the plan —
-  // unwrap it and read the text inside (ARCH-01).
-  if (providerName && !looksLikePlan(result?.value)) {
-    const unwrap = PROVIDER_UNWRAPPERS[providerName];
-    const inner = unwrap && result?.value ? unwrap(result.value) : "";
-    const unwrapped = inner ? parseBestJson(inner) : null;
-    if (unwrapped) result = unwrapped;
-  }
-
-  if (!result) {
-    console.warn("[parser] Failed to parse LLM response as JSON:", responseText?.slice(0, 200));
-    return [];
-  }
-
-  // Step 3: Normalise to array of step objects
-  const stepsArray = Array.isArray(result.value) ? result.value : [result.value];
-
-  // Step 5: Validate and sanitize each step (ARCH-01, ARCH-03)
   const validSteps = [];
   for (const step of stepsArray) {
     if (!step || typeof step !== "object" || typeof step.action !== "string") {
-      console.warn("[parser] Dropping step — missing or non-string action:", step);
+      console.warn("[normalize] Dropping step — missing or non-string action:", step);
       continue;
     }
 
     const { action, parameters, priority } = step;
 
-    if (!KNOWN_ACTIONS.has(action)) {
-      console.warn(`[parser] Dropping step — unknown action "${action}"`);
+    if (!KNOWN_ACTION_SET.has(action)) {
+      console.warn(`[normalize] Dropping step — unknown action "${action}"`);
       continue;
     }
 
     // parameters must be undefined, null, or a plain object
     if (parameters !== undefined && parameters !== null && typeof parameters !== "object") {
       console.warn(
-        `[parser] Dropping step "${action}" — parameters must be an object, got ${typeof parameters}:`,
+        `[normalize] Dropping step "${action}" — parameters must be an object, got ${typeof parameters}:`,
         parameters
       );
       continue;
@@ -442,11 +352,11 @@ export function parseAgentResponse(responseText, providerName) {
     if (validator) {
       const result = validator(params);
       if (!result.valid) {
-        console.warn(`[parser] Dropping step "${action}" — validation failed:`, result.errors);
+        console.warn(`[normalize] Dropping step "${action}" — validation failed:`, result.errors);
         continue;
       }
       if (result.errors.length > 0) {
-        console.warn(`[parser] Step "${action}" — sanitized with warnings:`, result.errors);
+        console.warn(`[normalize] Step "${action}" — sanitized with warnings:`, result.errors);
       }
       validSteps.push({
         action,

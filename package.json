@@ -36,6 +36,10 @@
     ]
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.123",
+    "@ai-sdk/openai": "^4.0.122",
+    "@ai-sdk/openai-compatible": "^3.0.94",
+    "ai": "^7.0.178",
     "firebase": "^10.0.0",
     "js-yaml": "^4.3.2",
     "react": "^19.1.1",

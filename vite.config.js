@@ -37,6 +37,18 @@ export default defineConfig(({ mode }) => ({
           // mark and empty-state stack), so this chunk never loads with the app
           // or the popup — naming it keeps it out of the synthesized chunks.
           three: ["three"],
+          // #224 joins three.js in the load-on-demand club: the whole AI SDK
+          // layer — core, provider packages, and the zod runtime they validate
+          // against — is reachable only through llm/aiVendor.js's dynamic
+          // import, so this chunk never loads at startup. Naming it keeps it
+          // out of the synthesized chunks and its cost visible in build logs.
+          "ai-vendor": [
+            "ai",
+            "zod",
+            "@ai-sdk/google",
+            "@ai-sdk/openai",
+            "@ai-sdk/openai-compatible",
+          ],
         },
       },
     },
