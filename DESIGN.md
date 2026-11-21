@@ -314,7 +314,10 @@ Two consequences worth stating:
   since a ranking describes one moment and would go stale. The rewrite lands
   whenever the widening finishes: the plan applies and the search box unlocks
   first, and a cold or stale index spends as long as embedding takes widening the
-  results in the background rather than holding the view shut.
+  results in the background rather than holding the view shut. The rebuilds
+  themselves serialize: a query arriving mid-rebuild waits for the commit and
+  re-checks what is still missing, so a cold index is never embedded twice and
+  an older snapshot is never committed over a newer one.
 
 Each provider's embedding call follows that provider's own contract for a configured
 base URL, which the chat providers disagree about: OpenAI's base is the `/v1` root,
