@@ -107,7 +107,7 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 3. Unzip it.
 4. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the
    unzipped folder.
-5. Pin the toolbar icon. Clicking it opens quick-add for the current tab; "Open full app" in the
+5. Pin the toolbar icon. Clicking it opens quick-add for the current tab; "Open BookmarkIt" in the
    popup opens the full bookmark manager.
 
 Want a build of an unreleased branch? Every CI run attaches the same zip as a `bookmarkit-extension`
@@ -142,7 +142,7 @@ The extension ships two surfaces from one build:
 | Surface       | Entry        | What it is                                                                                                                                  |
 | ------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Toolbar popup | `popup.html` | Quick-add for the current tab: prefilled title/URL, tags, rating, folder. Detects an already-saved URL and edits it instead of duplicating. |
-| Full app      | `index.html` | The complete manager (search, agent, import/export, options). Opened from the popup's "Open full app".                                      |
+| Full app      | `index.html` | The complete manager (search, agent, import/export, options). Opened from the popup's "Open BookmarkIt".                                    |
 
 ### Getting there without opening it
 
