@@ -1,5 +1,18 @@
 # bookmarkit
 
+## 0.10.0
+
+### Minor Changes
+
+- 97c3f4a: The import/export panel renders through the unified design system: it is now the modal-standard dialog itself — the divided header carrying "Import & Export" with the mockup's description line, and the tinted footer band holding the tonal bordered Close. The format tabs, the dashed file drop zone, and the paste/preview fields are new ui-* screen recipes; export sections carry a live bookmark-count tag, the JSON download wears the filled primary recipe with the HTML download as its tonal secondary, and the append/replace confirmation sits on a card with the system's Cancel/Import footer pair. The JSON and Netscape HTML parse/export round-trip is unchanged.
+- 527620f: Migrate the options modal to the unified design system
+
+  OptionsModal (and its key-encryption section) now render the design system's modal-standard shell at the options-settings mockup's wide 2xl reading: headline-sm section headings with body-sm sublines, label-md rows, the active-provider status pill, and the native select and file controls tokenized as `ui-input`. The canonical button intents map the actions — primary exits, destructive clears the API key, tertiary drives the model-list refresh, secondary takes the discards. Provider model lists, key management and encryption flows are unchanged — presentation only.
+
+- e647e45: Migrate the quick-add popup to the unified design system
+
+  The MV3 quick-add popup renders the toolbar mockup's compact shell: the brand-mark header, labeled input fields (the URL field in Fira Code with a forced LTR reading), the folder/tags grid, and a divided footer pairing the tonal "Open BookmarkIt" with the crimson "Save Bookmark". The design-system CSS and self-hosted fonts now load in the popup entry, and popup.html carries a light `data-ui-theme` default so the themed frame paints before the theme bridge runs. The save flow, tab discovery and chrome.* integration are unchanged; Escape still closes the popup.
+
 ## 0.9.0
 
 ### Minor Changes
