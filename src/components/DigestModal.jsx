@@ -106,7 +106,6 @@ const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onClose }) =
       title="Weekly Digest"
       description="Local summary with optional AI topic grouping."
       onClose={onClose}
-      onScrimClick={onClose}
       footer={
         <>
           {neverOpened.length > 0 && (
