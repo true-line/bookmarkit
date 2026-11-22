@@ -104,6 +104,38 @@ export const StandardOpen = {
   ),
 };
 
+// The screens extend the shell vocabulary with a wider reading — the
+// help-shortcuts screen's max-w-2xl modal-standard (#244).
+export const StandardWideOpen = {
+  render: () => (
+    <Modal
+      size="2xl"
+      title="Help & Keyboard Shortcuts"
+      onClose={() => {}}
+      footer={<Button>Got it</Button>}
+    >
+      <div style={{ display: "grid", gap: "12px" }}>
+        {["Edit selected — E", "Select all visible — Cmd/Ctrl+A"].map((row) => (
+          <div
+            key={row}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "10px",
+              borderRadius: "var(--ui-radius)",
+              background: "var(--ui-surface-container-low)",
+              border: "1px solid var(--ui-outline-variant)",
+            }}
+          >
+            {row}
+          </div>
+        ))}
+      </div>
+    </Modal>
+  ),
+};
+
 function AlertHost() {
   const [open, setOpen] = React.useState(false);
   return (

@@ -107,11 +107,11 @@ stamps `data-ui-theme` on the document element — derived light/dark from the
 theme's own background, so user-uploaded themes land on the right palette —
 and maps the user's accent/accent-hover onto `--ui-brand-crimson`/`-hover`
 (the canonical `--ui-*` palette otherwise stays the one the Stitch screens
-ship; only brand follows the user). No surface renders `ui-*` components
-yet: the Storybook preview supplies the scope root plus UI-theme and
-direction toolbars, and surfaces migrate one at a time by rendering under
-the same
-attribute. The existing `DesignSystem.jsx` library and its seven runtime theme
+ship; only brand follows the user). Surfaces migrate one at a time by
+rendering under that attribute — `HelpModal` is the first (#244), in the app
+under the bridge's scope and in Storybook under the preview's scope root,
+which also supplies the UI-theme and direction toolbars. The existing
+`DesignSystem.jsx` library and its seven runtime theme
 variables are untouched — the two systems coexist until a surface switches,
 and the unified `Modal` deliberately reuses `useFocusTrap` so both dialog
 families keep one keyboard contract. The spec's `@components/*.html` files
@@ -123,7 +123,10 @@ dialog Cancel, inputs sit at 40px with on-surface labels, the selected card
 wears a 2px primary border, dialogs are bordered with a divided header
 (headline-md title, optional body-sm description, both wired into the aria
 labelling) and a tinted footer band, and `card-interactive-2`'s selected
-reading is confirmed. Where the screens say nothing, the sticker sheet's
+reading is confirmed; the help-shortcuts screen extends the dialog shell
+with the `Modal` `size` prop (its max-w-2xl panel) and contributes the
+shortcut-row and command-chip recipes alongside `ui-kbd`. Where the screens
+say nothing, the sticker sheet's
 `modal-alert`/`modal-drawer` and `card-action` stand as listed; where screen
 and spec text disagree (the digest's `rounded-md` card, inputs' 1px focus
 ring), the spec text wins and the divergence is noted in comments.
