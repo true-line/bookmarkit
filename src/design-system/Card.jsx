@@ -6,7 +6,18 @@ import React from "react";
 // card-interactive and card-interactive-2. The manager screen confirms the
 // interactive recipe: a white card with a hairline border that raises and
 // steps its border to outline on hover, and the "-2" reading as the selected
-// state — a 2px primary border with aria-pressed at the call site.
+// state — a 2px primary border with aria-pressed rendered by the component.
+
+// Events coming from nested interactive content belong to that content — a
+// nested link or button never also fires the card action (the keyboard route
+// is the sneaky one: a child button's Enter would otherwise bubble straight
+// into the card's handler).
+function fromNestedControl(event) {
+  return (
+    event.target !== event.currentTarget &&
+    event.target.closest("a, button, input, select, textarea, [role='button']") !== null
+  );
+}
 
 export function Card({
   variant = "elevated",
@@ -17,6 +28,17 @@ export function Card({
   ...props
 }) {
   const interactive = variant === "interactive" || variant === "interactive-selected";
+
+  // One activation path for click and keyboard.
+  function handleCardActivation(event) {
+    if (!onClick || fromNestedControl(event)) return;
+    if (event.type === "keydown") {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+    }
+    onClick(event);
+  }
+
   if (interactive) {
     return (
       <div
@@ -26,17 +48,12 @@ export function Card({
         // way a button would.
         role="button"
         tabIndex={0}
+        aria-pressed={variant === "interactive-selected"}
         className={`ui-card ui-card--interactive ${
           variant === "interactive-selected" ? "ui-card--selected" : ""
         } ${className}`}
-        onClick={onClick}
-        onKeyDown={(event) => {
-          if (!onClick) return;
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            onClick(event);
-          }
-        }}
+        onClick={handleCardActivation}
+        onKeyDown={handleCardActivation}
         {...props}
       >
         {children}

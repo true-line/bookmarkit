@@ -22,10 +22,12 @@ import { useFocusTrap } from "../hooks/useFocusTrap.js";
 
 const EXIT_MS = 150; // mirrors --ui-duration-exit; keep in step with tokens.css
 
-// Variant is a closed set, so tables keep the wiring decision-free.
+// Variant is a closed set, so tables keep the wiring decision-free. Alert
+// carries its modifier class so the stylesheet's error-toned heading rule
+// (.ui-modal-panel--alert) actually applies.
 const PANEL_CLASS = {
   standard: "ui-modal-panel",
-  alert: "ui-modal-panel",
+  alert: "ui-modal-panel ui-modal-panel--alert",
   drawer: "ui-drawer-panel",
 };
 const ROLE = {

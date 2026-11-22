@@ -5,8 +5,8 @@ import { UiScope } from "./story-decorator.jsx";
 // Card stories mirroring the screens' canonical composition: card-elevated,
 // card-action (sticker-sheet-listed, unexercised by the screens),
 // card-interactive and card-interactive-2 — the selected reading the manager
-// screen confirms (2px primary border, aria-pressed at the call site). The
-// body mirrors the bookmark card: headline-sm title, Fira Code URL, tonal
+// screen confirms (2px primary border, aria-pressed rendered by the
+// component). The body mirrors the bookmark card: headline-sm title, Fira Code URL, tonal
 // label-sm tag chips.
 
 const meta = {
@@ -82,7 +82,7 @@ export const Interactive = {
 export const InteractiveSelected = {
   render: () => (
     <div style={{ maxWidth: "420px" }}>
-      <Card variant="interactive-selected" onClick={() => {}} aria-pressed="true">
+      <Card variant="interactive-selected" onClick={() => {}}>
         <CardBody />
       </Card>
     </div>
