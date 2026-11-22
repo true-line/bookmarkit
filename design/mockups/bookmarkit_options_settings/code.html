@@ -200,4 +200,110 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
             </label>
 
             <label class="flex flex-col gap-1.5">
-              <span data-design-text-token="label-md" class="text-label-md text-li
+              <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">API Key</span>
+              <input type="password" placeholder="Enter API key" autocomplete="off" class="w-full min-h-10 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+            </label>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <label for="model-id-input" data-design-text-token="label-md" class="text-label-md text-light-on-surface">Model</label>
+              <button type="button" class="text-label-sm text-light-primary underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">Refresh list</button>
+            </div>
+            <input id="model-id-input" type="text" dir="ltr" placeholder="Type a model id, or load the list" class="w-full min-h-10 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 font-mono text-mono-sm text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+          </div>
+
+          <label class="flex flex-col gap-1.5">
+            <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">API key encryption passphrase</span>
+            <input type="password" placeholder="Passphrase (min 6 characters)" aria-describedby="passphrase-hint" class="w-full min-h-10 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+            <span id="passphrase-hint" data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Optional session lock for your stored API key.</span>
+          </label>
+        </section>
+
+        <!-- Appearance & Accessibility -->
+        <section aria-labelledby="section-appearance" class="flex flex-col gap-4 pb-6 border-b border-light-outline-variant">
+          <h2 id="section-appearance" data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Appearance &amp; accessibility</h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter-md items-end">
+            <label class="flex flex-col gap-1.5">
+              <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Theme</span>
+              <select class="w-full min-h-10 rounded border border-light-outline bg-light-surface-container-lowest px-3 py-2 text-body-md text-light-on-surface focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+                <option selected>Default (Light)</option>
+                <option>Dark Slate</option>
+                <option>High Contrast</option>
+              </select>
+            </label>
+
+            <div class="flex flex-col gap-1.5">
+              <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Custom theme (JSON / YAML)</span>
+              <div class="flex items-center gap-3">
+                <button type="button" class="min-h-10 px-4 py-2 rounded bg-light-surface-container text-light-primary border border-light-outline-variant hover:bg-light-surface-container-high text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Choose File</button>
+                <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">No file chosen</span>
+              </div>
+            </div>
+          </div>
+
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" checked class="mt-0.5 rounded-sm border-light-outline text-light-primary-container focus:ring-light-primary">
+            <span class="flex flex-col gap-0.5">
+              <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Show 3D effects</span>
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Rendered locally and automatically paused when reduced motion is enabled.</span>
+            </span>
+          </label>
+        </section>
+
+        <!-- Privacy & Agent Access -->
+        <section aria-labelledby="section-privacy" class="flex flex-col gap-4">
+          <h2 id="section-privacy" data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Privacy &amp; browser agents</h2>
+
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" class="mt-0.5 rounded-sm border-light-outline text-light-primary-container focus:ring-light-primary">
+            <span class="flex flex-col gap-0.5">
+              <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Load site icons from the web</span>
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Off by default: no icon is fetched over the network. Uses browser cache or neutral placeholders otherwise.</span>
+            </span>
+          </label>
+
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" class="mt-0.5 rounded-sm border-light-outline text-light-primary-container focus:ring-light-primary">
+            <span class="flex flex-col gap-0.5">
+              <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Let browser agents search my bookmarks (WebMCP)</span>
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Off by default. Exposes read-only search and folder listing while this tab stays open.</span>
+            </span>
+          </label>
+        </section>
+
+        <!-- About, Privacy & Licensing -->
+        <section aria-labelledby="section-legal" class="flex flex-col gap-3 pt-6 border-t border-light-outline-variant">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="section-legal" data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">About, Privacy &amp; Licensing</h2>
+            <span data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant">v2.4.0 · MIT License</span>
+          </div>
+          <p data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">
+            BookmarkIt runs locally in your browser with zero telemetry or cloud sync. Network requests occur only when you trigger optional AI suggestions with your own key.
+          </p>
+          <div class="flex flex-wrap items-center gap-2.5 pt-1">
+            <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-3.5 py-1.5 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+              <span class="material-symbols-outlined text-[16px] text-light-on-surface-variant" aria-hidden="true">policy</span>
+              <span data-design-text-token="label-md" class="text-label-md">Privacy Policy</span>
+            </button>
+            <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-3.5 py-1.5 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+              <span class="material-symbols-outlined text-[16px] text-light-on-surface-variant" aria-hidden="true">description</span>
+              <span data-design-text-token="label-md" class="text-label-md">Open-Source Licenses</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Footer -->
+      <footer class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-light-surface-container-low border-t border-light-outline-variant rounded-b-lg">
+        <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Changes save to this browser</span>
+        <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="inline-flex items-center justify-center min-h-9 px-5 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span data-design-text-token="label-lg" class="text-label-lg">Done</span>
+        </button>
+      </footer>
+    </dialog>
+  </div>
+
+
+</body></html>
