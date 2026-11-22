@@ -193,4 +193,79 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
             <span class="material-symbols-outlined text-[18px] text-light-primary" aria-hidden="true">bookmarks</span>
             <span data-design-text-token="label-md" class="text-label-md truncate">All Bookmarks</span>
           </span>
-          <span data-design-text-token="lab
+          <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant tabular-nums">0</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-9 px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">calendar_today</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Weekly Digest</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">0</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-9 px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">visibility_off</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Never Opened</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">0</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-9 px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">label_off</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Untagged</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">0</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-9 px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">link_off</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Broken Links</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">0</span>
+        </button>
+      </nav>
+
+      <div class="mt-auto pt-4 border-t border-light-outline-variant flex flex-col gap-1 text-start">
+        <button type="button" class="w-full flex items-center gap-2.5 min-h-9 px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">swap_vert</span>
+          <span data-design-text-token="label-md" class="text-label-md">Import / Export</span>
+        </button>
+        <button type="button" class="w-full flex items-center gap-2.5 min-h-9 px-2.5 py-1.5 rounded text-light-on-surface hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">settings</span>
+          <span data-design-text-token="label-md" class="text-label-md">Options</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Empty Shelf Centerpiece -->
+    <main class="flex-1 min-w-0 flex items-center justify-center p-8">
+      <div class="max-w-md w-full flex flex-col items-center text-center gap-5">
+        <!-- Layered Card Stack Mark -->
+        <div class="relative w-24 h-24 flex items-center justify-center" aria-hidden="true">
+          <div class="w-20 h-20 rounded-lg bg-light-surface-container border border-light-outline-variant -rotate-6 absolute"></div>
+          <div class="w-20 h-20 rounded-lg bg-light-surface-container-lowest border border-light-outline-variant shadow-md flex items-center justify-center relative">
+            <span class="material-symbols-outlined text-[36px] text-light-primary" style="font-variation-settings: &#39;FILL&#39; 1;">bookmarks</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <h1 data-design-text-token="headline-lg" class="font-headline text-headline-lg text-light-on-surface text-balance">Your bookmark shelf is empty</h1>
+          <p data-design-text-token="body-md" class="text-body-md text-light-on-surface-variant text-pretty">Save your first link or import an existing Chrome, Firefox, or JSON export. Everything stays local to your browser.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-1">
+          <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="inline-flex items-center justify-center gap-2 min-h-10 px-5 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
+            <span>Add Bookmark</span>
+          </button>
+          <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-2 min-h-10 px-5 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">upload_file</span>
+            <span>Import Bookmarks</span>
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+
+</body></html>
