@@ -1,0 +1,664 @@
+/*
+ * Unified UI design system components (#238, Storybook-first).
+ *
+ * Every rule styles itself from the --ui-* tokens in tokens.css and lays out
+ * with CSS logical properties (inline start/end, no physical left/right), so
+ * `dir="rtl"` mirrors automatically — that is the spec's i18n contract, not a
+ * per-component opt-in. Buttons, chips and multi-word labels never get fixed
+ * widths or nowrap: translated strings run 30–40% longer and must wrap.
+ *
+ * Component classes are `ui-*`, matching the sticker-sheet variants named in
+ * the spec (button-primary, card-elevated, input-field-text, modal-standard,
+ * typography-display, ...). The sticker-sheet HTML files were not included in
+ * the supplied archive, so the visual decisions behind each class come from
+ * the spec's token sections.
+ */
+
+/* ---------------------------------------------------------------- root -- */
+
+/* Opt-in scope root: canvas color, ink color, base family. The Storybook
+   story decorator (and later a migrated surface) renders content under it. */
+.ui-root {
+  background: var(--ui-background);
+  color: var(--ui-on-background);
+  font-family: var(--ui-font-body);
+}
+
+/* One focus contract for every interactive element: a 2px ring in the theme's
+   primary role, ≥ 3:1 against its surface (spec: accessible focus rings). */
+.ui-root :is(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+/* Status is never color alone — these pair with icon and text at call sites. */
+.ui-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Raw URLs never reverse in RTL locales: force the reading direction while
+   keeping punctuation flow via unicode-bidi. Pair with dir="ltr". */
+.ui-url {
+  font: var(--ui-type-mono-md);
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+
+/* ------------------------------------------------------- typography ----- */
+
+/* The spec's type scale. Letter-spacing is the one thing the font shorthand
+   in tokens.css cannot carry, so each class states its own. */
+.ui-type-display-lg {
+  font: var(--ui-type-display-lg);
+  letter-spacing: -0.5px;
+}
+
+.ui-type-display-lg-mobile {
+  font: var(--ui-type-display-lg-mobile);
+  letter-spacing: -0.25px;
+}
+
+.ui-type-headline-lg {
+  font: var(--ui-type-headline-lg);
+  letter-spacing: -0.25px;
+}
+
+.ui-type-headline-md {
+  font: var(--ui-type-headline-md);
+  letter-spacing: -0.1px;
+}
+
+.ui-type-headline-sm {
+  font: var(--ui-type-headline-sm);
+  letter-spacing: 0;
+}
+
+.ui-type-body-lg {
+  font: var(--ui-type-body-lg);
+  letter-spacing: 0;
+}
+
+.ui-type-body-md {
+  font: var(--ui-type-body-md);
+  letter-spacing: 0;
+}
+
+.ui-type-body-sm {
+  font: var(--ui-type-body-sm);
+  letter-spacing: 0;
+}
+
+.ui-type-label-lg {
+  font: var(--ui-type-label-lg);
+  letter-spacing: 0;
+}
+
+.ui-type-label-md {
+  font: var(--ui-type-label-md);
+  letter-spacing: 0;
+}
+
+.ui-type-label-sm {
+  font: var(--ui-type-label-sm);
+  letter-spacing: 0.1px;
+}
+
+.ui-type-mono-md {
+  font: var(--ui-type-mono-md);
+  letter-spacing: 0;
+}
+
+.ui-type-mono-sm {
+  font: var(--ui-type-mono-sm);
+  letter-spacing: 0;
+}
+
+/* Inline <kbd> keycap chips: 4px radius, Fira Code, white surface with a
+   hairline (the help-shortcuts screen's recipe). */
+.ui-kbd {
+  font: var(--ui-type-mono-sm);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  padding: 2px 8px;
+}
+
+/* Provider status pills: mono copy in a full-radius hairline. */
+.ui-pill {
+  font: var(--ui-type-mono-sm);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-full);
+  background: var(--ui-surface-container-low);
+  color: var(--ui-on-surface-variant);
+  padding: 2px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-xs);
+}
+
+/* --------------------------------------------------------------- button -- */
+
+/* Sticker sheet: button-primary, button-icon, button-with-icon. The screen
+   mockups extend the vocabulary with secondary, tertiary and destructive, and
+   fix the filled-button recipe: rest on the *container* role and step to the
+   base role on hover (primary-container → primary, tertiary-container →
+   tertiary), with shadow-sm. The 8px radius and 36px minimum height are the
+   spec's control contract; coarse pointers raise every target to 44px at the
+   bottom of this file. Text wraps instead of ellipsising — i18n titles run
+   long. */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-gutter-sm);
+  min-height: 36px;
+  padding-inline: var(--ui-space-gutter-md);
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius);
+  font: var(--ui-type-label-lg);
+  color: var(--ui-on-surface);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-state) var(--ui-ease-state),
+    color var(--ui-duration-state) var(--ui-ease-state),
+    border-color var(--ui-duration-state) var(--ui-ease-state);
+}
+
+.ui-button--primary {
+  background: var(--ui-primary-container);
+  color: var(--ui-on-primary);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.ui-button--primary:hover:enabled {
+  /* The screens hover primary-container → primary (a darkening in light).
+     color-mix keeps that darkening and stays sensible in dark. */
+  background: color-mix(
+    in srgb,
+    var(--ui-primary-container) var(--ui-hover-mix-amount),
+    var(--ui-hover-mix-color)
+  );
+}
+
+/* The unified AI-assist accent: tertiary marks every model-powered action,
+   so users can tell AI features from local, offline ones. Suggest buttons
+   rest on the container role at label-md size, per the screens. */
+.ui-button--tertiary {
+  background: var(--ui-tertiary-container);
+  color: var(--ui-on-tertiary);
+  font: var(--ui-type-label-md);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.ui-button--tertiary:hover:enabled {
+  background: color-mix(
+    in srgb,
+    var(--ui-tertiary-container) var(--ui-hover-mix-amount),
+    var(--ui-hover-mix-color)
+  );
+}
+
+/* Screens: button-secondary — the tonal bordered Cancel beside the crimson
+   CTA in every dialog footer. */
+.ui-button--secondary {
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface);
+  border-color: var(--ui-outline-variant);
+}
+
+.ui-button--secondary:hover:enabled {
+  background: var(--ui-surface-container-high);
+}
+
+/* Screens: button-with-icon and the selection-bar actions — the outlined
+   reading: white surface, hairline border, icon and label. */
+.ui-button--outlined {
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  border-color: var(--ui-outline-variant);
+}
+
+.ui-button--outlined:hover:enabled {
+  background: var(--ui-surface-container);
+}
+
+/* Screens: button-destructive — filled danger with a shadow, for delete
+   confirmations. Hover steps darker (the screens hover to the error role). */
+.ui-button--destructive {
+  background: var(--ui-danger);
+  color: var(--ui-on-primary);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.ui-button--destructive:hover:enabled {
+  background: color-mix(
+    in srgb,
+    var(--ui-danger) var(--ui-hover-mix-amount),
+    var(--ui-hover-mix-color)
+  );
+}
+
+/* The screens dress the filled buttons for light only — their hardwired
+   on-primary/on-tertiary text is tone 20, which sits illegibly on the same
+   fills in dark. Dark takes the M3 on-container roles instead: the text
+   tokens actually paired with these fills in each theme. */
+[data-ui-theme="dark"] .ui-button--primary {
+  color: var(--ui-on-primary-container);
+}
+
+[data-ui-theme="dark"] .ui-button--tertiary {
+  color: var(--ui-on-tertiary-container);
+}
+
+[data-ui-theme="dark"] .ui-button--destructive {
+  color: var(--ui-on-error-container);
+}
+
+/* Disabled reads as unavailable without relying on color alone: contrast of
+   both the fill and the label drops against the surface. */
+.ui-button:disabled {
+  background: color-mix(in srgb, var(--ui-on-surface) 12%, transparent);
+  color: color-mix(in srgb, var(--ui-on-surface) 38%, transparent);
+  cursor: not-allowed;
+}
+
+.ui-spinner {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: var(--ui-radius-full);
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-block-start-color: currentColor;
+  animation: ui-spin 800ms linear infinite;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sticker sheet: button-icon. Tonal and bordered per the screens (surface
+   container fill, outline-variant hairline); the label is the accessible
+   name, never omitted. */
+.ui-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface-variant);
+  cursor: pointer;
+  transition: background-color var(--ui-duration-state) var(--ui-ease-state);
+}
+
+.ui-icon-button:hover:enabled {
+  background: var(--ui-surface-container-high);
+}
+
+.ui-icon-button:disabled {
+  color: color-mix(in srgb, var(--ui-on-surface) 38%, transparent);
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------------- card -- */
+
+/* Sticker sheet: card-elevated, card-action, card-interactive,
+   card-interactive-2. Pure white cards on the alabaster canvas, framed by a
+   1px outline-variant hairline with the spec's ambient shadow. */
+.ui-card {
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  padding: var(--ui-space-gutter-md);
+  box-shadow: var(--ui-shadow-card);
+}
+
+/* Interactive cards raise on hover and keep the shared focus ring. The row's
+   flex-end alignment is logical — it tracks inline-end in RTL automatically. */
+.ui-card--interactive {
+  cursor: pointer;
+  transition:
+    box-shadow var(--ui-duration-state) var(--ui-ease-state),
+    border-color var(--ui-duration-state) var(--ui-ease-state);
+}
+
+.ui-card--interactive:hover {
+  box-shadow: var(--ui-shadow-card-hover);
+  border-color: var(--ui-outline);
+}
+
+/* Sticker sheet: card-interactive-2 — the selected/checked reading,
+   confirmed by the screens: a 2px primary border and no fill change, with
+   aria-pressed carried by the call site. */
+.ui-card--selected {
+  border-width: 2px;
+  border-color: var(--ui-primary);
+}
+
+/* Canonical card chips (the tag row on bookmark cards): 4px radius tonal
+   chips at label-sm. */
+.ui-tag {
+  font: var(--ui-type-label-sm);
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface-variant);
+  border-radius: var(--ui-radius-sm);
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-space-gutter-sm);
+  margin-block-start: var(--ui-space-gutter-md);
+}
+
+/* ---------------------------------------------------------- input field -- */
+
+/* Sticker sheet: input-field-text, input-field-icon. The 1px outline border
+   (#585F69 on light) is the spec's ≥ 3:1 boundary token, not a decorative
+   hairline; focus doubles the emphasis by turning the border primary under
+   the shared ring. */
+.ui-field {
+  display: grid;
+  gap: 6px; /* the screens' gap-1.5 between label, control and message */
+}
+
+.ui-field > label {
+  font: var(--ui-type-label-md);
+  color: var(--ui-on-surface);
+}
+
+.ui-field-control {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+}
+
+.ui-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px; /* the screens' min-h-10 for form fields */
+  padding-inline: 14px; /* the screens' px-3.5 */
+  border: 1px solid var(--ui-outline);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  font: var(--ui-type-body-md);
+  transition: border-color var(--ui-duration-state) var(--ui-ease-state);
+}
+
+.ui-input::placeholder {
+  color: var(--ui-on-surface-variant);
+}
+
+.ui-input:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+  border-color: var(--ui-primary);
+}
+
+.ui-input[aria-invalid="true"],
+.ui-input--invalid {
+  border-color: var(--ui-error);
+}
+
+/* The screens' input-field-valid: success border while the value is good. */
+.ui-input--valid {
+  border-color: var(--ui-success);
+}
+
+.ui-input--valid:focus-visible {
+  border-color: var(--ui-success);
+}
+
+/* URL and favicon inputs carry Fira Code, per the screens. */
+.ui-input--mono {
+  font: var(--ui-type-mono-sm);
+}
+
+.ui-input:disabled {
+  background: var(--ui-surface-container-high);
+  color: color-mix(in srgb, var(--ui-on-surface) 38%, transparent);
+  border-color: var(--ui-outline-variant);
+  cursor: not-allowed;
+}
+
+.ui-field-icon {
+  display: inline-flex;
+  color: var(--ui-on-surface-variant);
+  flex: none;
+}
+
+/* Validation pairs the color with an explicit message (and icon at the call
+   site); the text is what assistive tech and colorblind users both read. */
+.ui-field-error {
+  font: var(--ui-type-body-sm);
+  color: var(--ui-error);
+}
+
+/* The screens' input-field-valid: success border on the field and an
+   explicit status line, still color-plus-text, never color alone. */
+.ui-field-success {
+  font: var(--ui-type-body-sm);
+  color: var(--ui-success);
+}
+
+.ui-field-hint {
+  font: var(--ui-type-body-sm);
+  color: var(--ui-on-surface-variant);
+}
+
+/* ---------------------------------------------------------------- modal -- */
+
+/* Sticker sheet: modal-standard, modal-alert, modal-drawer. Panels sit above
+   the spec's scrim, carry the 12px dialog radius, and enter over 200ms /
+   exit over 150ms with the spec's cubic-beziers. Focus trapping, Escape
+   handling and focus restoration reuse the app's useFocusTrap hook so the
+   keyboard contract matches the existing dialogs exactly. */
+.ui-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--ui-dialog-scrim);
+  display: grid;
+  place-items: center;
+  padding: var(--ui-space-gutter-lg);
+  animation: ui-scrim-in var(--ui-duration-enter) var(--ui-ease-enter);
+}
+
+.ui-modal-scrim[data-closing="true"] {
+  animation: ui-scrim-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
+}
+
+.ui-modal-panel {
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-dialog);
+  width: min(576px, 100%);
+  max-height: min(90dvh, 100%);
+  display: flex;
+  flex-direction: column;
+  animation: ui-panel-in var(--ui-duration-enter) var(--ui-ease-enter);
+}
+
+.ui-modal-scrim[data-closing="true"] .ui-modal-panel {
+  animation: ui-panel-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
+}
+
+.ui-modal-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-space-gutter-sm);
+  padding: var(--ui-space-gutter-lg) var(--ui-space-gutter-lg) var(--ui-space-gutter-md);
+  border-block-end: 1px solid var(--ui-outline-variant);
+}
+
+.ui-modal-heading h2 {
+  font: var(--ui-type-headline-md);
+  letter-spacing: -0.1px;
+  color: var(--ui-on-surface);
+  margin: 0;
+}
+
+.ui-modal-description {
+  font: var(--ui-type-body-sm);
+  color: var(--ui-on-surface-variant);
+  margin: var(--ui-space-gutter-xs) 0 0;
+}
+
+/* Alert dialogs wear the error role on their heading when destructive. The
+   screens confirm destructive actions through modal-standard with a
+   destructive footer button, so this error heading is the alertdialog
+   reading — kept for the sticker sheet's modal-alert. */
+.ui-modal-panel--alert .ui-modal-heading h2 {
+  color: var(--ui-error);
+}
+
+.ui-modal-body {
+  font: var(--ui-type-body-md);
+  color: var(--ui-on-surface);
+  padding: var(--ui-space-gutter-md) var(--ui-space-gutter-lg);
+  overflow-y: auto;
+  margin: 0;
+}
+
+.ui-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--ui-space-gutter-sm);
+  padding: var(--ui-space-gutter-md) var(--ui-space-gutter-lg);
+  background: var(--ui-surface-container-low);
+  border-block-start: 1px solid var(--ui-outline-variant);
+  border-end-end-radius: var(--ui-radius-lg);
+  border-end-start-radius: var(--ui-radius-lg);
+}
+
+/* Sticker sheet: modal-drawer — an inline-start sheet. Inset, radius corners
+   and the slide are all logical: the border-radius sets the start edge square
+   and the end edge rounded, and the slide direction flips via the custom
+   property so RTL drawers enter from where RTL readers expect. */
+.ui-drawer-panel {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 50;
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  width: min(360px, 85vw);
+  max-height: 100dvh;
+  border-radius: 0;
+  border-start-end-radius: var(--ui-radius-lg);
+  border-end-end-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-card-hover);
+  display: flex;
+  flex-direction: column;
+  animation: ui-drawer-in var(--ui-duration-enter) var(--ui-ease-enter);
+  --ui-drawer-from: -100%;
+}
+
+.ui-modal-scrim[data-closing="true"] .ui-drawer-panel {
+  animation: ui-drawer-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
+}
+
+[dir="rtl"] .ui-drawer-panel {
+  --ui-drawer-from: 100%;
+}
+
+@keyframes ui-drawer-in {
+  from {
+    translate: var(--ui-drawer-from) 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes ui-drawer-out {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--ui-drawer-from) 0;
+  }
+}
+
+@keyframes ui-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-scrim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ------------------------------------------------------- interaction a11y - */
+
+/* Coarse pointers get the spec's 44px targets. */
+@media (pointer: coarse) {
+  .ui-button,
+  .ui-icon-button,
+  .ui-input {
+    min-height: 44px;
+  }
+
+  .ui-icon-button {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Motion collapses entirely under prefers-reduced-motion: reduce — hover and
+   focus stay instant, dialog and drawer transitions become cuts. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-root *,
+  .ui-root *::before,
+  .ui-root *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
