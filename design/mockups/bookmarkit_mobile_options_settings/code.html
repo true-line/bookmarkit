@@ -200,4 +200,98 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
       <label class="flex flex-col gap-1.5">
         <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Encrypted API Key</span>
         <input type="password" dir="ltr" value="sk-proj-••••••••••••••••••••" class="w-full min-h-11 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 font-mono text-mono-sm text-light-on-surface focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
-        <span data-design-text-token="body-sm" class="text-body-sm text-light-on
+        <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Stored locally with AES-GCM passphrase encryption.</span>
+      </label>
+    </section>
+
+    <!-- Appearance & Accessibility -->
+    <section class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col gap-4">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[20px] text-light-primary" aria-hidden="true">tune</span>
+        <h2 data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Appearance &amp; i18n</h2>
+      </div>
+
+      <label class="flex flex-col gap-1.5">
+        <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Theme</span>
+        <select class="w-full min-h-11 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
+          <option selected>System default</option>
+          <option>Light (Alabaster)</option>
+          <option>Dark (Slate)</option>
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1.5">
+        <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Interface Language</span>
+        <select class="w-full min-h-11 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
+          <option selected>English (LTR)</option>
+          <option>العربية (RTL)</option>
+          <option>עברית (RTL)</option>
+          <option>日本語 (LTR)</option>
+        </select>
+      </label>
+
+      <label class="flex items-center justify-between gap-3 min-h-11 py-1 cursor-pointer">
+        <div>
+          <span data-design-text-token="label-md" class="text-label-md text-light-on-surface block">Reduce motion</span>
+          <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant block">Disable drawer and card transitions</span>
+        </div>
+        <input type="checkbox" checked class="w-5 h-5 rounded border-light-outline text-light-primary focus:ring-light-primary">
+      </label>
+    </section>
+
+    <!-- Privacy & WebMCP -->
+    <section class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col gap-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[20px] text-light-on-surface-variant" aria-hidden="true">shield</span>
+        <h2 data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Privacy &amp; Agents</h2>
+      </div>
+
+      <label class="flex items-center justify-between gap-3 min-h-11 py-1 cursor-pointer">
+        <div>
+          <span data-design-text-token="label-md" class="text-label-md text-light-on-surface block">Enable WebMCP Tools</span>
+          <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant block">Allow browser agents to search locally</span>
+        </div>
+        <input type="checkbox" checked class="w-5 h-5 rounded border-light-outline text-light-primary focus:ring-light-primary">
+      </label>
+    </section>
+
+    <!-- About, Privacy & Licensing -->
+    <section class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="material-symbols-outlined text-[20px] text-light-on-surface-variant shrink-0" aria-hidden="true">policy</span>
+          <h2 data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface truncate">Privacy &amp; Licensing</h2>
+        </div>
+        <span data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant shrink-0">v2.4.0 · MIT</span>
+      </div>
+
+      <p data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">
+        Zero telemetry or cloud sync. Data stays in your browser; AI requests only run when you supply a key.
+      </p>
+
+      <div class="flex flex-col gap-2 pt-1">
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="w-full inline-flex items-center justify-between min-h-11 px-3.5 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span data-design-text-token="label-md" class="text-label-md">Privacy Policy</span>
+          <span class="material-symbols-outlined text-[18px] text-light-on-surface-variant" aria-hidden="true">chevron_right</span>
+        </button>
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="w-full inline-flex items-center justify-between min-h-11 px-3.5 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span data-design-text-token="label-md" class="text-label-md">Open-Source Licenses</span>
+          <span class="material-symbols-outlined text-[18px] text-light-on-surface-variant" aria-hidden="true">chevron_right</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky Bottom Action Footer -->
+  <footer class="fixed bottom-0 inset-x-0 z-20 bg-light-surface-container-low/95 backdrop-blur-sm border-t border-light-outline-variant px-4 py-3 flex items-center gap-3">
+    <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="flex-1 inline-flex items-center justify-center min-h-11 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+      <span data-design-text-token="label-lg" class="text-label-lg">Reset</span>
+    </button>
+    <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="flex-1 inline-flex items-center justify-center min-h-11 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+      <span data-design-text-token="label-lg" class="text-label-lg">Save Settings</span>
+    </button>
+  </footer>
+
+
+
+</body></html>
