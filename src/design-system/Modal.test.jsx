@@ -112,6 +112,24 @@ describe("Modal (unified design system)", () => {
     );
   });
 
+  it("labels the dialog with the title and describes it with the header description", () => {
+    render(
+      <Modal
+        title="Edit Bookmark"
+        description="Update details, organize into folders, or generate AI suggestions."
+        onClose={() => {}}
+      />
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(document.getElementById(dialog.getAttribute("aria-labelledby"))).toHaveTextContent(
+      "Edit Bookmark"
+    );
+    const describedBy = dialog.getAttribute("aria-describedby");
+    expect(document.getElementById(describedBy)).toHaveTextContent(
+      "Update details, organize into folders, or generate AI suggestions."
+    );
+  });
+
   it("renders the drawer variant as a dialog on the inline-start sheet", () => {
     render(
       <Modal variant="drawer" title="Folders" onClose={() => {}}>

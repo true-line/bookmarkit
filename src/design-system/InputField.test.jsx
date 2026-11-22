@@ -28,6 +28,27 @@ describe("InputField (unified design system)", () => {
     expect(document.getElementById(describedBy)).toHaveTextContent("Enter a title before saving.");
   });
 
+  it("pairs the valid state with a success border, check icon and status line", () => {
+    render(
+      <InputField
+        id="url"
+        label="URL"
+        dir="ltr"
+        mono
+        validity="valid"
+        defaultValue="https://ghostty.org/docs/help/macos-login-shells"
+        success="Valid public http(s) URL"
+      />
+    );
+    const input = screen.getByLabelText("URL");
+    expect(input).toHaveClass("ui-input--valid");
+    expect(input).not.toHaveAttribute("aria-invalid");
+    expect(input.parentElement.querySelector(".ui-field-icon")).not.toBeNull();
+    const status = document.getElementById(input.getAttribute("aria-describedby"));
+    expect(status).toHaveAttribute("role", "status");
+    expect(status).toHaveTextContent("Valid public http(s) URL");
+  });
+
   it("defaults to dir=auto so user-entered copy reads in its own direction", () => {
     render(<InputField id="title" label="Title" />);
     expect(screen.getByLabelText("Title")).toHaveAttribute("dir", "auto");

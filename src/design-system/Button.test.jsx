@@ -17,6 +17,19 @@ describe("Button (unified design system)", () => {
     render(<Button intent="tertiary">Suggest Tags</Button>);
     expect(screen.getByRole("button", { name: "Suggest Tags" })).toHaveClass("ui-button--tertiary");
   });
+
+  it("exposes the screens' dialog and destructive intents", () => {
+    render(
+      <>
+        <Button intent="secondary">Cancel</Button>
+        <Button intent="destructive">Delete</Button>
+        <Button intent="outlined">Asc</Button>
+      </>
+    );
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveClass("ui-button--secondary");
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("ui-button--destructive");
+    expect(screen.getByRole("button", { name: "Asc" })).toHaveClass("ui-button--outlined");
+  });
 });
 
 describe("IconButton (unified design system)", () => {
