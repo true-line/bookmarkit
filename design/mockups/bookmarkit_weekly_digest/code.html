@@ -303,4 +303,90 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
 
       <div class="p-6 max-w-6xl w-full mx-auto flex flex-col gap-6 text-start">
         <!-- 3-Part Summary Strip -->
-        <section aria-label="Digest summary" class="grid grid-cols-1 md:grid-cols-3 gap-gu
+        <section aria-label="Digest summary" class="grid grid-cols-1 md:grid-cols-3 gap-gutter-md items-stretch">
+          <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col justify-between gap-2">
+            <span data-design-text-token="label-md" class="text-label-md text-light-on-surface-variant">Arrived this week</span>
+            <div class="flex items-baseline justify-between gap-2">
+              <span data-design-text-token="display-lg-mobile" class="font-headline text-display-lg-mobile text-light-on-surface tabular-nums">14</span>
+              <span data-design-text-token="label-sm" class="text-label-sm text-light-primary">2 topic groups</span>
+            </div>
+          </article>
+
+          <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col justify-between gap-2">
+            <span data-design-text-token="label-md" class="text-label-md text-light-on-surface-variant">Settled &amp; never opened</span>
+            <div class="flex items-baseline justify-between gap-2">
+              <span data-design-text-token="display-lg-mobile" class="font-headline text-display-lg-mobile text-light-on-surface tabular-nums">183</span>
+              <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant">Older than 7 days</span>
+            </div>
+          </article>
+
+          <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col justify-between gap-2">
+            <span data-design-text-token="label-md" class="text-label-md text-light-on-surface-variant">Needs tags</span>
+            <div class="flex items-baseline justify-between gap-2">
+              <span data-design-text-token="display-lg-mobile" class="font-headline text-display-lg-mobile text-light-on-surface tabular-nums">42</span>
+              <span data-design-text-token="label-sm" class="text-label-sm text-light-tertiary">Ready for triage</span>
+            </div>
+          </article>
+        </section>
+
+        <!-- Topic Cluster 1 -->
+        <section aria-labelledby="cluster-ai" class="flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-2">
+            <h2 id="cluster-ai" data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">AI &amp; Agent Engineering</h2>
+            <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant tabular-nums">8 bookmarks</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter-md">
+            <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm flex items-start gap-3">
+              <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-tertiary">
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">article</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Writing a good CLAUDE.md | HumanLayer Blog</h3>
+                <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://www.humanlayer.dev/blog/writing-a-good-claude-md</p>
+              </div>
+            </article>
+            <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm flex items-start gap-3">
+              <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-tertiary">
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">science</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Chroma Context-1: Self-Editing Search Agent</h3>
+                <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://www.trychroma.com/research/context-1</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Topic Cluster 2 -->
+        <section aria-labelledby="cluster-cli" class="flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-2">
+            <h2 id="cluster-cli" data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Terminal &amp; Shell Tooling</h2>
+            <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant tabular-nums">6 bookmarks</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter-md">
+            <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm flex items-start gap-3">
+              <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-on-surface-variant">
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">terminal</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">macOS Login Shells — Ghostty Help</h3>
+                <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://ghostty.org/docs/help/macos-login-shells</p>
+              </div>
+            </article>
+            <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm flex items-start gap-3">
+              <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-on-surface-variant">
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">terminal</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Frequently Asked Questions — kitty</h3>
+                <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://sw.kovidgoyal.net/kitty/faq/</p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+
+</body></html>
