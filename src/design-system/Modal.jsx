@@ -33,7 +33,15 @@ const EXIT_MS = 150; // mirrors --ui-duration-exit; keep in step with tokens.css
 const PANEL_CLASS = {
   standard: "ui-modal-panel",
   alert: "ui-modal-panel ui-modal-panel--alert",
-  drawer:   alert: "alertdialog",
+  drawer: "ui-drawer-panel",
+};
+const PANEL_SIZE_CLASS = {
+  md: "",
+  "2xl": " ui-modal-panel--2xl",
+};
+const ROLE = {
+  standard: "dialog",
+  alert: "alertdialog",
   drawer: "dialog",
 };
 
