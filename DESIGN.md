@@ -93,6 +93,26 @@ from closing its parent. App-level shortcuts are declared through
 `useKeyboardShortcuts`, which skips typing contexts and is suspended entirely
 while any dialog is open.
 
+## The unified design system (Storybook-first)
+
+`src/design-system/` is the additive implementation of the supplied unified UI
+spec (#238): `tokens.css` defines the light/dark palettes, the Red Hat Text /
+Radio Canada Big / Fira Code type scale, the 4px/8px spacing rhythm, radii,
+elevation and motion as `--ui-*` variables scoped to a `[data-ui-theme]` root,
+and the components (Button, Card, InputField, Modal, Typography) style
+themselves from those tokens with CSS logical properties, so `dir="rtl"`
+mirrors without per-component overrides. Nothing in the app imports it yet:
+the Storybook preview supplies the scope root plus UI-theme and direction
+toolbars, and surfaces migrate one at a time by rendering under the same
+attribute. The existing `DesignSystem.jsx` library and its seven runtime theme
+variables are untouched — the two systems coexist until a surface switches,
+and the unified `Modal` deliberately reuses `useFocusTrap` so both dialog
+families keep one keyboard contract. The spec's `@components/*.html`
+sticker-sheet files never arrived with the archive; variant names follow the
+sheet, and the handful of additions the dialogs need (`quiet`, `danger`
+button intents, the selected reading of `card-interactive-2`) are flagged in
+comments for reconciliation if the sheets ever surface.
+
 ## Reading the page
 
 `utils/pageMetadata.js` covers one question — what a page says about itself —
