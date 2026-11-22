@@ -2,9 +2,14 @@
 //
 // A chip restores both halves of what was saved — the agent plan and the manual
 // filters — because that is what the user was looking at when they saved it.
+//
+// #250: chips wear the pressed-state vocabulary — the active view fills with
+// the primary container, the rest stay outlined — and the naming field is the
+// design system's input-field (the dark on-container text swap lives in
+// index.css beside the app's other chrome compositions).
 
 import React, { useState } from "react";
-import { Button, Input } from "./DesignSystem.jsx";
+import { Button, InputField } from "../design-system/index.js";
 
 const SmartViewBar = React.memo(function SmartViewBar({
   views,
@@ -33,18 +38,10 @@ const SmartViewBar = React.memo(function SmartViewBar({
       {views.map((view) => {
         const active = view.id === activeViewId;
         return (
-          <span
-            key={view.id}
-            className={`inline-flex items-center gap-1 pl-2 pr-1 py-0.5 text-xs rounded-full border ${
-              active
-                ? "bg-accent text-white border-accent"
-                : "bg-primary-bg text-primary-text border-border"
-            }`}
-          >
+          <span key={view.id} className={`ui-view-chip ${active ? "ui-view-chip--active" : ""}`}>
             <button
               type="button"
               onClick={() => onApply(view)}
-              className="focus:outline-none focus:ring-2 focus:ring-accent rounded"
               // The chip's own state matters: pressing the active one again is a
               // no-op, and a screen reader should not have to guess that.
               aria-pressed={active}
@@ -54,7 +51,7 @@ const SmartViewBar = React.memo(function SmartViewBar({
             <button
               type="button"
               onClick={() => onForget(view.id)}
-              className="opacity-60 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-accent rounded px-1"
+              className="ui-view-chip-forget"
               aria-label={`Delete view ${view.name}`}
             >
               ✕
@@ -64,14 +61,14 @@ const SmartViewBar = React.memo(function SmartViewBar({
       })}
 
       {canSave && !naming && (
-        <Button type="button" size="sm" intent="ghost" onClick={() => setNaming(true)}>
+        <Button intent="secondary" onClick={() => setNaming(true)}>
           Save current view
         </Button>
       )}
 
       {naming && (
         <form onSubmit={submit} className="flex items-center gap-2">
-          <Input
+          <InputField
             id="smart-view-name"
             type="text"
             value={name}
@@ -81,13 +78,12 @@ const SmartViewBar = React.memo(function SmartViewBar({
             wrapperClassName="w-[12.5rem]"
             autoFocus
           />
-          <Button type="submit" size="sm" disabled={!name.trim()}>
+          <Button type="submit" disabled={!name.trim()}>
             Save
           </Button>
           <Button
             type="button"
-            size="sm"
-            intent="ghost"
+            intent="secondary"
             onClick={() => {
               setNaming(false);
               setName("");
