@@ -181,3 +181,218 @@ const baseUrlStatus = (baseUrlError) =>
       {baseUrlError}
     </span>
   ) : null;
+
+// Options modal that displays and allows changing the current LLM provider and its options
+const OptionsModal = ({
+  provider,
+  providerOptions = {},
+  onChange,
+  onChangeOptions,
+  encryption = { encrypted: false, locked: false },
+  onEnableEncryption,
+  onDisableEncryption,
+  onUnlock,
+  currentTheme,
+  themes,
+  onThemeChange,
+  onThemeUpload,
+  remoteFavicons = false,
+  onRemoteFaviconsChange,
+  effects = true,
+  onEffectsChange,
+  webMcpEnabled = false,
+  webMcpAvailable = false,
+  onWebMcpEnabledChange,
+  onClose,
+}) => {
+  const [models, setModels] = useState([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [modelsError, setModelsError] = useState("");
+  const [baseUrlError, setBaseUrlError] = useState("");
+  const [showExample, setShowExample] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const debouncedApiKey = useDebounce(providerOptions.apiKey || "", 600);
+  const debouncedBaseUrl = useDebounce(providerOptions.baseUrl || "", 600);
+  // A locked session reads no key value, so the clear affordance follows the
+  // same visibility as the field's contents.
+  const hasApiKey = Boolean(providerOptions.apiKey);
+
+  const isValidBaseUrl = (url) => {
+    if (!url) return true; // empty = use provider default, always OK
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
+  const fetchModels = async (forceRefresh = false) => {
+    // A hosted provider without a key has no request worth sending — the
+    // endpoint refuses it (Gemini answers 403) — so opening Options must not
+    // read as an error. Discovery waits for the key; the local servers stay
+    // always ready because their listing needs none.
+    if (!isProviderReady(provider, { apiKey: providerOptions.apiKey || "" })) {
+      setModels([]);
+      setModelsError("");
+      return;
+    }
+
+    // ARCH-04: Check module-level cache before making a network request
+    const cacheKey = `${provider}|${providerOptions.apiKey || ""}|${providerOptions.baseUrl || ""}`;
+    if (!forceRefresh) {
+      const cached = _modelsCache[cacheKey];
+      if (cached && Date.now() < cached.expiresAt) {
+        setModels(cached.models);
+        return;
+      }
+    }
+
+    setIsLoadingModels(true);
+    setModelsError("");
+    try {
+      const opts = {
+        apiKey: providerOptions.apiKey || "",
+        model: providerOptions.model || "",
+        baseUrl: providerOptions.baseUrl || undefined,
+      };
+      const llm = createLLM(provider, opts);
+      const list = (await llm.listModels?.()) || [];
+      const models = Array.isArray(list) ? list : [];
+      // Store in module-level cache with TTL
+      _modelsCache[cacheKey] = { models, expiresAt: Date.now() + MODELS_CACHE_TTL };
+      setModels(models);
+    } catch (e) {
+      setModels([]);
+      setModelsError(e?.message || "Failed to load models");
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isValidBaseUrl(debouncedBaseUrl)) {
+      setBaseUrlError("Not a Valid Url Pattern");
+      return;
+    }
+    setBaseUrlError("");
+    fetchModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider, debouncedApiKey, debouncedBaseUrl]);
+
+  const providerEntries = [
+    { value: LLM_PROVIDERS.GEMINI, label: "Gemini" },
+    { value: LLM_PROVIDERS.OPENAI, label: "OpenAI (ChatGPT)" },
+    { value: LLM_PROVIDERS.GROK, label: "Grok" },
+    { value: LLM_PROVIDERS.OLLAMA, label: "Ollama (Local)" },
+    { value: LLM_PROVIDERS.LMSTUDIO, label: "LM Studio (Local)" },
+  ];
+
+  // Models that do not accept a temperature parameter (OpenAI o1/o3 reasoning series)
+  const modelSupportsTemperature = (providerKey, modelName) => {
+    if (providerKey === LLM_PROVIDERS.OPENAI && modelName) {
+      return !/^o[13]/i.test(modelName);
+    }
+    return true;
+  };
+
+  const hosted =
+    provider === LLM_PROVIDERS.GEMINI ||
+    provider === LLM_PROVIDERS.OPENAI ||
+    provider === LLM_PROVIDERS.GROK;
+  const local = provider === LLM_PROVIDERS.OLLAMA || provider === LLM_PROVIDERS.LMSTUDIO;
+  const modelChange = (e) => onChangeOptions?.({ model: e.target.value });
+  const clearApiKey = () => onChangeOptions?.({ apiKey: "" });
+
+  return (
+    <>
+      <Modal
+        title="Options"
+        closeLabel="Close options"
+        onClose={onClose}
+        size="2xl"
+        footer={
+          <>
+            <Typography
+              variant="body-sm"
+              style={{ marginInlineEnd: "auto", alignSelf: "center", ...hintStyle }}
+            >
+              Changes save to this browser.
+            </Typography>
+            <Button onClick={onClose}>Done</Button>
+          </>
+        }
+      >
+        <div style={{ display: "grid", gap: "var(--ui-space-gutter-lg)" }}>
+          {/* Read-only status: shows what provider + model will actually be
+              used, as the options-settings screen's active-provider pill. */}
+          <div>
+            <span className="ui-pill">
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "var(--ui-radius-full)",
+                  background: "var(--ui-success)",
+                }}
+              />
+              Active: {provider || "none"}
+              {providerOptions.model ? ` / ${providerOptions.model}` : ""}
+            </span>
+          </div>
+
+          <section style={sectionGap} aria-labelledby="options-provider-heading">
+            <div>
+              <Typography
+                variant="headline-sm"
+                as="h3"
+                id="options-provider-heading"
+                style={headingStyle}
+              >
+                Provider &amp; model
+              </Typography>
+              <Typography variant="body-sm" style={sublineStyle}>
+                Changes apply immediately and persist to this browser.
+              </Typography>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <TokenSelect
+                label="LLM Provider"
+                id="llm-provider"
+                value={provider}
+                onChange={(e) => onChange?.(e.target.value)}
+                options={providerEntries}
+              />
+              {/* Provider-specific key field, beside the provider select as on
+                  the mockup's two-column row. */}
+              {hosted && (
+                <ApiKeyField
+                  label="API Key"
+                  id="api-key"
+                  placeholder={
+                    encryption.locked ? "Locked — unlock below to edit" : "Enter API key"
+                  }
+                  value={providerOptions.apiKey || ""}
+                  disabled={encryption.locked}
+                  onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
+                  hasApiKey={hasApiKey}
+                  onClear={clearApiKey}
+                />
+              )}
+              {local && (
+                <ApiKeyField
+                  label="API Key (optional)"
+                  id="local-api-key"
+                  placeholder={
+                    encryption.locked
+                      ? "Locked — unlock below to edit"
+                      : "Only if the server requires one"
+                  }
+                  value={providerOptions.apiKey || ""}
+                  disabled={encryption.locked}
+                  onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
+                  hasApiKey={hasApiKey}
+                  onClear={clearApiKey}
