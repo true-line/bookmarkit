@@ -107,11 +107,19 @@ toolbars, and surfaces migrate one at a time by rendering under the same
 attribute. The existing `DesignSystem.jsx` library and its seven runtime theme
 variables are untouched — the two systems coexist until a surface switches,
 and the unified `Modal` deliberately reuses `useFocusTrap` so both dialog
-families keep one keyboard contract. The spec's `@components/*.html`
-sticker-sheet files never arrived with the archive; variant names follow the
-sheet, and the handful of additions the dialogs need (`quiet`, `danger`
-button intents, the selected reading of `card-interactive-2`) are flagged in
-comments for reconciliation if the sheets ever surface.
+families keep one keyboard contract. The spec's `@components/*.html` files
+arrived afterwards as full screen mockups (22 screens, desktop and mobile)
+annotated with `data-component-id`; the components follow them where they are
+more specific than the token sections — filled buttons rest on the container
+role and hover to the base role, `button-secondary` (tonal bordered) is the
+dialog Cancel, inputs sit at 40px with on-surface labels, the selected card
+wears a 2px primary border, dialogs are bordered with a divided header
+(headline-md title, optional body-sm description, both wired into the aria
+labelling) and a tinted footer band, and `card-interactive-2`'s selected
+reading is confirmed. Where the screens say nothing, the sticker sheet's
+`modal-alert`/`modal-drawer` and `card-action` stand as listed; where screen
+and spec text disagree (the digest's `rounded-md` card, inputs' 1px focus
+ring), the spec text wins and the divergence is noted in comments.
 
 ## Reading the page
 
