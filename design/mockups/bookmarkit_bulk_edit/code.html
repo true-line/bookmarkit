@@ -195,4 +195,29 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
             <option>4 stars</option>
             <option>3 stars</option>
             <option>Clear rating</option>
-   
+          </select>
+        </label>
+      </form>
+
+      <footer class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-light-surface-container-low border-t border-light-outline-variant rounded-b-lg">
+        <button data-component-id="button-destructive" data-component-type="button" data-component-variant="destructive" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-10 px-4 py-2 rounded bg-danger text-light-on-primary shadow-sm hover:bg-light-error text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">delete</span>
+          <span>Delete 12</span>
+        </button>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center min-h-9 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Cancel</button>
+          <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="inline-flex items-center justify-center min-h-10 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Apply Changes</button>
+        </div>
+      </footer>
+    </dialog>
+
+    <!-- Undo Toast Preview -->
+    <div role="status" aria-live="polite" class="w-full max-w-lg rounded-md bg-light-inverse-surface text-light-inverse-on-surface px-4 py-3 shadow-lg flex items-center justify-between gap-4">
+      <span data-design-text-token="body-md" class="text-body-md tabular-nums">Updated 12 bookmarks</span>
+      <button type="button" class="text-label-md text-light-inverse-primary underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-inverse-primary rounded">Undo (Cmd+Z)</button>
+    </div>
+  </div>
+
+
+</body></html>
