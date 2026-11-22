@@ -193,4 +193,53 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
               <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://context7.com/</p>
             </div>
             <div class="p-3 rounded bg-light-surface-container-lowest border border-light-outline-variant">
-              <span data-design-text-tok
+              <span data-design-text-token="label-sm" class="text-label-sm text-light-on-error-container block mb-1">Remove duplicate</span>
+              <p dir="auto" data-design-text-token="label-md" class="text-label-md text-light-on-surface">Context7</p>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://context7.com/?utm_source=hn</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Pair 2: AI Near-Duplicate -->
+        <article class="rounded-md border border-light-outline-variant bg-light-surface-container-low p-4 flex flex-col gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked class="rounded-sm border-light-outline text-light-primary-container focus:ring-light-primary">
+              <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Same article on canonical &amp; mirror URL</span>
+            </label>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-light-tertiary-container text-light-on-tertiary text-label-sm">
+              <span class="material-symbols-outlined text-[13px]" aria-hidden="true">auto_awesome</span>
+              <span>AI Proposed</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter-sm">
+            <div class="p-3 rounded bg-light-surface-container-lowest border border-success">
+              <span data-design-text-token="label-sm" class="text-label-sm text-success block mb-1">Keep (canonical + notes)</span>
+              <p dir="auto" data-design-text-token="label-md" class="text-label-md text-light-on-surface">Writing a good CLAUDE.md</p>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://www.humanlayer.dev/blog/writing-a-good-claude-md</p>
+            </div>
+            <div class="p-3 rounded bg-light-surface-container-lowest border border-light-outline-variant">
+              <span data-design-text-token="label-sm" class="text-label-sm text-light-on-error-container block mb-1">Remove duplicate</span>
+              <p dir="auto" data-design-text-token="label-md" class="text-label-md text-light-on-surface">HumanLayer: Writing a good CLAUDE.md</p>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://medium.com/@humanlayer/writing-a-good-claude-md</p>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <footer class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-light-surface-container-low border-t border-light-outline-variant rounded-b-lg">
+        <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant tabular-nums">2 pairs selected · 1 undo entry</span>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center min-h-9 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Cancel</button>
+          <button data-component-id="button-destructive" data-component-type="button" data-component-variant="destructive" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-4 py-2 rounded bg-danger text-light-on-primary shadow-sm hover:bg-light-error text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">delete</span>
+            <span>Remove Selected (2)</span>
+          </button>
+        </div>
+      </footer>
+    </dialog>
+  </div>
+
+
+</body></html>
