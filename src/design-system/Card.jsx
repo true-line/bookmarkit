@@ -1,4 +1,5 @@
 import React from "react";
+import { fromNestedControl } from "./nested-control.js";
 
 // Unified UI design system card (#238). Sticker-sheet variants: card-elevated
 // (the resting white card), card-action (elevated card with a footer action
@@ -9,15 +10,9 @@ import React from "react";
 // state — a 2px primary border with aria-pressed rendered by the component.
 
 // Events coming from nested interactive content belong to that content — a
-// nested link or button never also fires the card action (the keyboard route
-// is the sneaky one: a child button's Enter would otherwise bubble straight
-// into the card's handler).
-function fromNestedControl(event) {
-  return (
-    event.target !== event.currentTarget &&
-    event.target.closest("a, button, input, select, textarea, [role='button']") !== null
-  );
-}
+// nested link or button never also fires the card action. The rule itself
+// lives in nested-control.js so a call site that owns the card's activation
+// (the manager's two-stage bookmark selection) applies the same predicate.
 
 export function Card({
   variant = "elevated",

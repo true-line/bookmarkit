@@ -444,6 +444,104 @@ body {
   color: var(--ui-on-surface);
 }
 
+/* ─── Bookmark card (#251) ────────────────────────────────────────────────
+   The card surface renders the design system's card-interactive recipe
+   (components.css owns the resting card, hover raise and the selected 2px
+   primary border); these are the card's own body — the mockup's 36px favicon
+   roundel with the 20px icon, headline-sm title, the mono URL line, and the
+   tag row with the trailing rating — composed from --ui-* tokens. */
+.ui-bookmark-card {
+  flex: 1;
+  min-width: 0;
+  min-height: 96px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px; /* the mockup's gap-3.5 between the roundel and the body */
+}
+.ui-bookmark-card:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+.ui-bookmark-card--pending {
+  background: var(--ui-error-container);
+  border-color: var(--ui-error);
+}
+
+/* #39: a stored URL can point anywhere, so the roundel holds the real
+   favicon at the mockup's 20px icon size and faviconSrc decides what may
+   load — the inline placeholder on error, never a second remote request. */
+.ui-bookmark-favicon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  background: var(--ui-surface-container);
+  border-radius: var(--ui-radius-full);
+}
+.ui-bookmark-favicon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.ui-bookmark-status {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  width: 10px;
+  height: 10px;
+  background: var(--ui-error);
+  border-radius: var(--ui-radius-full);
+}
+
+.ui-bookmark-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* the mockup's gap-1.5 between title, URL and meta row */
+}
+.ui-bookmark-title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ui-on-surface);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-bookmark-url {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ui-on-surface-variant);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-bookmark-description {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--ui-on-surface-variant);
+  font: var(--ui-type-body-sm);
+}
+.ui-bookmark-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-block-start: 4px;
+}
+.ui-bookmark-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+  color: var(--ui-primary);
+}
+
 /* ─── Narrow viewports ────────────────────────────────────────────────────
    The action row is one nowrap, horizontally scrollable strip: once the view
    selector joined, the buttons outgrew the reading measure, so the header

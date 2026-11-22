@@ -84,6 +84,24 @@ export function HealthIcon({ size = 16 }) {
   );
 }
 
+/** The card's rating reading (mockup: one filled star beside the count). */
+export function StarIcon({ size = 14 }) {
+  // Filled by design — the mockup's star reads solid (`FILL 1`), unlike the
+  // stroke set above, so it declares its own paint instead of the base props.
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="none"
+      aria-hidden="true"
+    >
+      <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+    </svg>
+  );
+}
+
 /** The provider-ready badge on the search field (auto_awesome). */
 export function SparkIcon({ size = 14 }) {
   return (
