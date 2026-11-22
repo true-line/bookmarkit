@@ -97,10 +97,8 @@ describe("ChangeReviewModal on the unified design system (#249)", () => {
   it("marks a gained tag with the screens' tertiary reading", () => {
     setup();
 
-    expect(screen.getByText("memory").getAttribute("style")).toContain(
-      "var(--ui-tertiary-container)"
-    );
-    expect(screen.getByText("rust").getAttribute("style")).toBe(null);
+    expect(screen.getByText("memory")).toHaveClass("ui-tag--accent");
+    expect(screen.getByText("rust")).not.toHaveClass("ui-tag--accent");
   });
 
   it("reports the live selection count from the footer", () => {
