@@ -198,4 +198,37 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
 
       <label class="flex items-center gap-3 min-h-11 cursor-pointer">
         <input type="checkbox" checked class="w-5 h-5 rounded border-light-outline text-light-primary focus:ring-light-primary">
-        <span 
+        <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface">Skip URLs already in library</span>
+      </label>
+    </section>
+
+    <!-- Export Card -->
+    <section class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col gap-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[20px] text-light-on-surface-variant" aria-hidden="true">download</span>
+        <h2 data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Export Library</h2>
+      </div>
+      <p data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">
+        Download your full collection for backup or migration.
+      </p>
+
+      <div class="flex flex-col gap-2">
+        <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="w-full inline-flex items-center justify-between min-h-11 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span data-design-text-token="label-lg" class="text-label-lg">Export JSON Backup</span>
+          <span class="font-mono text-mono-sm opacity-90">.json</span>
+        </button>
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="w-full inline-flex items-center justify-between min-h-11 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span data-design-text-token="label-md" class="text-label-md">Export Browser HTML</span>
+          <span class="font-mono text-mono-sm text-light-on-surface-variant">.html</span>
+        </button>
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="w-full inline-flex items-center justify-between min-h-11 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span data-design-text-token="label-md" class="text-label-md">Export Markdown</span>
+          <span class="font-mono text-mono-sm text-light-on-surface-variant">.md</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+
+
+</body></html>
