@@ -14,4 +14,5 @@ export { Button, IconButton } from "./Button.jsx";
 export { Card } from "./Card.jsx";
 export { InputField } from "./InputField.jsx";
 export { Modal } from "./Modal.jsx";
+export { Tag } from "./Tag.jsx";
 export { Typography } from "./Typography.jsx";

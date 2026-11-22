@@ -2,10 +2,11 @@ import React from "react";
 
 // Unified UI design system card (#238). Sticker-sheet variants: card-elevated
 // (the resting white card), card-action (elevated card with a footer action
-// row), card-interactive and card-interactive-2 (the clickable readings — the
-// second is the selected/checked state). The sticker-sheet HTML files were
-// not in the supplied archive, so "interactive-2" as selected is this
-// implementation's reading of the name; revisit if the sheets surface.
+// row — listed on the sticker sheet but unexercised by the screens),
+// card-interactive and card-interactive-2. The manager screen confirms the
+// interactive recipe: a white card with a hairline border that raises and
+// steps its border to outline on hover, and the "-2" reading as the selected
+// state — a 2px primary border with aria-pressed at the call site.
 
 export function Card({
   variant = "elevated",
