@@ -113,14 +113,15 @@
   letter-spacing: 0;
 }
 
-/* Inline <kbd> keycap chips: 4px radius, Fira Code. */
+/* Inline <kbd> keycap chips: 4px radius, Fira Code, white surface with a
+   hairline (the help-shortcuts screen's recipe). */
 .ui-kbd {
   font: var(--ui-type-mono-sm);
   border: 1px solid var(--ui-outline-variant);
   border-radius: var(--ui-radius-sm);
-  background: var(--ui-surface-container-high);
+  background: var(--ui-surface-container-lowest);
   color: var(--ui-on-surface);
-  padding: 1px 5px;
+  padding: 2px 8px;
 }
 
 /* Provider status pills: mono copy in a full-radius hairline. */
@@ -138,10 +139,14 @@
 
 /* --------------------------------------------------------------- button -- */
 
-/* Sticker sheet: button-primary, button-icon, button-with-icon. The 8px
-   radius and 36px minimum height are the spec's control contract; coarse
-   pointers raise every target to 44px at the bottom of this file. Text wraps
-   instead of ellipsising — i18n titles run long. */
+/* Sticker sheet: button-primary, button-icon, button-with-icon. The screen
+   mockups extend the vocabulary with secondary, tertiary and destructive, and
+   fix the filled-button recipe: rest on the *container* role and step to the
+   base role on hover (primary-container → primary, tertiary-container →
+   tertiary), with shadow-sm. The 8px radius and 36px minimum height are the
+   spec's control contract; coarse pointers raise every target to 44px at the
+   bottom of this file. Text wraps instead of ellipsising — i18n titles run
+   long. */
 .ui-button {
   display: inline-flex;
   align-items: center;
@@ -162,58 +167,93 @@
 }
 
 .ui-button--primary {
-  background: var(--ui-primary);
+  background: var(--ui-primary-container);
   color: var(--ui-on-primary);
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .ui-button--primary:hover:enabled {
+  /* The screens hover primary-container → primary (a darkening in light).
+     color-mix keeps that darkening and stays sensible in dark. */
   background: color-mix(
     in srgb,
-    var(--ui-primary) var(--ui-hover-mix-amount),
+    var(--ui-primary-container) var(--ui-hover-mix-amount),
     var(--ui-hover-mix-color)
   );
 }
 
-/* The unified AI-assist accent: tertiary violet marks every model-powered
-   action, so users can tell AI features from local, offline ones. */
+/* The unified AI-assist accent: tertiary marks every model-powered action,
+   so users can tell AI features from local, offline ones. Suggest buttons
+   rest on the container role at label-md size, per the screens. */
 .ui-button--tertiary {
-  background: var(--ui-tertiary);
+  background: var(--ui-tertiary-container);
   color: var(--ui-on-tertiary);
+  font: var(--ui-type-label-md);
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .ui-button--tertiary:hover:enabled {
   background: color-mix(
     in srgb,
-    var(--ui-tertiary) var(--ui-hover-mix-amount),
+    var(--ui-tertiary-container) var(--ui-hover-mix-amount),
     var(--ui-hover-mix-color)
   );
 }
 
-/* Dialog footers need a quiet Cancel beside the crimson CTA, and the alert
-   dialog needs a destructive confirm. The sticker sheet names only
-   button-primary/-icon/-with-icon, so these two intents are this
-   implementation's reading of the spec's own semantics (tertiary-container
-   text buttons, the danger status color) — flagged for the sticker-sheet
-   diff when the missing HTML files surface. */
-.ui-button--quiet {
-  color: var(--ui-primary);
+/* Screens: button-secondary — the tonal bordered Cancel beside the crimson
+   CTA in every dialog footer. */
+.ui-button--secondary {
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface);
+  border-color: var(--ui-outline-variant);
 }
 
-.ui-button--quiet:hover:enabled {
-  background: color-mix(in srgb, var(--ui-on-surface) 8%, transparent);
+.ui-button--secondary:hover:enabled {
+  background: var(--ui-surface-container-high);
 }
 
-.ui-button--danger {
+/* Screens: button-with-icon and the selection-bar actions — the outlined
+   reading: white surface, hairline border, icon and label. */
+.ui-button--outlined {
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  border-color: var(--ui-outline-variant);
+}
+
+.ui-button--outlined:hover:enabled {
+  background: var(--ui-surface-container);
+}
+
+/* Screens: button-destructive — filled danger with a shadow, for delete
+   confirmations. Hover steps darker (the screens hover to the error role). */
+.ui-button--destructive {
   background: var(--ui-danger);
-  color: #ffffff;
+  color: var(--ui-on-primary);
+  box-shadow: var(--ui-shadow-sm);
 }
 
-.ui-button--danger:hover:enabled {
+.ui-button--destructive:hover:enabled {
   background: color-mix(
     in srgb,
     var(--ui-danger) var(--ui-hover-mix-amount),
     var(--ui-hover-mix-color)
   );
+}
+
+/* The screens dress the filled buttons for light only — their hardwired
+   on-primary/on-tertiary text is tone 20, which sits illegibly on the same
+   fills in dark. Dark takes the M3 on-container roles instead: the text
+   tokens actually paired with these fills in each theme. */
+[data-ui-theme="dark"] .ui-button--primary {
+  color: var(--ui-on-primary-container);
+}
+
+[data-ui-theme="dark"] .ui-button--tertiary {
+  color: var(--ui-on-tertiary-container);
+}
+
+[data-ui-theme="dark"] .ui-button--destructive {
+  color: var(--ui-on-error-container);
 }
 
 /* Disabled reads as unavailable without relying on color alone: contrast of
@@ -240,7 +280,8 @@
   }
 }
 
-/* Sticker sheet: button-icon. Ghost by default; the label is the accessible
+/* Sticker sheet: button-icon. Tonal and bordered per the screens (surface
+   container fill, outline-variant hairline); the label is the accessible
    name, never omitted. */
 .ui-icon-button {
   display: inline-flex;
@@ -249,16 +290,16 @@
   width: 36px;
   height: 36px;
   flex: none;
-  border: none;
+  border: 1px solid var(--ui-outline-variant);
   border-radius: var(--ui-radius);
-  background: transparent;
+  background: var(--ui-surface-container);
   color: var(--ui-on-surface-variant);
   cursor: pointer;
   transition: background-color var(--ui-duration-state) var(--ui-ease-state);
 }
 
 .ui-icon-button:hover:enabled {
-  background: color-mix(in srgb, var(--ui-on-surface) 8%, transparent);
+  background: var(--ui-surface-container-high);
 }
 
 .ui-icon-button:disabled {
@@ -294,12 +335,24 @@
   border-color: var(--ui-outline);
 }
 
-/* Sticker sheet: card-interactive-2 — the selected/checked reading of the
-   second interactive style: primary border over a faint primary tint.
-   (The sticker-sheet HTML was missing from the archive; revisit against it.) */
+/* Sticker sheet: card-interactive-2 — the selected/checked reading,
+   confirmed by the screens: a 2px primary border and no fill change, with
+   aria-pressed carried by the call site. */
 .ui-card--selected {
+  border-width: 2px;
   border-color: var(--ui-primary);
-  background: color-mix(in srgb, var(--ui-primary) 4%, var(--ui-surface-container-lowest));
+}
+
+/* Canonical card chips (the tag row on bookmark cards): 4px radius tonal
+   chips at label-sm. */
+.ui-tag {
+  font: var(--ui-type-label-sm);
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface-variant);
+  border-radius: var(--ui-radius-sm);
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .ui-card-actions {
@@ -317,12 +370,12 @@
    the shared ring. */
 .ui-field {
   display: grid;
-  gap: var(--ui-space-gutter-xs);
+  gap: 6px; /* the screens' gap-1.5 between label, control and message */
 }
 
 .ui-field > label {
   font: var(--ui-type-label-md);
-  color: var(--ui-on-surface-variant);
+  color: var(--ui-on-surface);
 }
 
 .ui-field-control {
@@ -334,8 +387,8 @@
 .ui-input {
   flex: 1;
   min-width: 0;
-  min-height: 36px;
-  padding-inline: 12px;
+  min-height: 40px; /* the screens' min-h-10 for form fields */
+  padding-inline: 14px; /* the screens' px-3.5 */
   border: 1px solid var(--ui-outline);
   border-radius: var(--ui-radius);
   background: var(--ui-surface-container-lowest);
@@ -354,8 +407,23 @@
   border-color: var(--ui-primary);
 }
 
-.ui-input[aria-invalid="true"] {
+.ui-input[aria-invalid="true"],
+.ui-input--invalid {
   border-color: var(--ui-error);
+}
+
+/* The screens' input-field-valid: success border while the value is good. */
+.ui-input--valid {
+  border-color: var(--ui-success);
+}
+
+.ui-input--valid:focus-visible {
+  border-color: var(--ui-success);
+}
+
+/* URL and favicon inputs carry Fira Code, per the screens. */
+.ui-input--mono {
+  font: var(--ui-type-mono-sm);
 }
 
 .ui-input:disabled {
@@ -376,6 +444,13 @@
 .ui-field-error {
   font: var(--ui-type-body-sm);
   color: var(--ui-error);
+}
+
+/* The screens' input-field-valid: success border on the field and an
+   explicit status line, still color-plus-text, never color alone. */
+.ui-field-success {
+  font: var(--ui-type-body-sm);
+  color: var(--ui-success);
 }
 
 .ui-field-hint {
@@ -408,35 +483,46 @@
 .ui-modal-panel {
   background: var(--ui-surface-container-lowest);
   color: var(--ui-on-surface);
+  border: 1px solid var(--ui-outline-variant);
   border-radius: var(--ui-radius-lg);
-  box-shadow: var(--ui-shadow-card-hover);
-  width: min(560px, 100%);
+  box-shadow: var(--ui-shadow-dialog);
+  width: min(576px, 100%);
   max-height: min(90dvh, 100%);
   display: flex;
   flex-direction: column;
   animation: ui-panel-in var(--ui-duration-enter) var(--ui-ease-enter);
 }
 
-.ui-modal-panel[data-closing="true"] {
+.ui-modal-scrim[data-closing="true"] .ui-modal-panel {
   animation: ui-panel-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
 }
 
 .ui-modal-heading {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--ui-space-gutter-sm);
-  padding: var(--ui-space-gutter-lg) var(--ui-space-gutter-lg) 0;
+  padding: var(--ui-space-gutter-lg) var(--ui-space-gutter-lg) var(--ui-space-gutter-md);
+  border-block-end: 1px solid var(--ui-outline-variant);
 }
 
 .ui-modal-heading h2 {
-  font: var(--ui-type-headline-lg);
-  letter-spacing: -0.25px;
+  font: var(--ui-type-headline-md);
+  letter-spacing: -0.1px;
   color: var(--ui-on-surface);
   margin: 0;
 }
 
-/* Alert dialogs wear the error role on their heading when destructive. */
+.ui-modal-description {
+  font: var(--ui-type-body-sm);
+  color: var(--ui-on-surface-variant);
+  margin: var(--ui-space-gutter-xs) 0 0;
+}
+
+/* Alert dialogs wear the error role on their heading when destructive. The
+   screens confirm destructive actions through modal-standard with a
+   destructive footer button, so this error heading is the alertdialog
+   reading — kept for the sticker sheet's modal-alert. */
 .ui-modal-panel--alert .ui-modal-heading h2 {
   color: var(--ui-error);
 }
@@ -454,7 +540,11 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: var(--ui-space-gutter-sm);
-  padding: 0 var(--ui-space-gutter-lg) var(--ui-space-gutter-lg);
+  padding: var(--ui-space-gutter-md) var(--ui-space-gutter-lg);
+  background: var(--ui-surface-container-low);
+  border-block-start: 1px solid var(--ui-outline-variant);
+  border-end-end-radius: var(--ui-radius-lg);
+  border-end-start-radius: var(--ui-radius-lg);
 }
 
 /* Sticker sheet: modal-drawer — an inline-start sheet. Inset, radius corners
@@ -480,7 +570,7 @@
   --ui-drawer-from: -100%;
 }
 
-.ui-drawer-panel[data-closing="true"] {
+.ui-modal-scrim[data-closing="true"] .ui-drawer-panel {
   animation: ui-drawer-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
 }
 
