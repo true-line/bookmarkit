@@ -175,6 +175,271 @@ body {
   padding-top: var(--space-4);
 }
 
+/* #210, kept intact by the migration: the strip's children refuse to shrink,
+   so a narrow window scrolls the single-line strip instead of squeezing the
+   ui-buttons until their labels wrap into two-line slabs. */
+.bookmarkit-header-actions > * {
+  flex-shrink: 0;
+}
+
+/* ─── Manager chrome compositions (#250) ──────────────────────────────────
+   The header/toolbar region speaks the unified design system. These are the
+   chrome-region compositions that have no sticker-sheet primitive — pressed
+   chips, the segmented view control, the folder tree rows — built from the
+   --ui-* tokens and following components.css's dark-scoped on-container text
+   swaps (the screens dress filled buttons for light only). Focus rings repeat
+   the ui-root contract: a 2px primary outline, ≥ 3:1 against the surface. */
+
+/* The search field's provider badge: the mockup's AI Ready chip rides the
+   input's trailing slot without taking pointer events. */
+.ui-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-xs);
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: var(--ui-radius-sm);
+  font: var(--ui-type-label-sm);
+  background: var(--ui-tertiary-container);
+  color: var(--ui-on-tertiary);
+  flex: none;
+  pointer-events: none;
+}
+[data-ui-theme="dark"] .ui-ai-badge {
+  color: var(--ui-on-tertiary-container);
+}
+
+.ui-search-trailing {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Filter strip: the boxed band the filter controls sit on. */
+.ui-filter-bar {
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface-container-low);
+}
+
+.ui-filter-select {
+  /* The selects hold their mockup widths in the strip; .ui-input's flex: 1
+     (meant for the ui-field-control row) would otherwise stretch them. */
+  flex: none;
+}
+
+.ui-filter-clear {
+  flex: none;
+  color: var(--ui-on-surface-variant);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--ui-radius-sm);
+}
+.ui-filter-clear:hover {
+  color: var(--ui-on-surface);
+}
+.ui-filter-clear:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+/* Tri-state tag chips. Include is a pressed state — the primary-container
+   fill with the dark on-container text swap; exclude reads as struck-through
+   tonal; off is the outlined rest state. */
+.ui-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 28px;
+  padding: 2px 10px;
+  border-radius: var(--ui-radius-full);
+  font: var(--ui-type-label-sm);
+  border: 1px solid var(--ui-outline-variant);
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface-variant);
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-state) var(--ui-ease-state),
+    color var(--ui-duration-state) var(--ui-ease-state);
+}
+.ui-filter-chip:hover {
+  background: var(--ui-surface-container);
+}
+.ui-filter-chip:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+.ui-filter-chip-count {
+  opacity: 0.6;
+}
+.ui-filter-chip--include {
+  background: var(--ui-primary-container);
+  color: var(--ui-on-primary);
+  border-color: transparent;
+}
+[data-ui-theme="dark"] .ui-filter-chip--include {
+  color: var(--ui-on-primary-container);
+}
+.ui-filter-chip--include:hover {
+  background: var(--ui-primary);
+}
+.ui-filter-chip--exclude {
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface-variant);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.ui-filter-chip--off:hover {
+  background: var(--ui-surface-container);
+}
+
+/* Segmented view-mode control (the mockup's bordered container, pressed
+   state on the primary container). */
+.ui-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-xs);
+  padding: 4px;
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container);
+}
+.ui-segmented > button {
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: var(--ui-radius-sm);
+  font: var(--ui-type-label-sm);
+  color: var(--ui-on-surface-variant);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-state) var(--ui-ease-state),
+    color var(--ui-duration-state) var(--ui-ease-state);
+}
+.ui-segmented > button:hover {
+  color: var(--ui-on-surface);
+}
+.ui-segmented > button:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+.ui-segmented > button[aria-pressed="true"] {
+  background: var(--ui-primary-container);
+  color: var(--ui-on-primary);
+  box-shadow: var(--ui-shadow-sm);
+}
+[data-ui-theme="dark"] .ui-segmented > button[aria-pressed="true"] {
+  color: var(--ui-on-primary-container);
+}
+
+/* Saved-view chips: the pressed-state vocabulary on a pill — the active view
+   fills with the primary container, the rest stay outlined; the forget ✕ is
+   the chip's quiet trailing affordance. */
+.ui-view-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-inline: 8px;
+  min-height: 28px;
+  border-radius: var(--ui-radius-full);
+  font: var(--ui-type-label-sm);
+  border: 1px solid var(--ui-outline-variant);
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface-variant);
+}
+.ui-view-chip > button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--ui-radius-sm);
+}
+.ui-view-chip > button:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+.ui-view-chip--active {
+  background: var(--ui-primary-container);
+  color: var(--ui-on-primary);
+  border-color: transparent;
+}
+[data-ui-theme="dark"] .ui-view-chip--active {
+  color: var(--ui-on-primary-container);
+}
+.ui-view-chip > .ui-view-chip-forget {
+  opacity: 0.6;
+  padding: 2px 4px;
+}
+.ui-view-chip > .ui-view-chip-forget:hover {
+  opacity: 1;
+}
+
+/* Folder tree rows (the mockup sidebar's 36px rows): tonal hover, the active
+   folder on surface-container-highest, label-sm tabular counts. */
+.ui-tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-xs);
+  min-height: 36px;
+  padding-inline-end: 4px;
+  padding-block: 4px;
+  border-radius: var(--ui-radius);
+  font: var(--ui-type-body-md);
+  color: var(--ui-on-surface-variant);
+}
+.ui-tree-row:hover {
+  background: var(--ui-surface-container);
+}
+.ui-tree-row--active,
+.ui-tree-row--active:hover {
+  background: var(--ui-surface-container-highest);
+  color: var(--ui-on-surface);
+}
+.ui-tree-toggle {
+  flex: none;
+  width: 16px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--ui-radius-sm);
+}
+.ui-tree-toggle:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+.ui-tree-row > button:not(.ui-tree-toggle) {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--ui-radius-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-tree-row > button:not(.ui-tree-toggle):focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+.ui-tree-count {
+  flex: none;
+  font: var(--ui-type-label-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-on-surface-variant);
+}
+.ui-tree-count--active {
+  color: var(--ui-on-surface);
+}
+
 /* ─── Narrow viewports ────────────────────────────────────────────────────
    The action row is one nowrap, horizontally scrollable strip: once the view
    selector joined, the buttons outgrew the reading measure, so the header
@@ -200,23 +465,23 @@ body {
     display: none;
   }
 
-  .ds-filter-text {
+  .ui-filter-text {
     flex: 1 1 100%;
     min-width: 0;
   }
-  .ds-filter-controls {
+  .ui-filter-controls {
     flex: 1 1 100%;
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
   }
-  /* The strip only scrolls if its contents refuse to shrink: .ds-field and
+  /* The strip only scrolls if its contents refuse to shrink: .ui-field and
      the buttons default to flex-shrink: 1, which on a nowrap row collapses
      the selects to slivers instead of letting the strip overflow. */
-  .ds-filter-controls > * {
+  .ui-filter-controls > * {
     flex-shrink: 0;
   }
-  .ds-filter-controls::-webkit-scrollbar {
+  .ui-filter-controls::-webkit-scrollbar {
     display: none;
   }
 }

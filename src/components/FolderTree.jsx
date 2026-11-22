@@ -12,7 +12,12 @@
 import React, { useMemo, useState } from "react";
 import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
 import { UNFILED, buildFolderTree, folderName, parentFolder } from "../utils/folderTree.js";
-import { Button, IconButton, Input } from "./DesignSystem.jsx";
+import { Button, IconButton, InputField } from "../design-system/index.js";
+
+// #250: the folder pane migrates with the chrome region — mockup sidebar rows
+// (36px minimum, tonal hover, the active folder on surface-container-highest),
+// label-sm tabular counts, design-system buttons and inputs. The row/state
+// classes live in index.css beside the app's other chrome compositions.
 
 /** What a drag is carrying. Two kinds, because a folder drop renests and a bookmark drop moves. */
 export const DRAG_BOOKMARKS = "application/x-bookmarkit-bookmarks";
@@ -31,10 +36,8 @@ const draggedIds = (event) => {
 
 const Row = ({ depth = 0, active, children, ...props }) => (
   <div
-    className={`flex items-center gap-1 rounded px-1 py-0.5 text-sm ${
-      active ? "bg-accent text-white" : "text-primary-text hover:bg-secondary-bg"
-    }`}
-    style={{ paddingLeft: `${depth * 0.75 + 0.25}rem` }}
+    className={`ui-tree-row ${active ? "ui-tree-row--active" : ""}`}
+    style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
     {...props}
   >
     {children}
@@ -42,7 +45,7 @@ const Row = ({ depth = 0, active, children, ...props }) => (
 );
 
 const Count = ({ node, active }) => (
-  <span className={`text-xs ${active ? "text-white" : "text-secondary-text"}`}>
+  <span className={`ui-tree-count ${active ? "ui-tree-count--active" : ""}`}>
     {node.total}
     {node.total !== node.count && <span title={`${node.count} directly in this folder`}>*</span>}
   </span>
@@ -77,7 +80,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
     return (
       <li>
         <Row depth={depth}>
-          <Input
+          <InputField
             id={`folder-rename-${node.path}`}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
@@ -113,12 +116,12 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
             onClick={() => onToggle(node.path)}
             aria-label={`${isCollapsed ? "Expand" : "Collapse"} ${node.name}`}
             aria-expanded={!isCollapsed}
-            className="w-4 shrink-0 text-xs"
+            className="ui-tree-toggle"
           >
             {isCollapsed ? "▸" : "▾"}
           </button>
         ) : (
-          <span className="w-4 shrink-0" aria-hidden="true" />
+          <span className="ui-tree-toggle" aria-hidden="true" />
         )}
 
         <button
@@ -137,7 +140,6 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
 
         <IconButton
           label={`Rename ${node.path}`}
-          size="sm"
           onClick={() => {
             setDraft(node.name);
             setRenaming(true);
@@ -145,18 +147,14 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
         >
           ✎
         </IconButton>
-        <IconButton
-          label={`Remove folder ${node.path}`}
-          size="sm"
-          onClick={() => setConfirmingDelete(true)}
-        >
+        <IconButton label={`Remove folder ${node.path}`} onClick={() => setConfirmingDelete(true)}>
           ✕
         </IconButton>
       </Row>
 
       {/* Deleting a folder never deletes bookmarks, so the offer has to say where they go. */}
       {confirmingDelete && (
-        <div className="ml-6 my-1 text-xs text-secondary-text">
+        <div className="ml-6 my-1 text-xs text-[var(--ui-on-surface-variant)]">
           <p className="mb-1">
             Move {node.total} bookmark{node.total === 1 ? "" : "s"} to{" "}
             {parentFolder(node.path) || "no folder"} and remove this folder?
@@ -164,7 +162,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
           <div className="flex gap-2">
             <Button
               type="button"
-              size="sm"
+              intent="destructive"
               onClick={() => {
                 setConfirmingDelete(false);
                 actions.onDelete(node.path);
@@ -172,12 +170,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
             >
               Remove
             </Button>
-            <Button
-              type="button"
-              intent="ghost"
-              size="sm"
-              onClick={() => setConfirmingDelete(false)}
-            >
+            <Button type="button" intent="secondary" onClick={() => setConfirmingDelete(false)}>
               Keep
             </Button>
           </div>
@@ -272,9 +265,7 @@ const FolderTree = React.memo(function FolderTree({
             >
               All bookmarks
             </button>
-            <span
-              className={`text-xs ${activeFolder === "" ? "text-white" : "text-secondary-text"}`}
-            >
+            <span className={`ui-tree-count ${activeFolder === "" ? "ui-tree-count--active" : ""}`}>
               {total}
             </span>
           </Row>
@@ -305,8 +296,8 @@ const FolderTree = React.memo(function FolderTree({
                 No folder
               </button>
               <span
-                className={`text-xs ${
-                  activeFolder === UNFILED ? "text-white" : "text-secondary-text"
+                className={`ui-tree-count ${
+                  activeFolder === UNFILED ? "ui-tree-count--active" : ""
                 }`}
               >
                 {unfiled}
