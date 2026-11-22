@@ -419,4 +419,172 @@ Two decisions in the sweep are load-bearing:
   Checking every link contacts every host in the collection — the same privacy
   question site icons answered with an opt-in — and a redirect target is the
   remote server's claim, which is precisely what `redirect: "manual"` exists to
-  refuse. The 
+  refuse. The sweep writes `urlStatus` and nothing else; what to do about a dead
+  link is left to the user, through the ordinary edit, bulk-edit and delete
+  paths.
+
+Its writes deliberately skip the undo recorder: a sweep reports what the web
+already did, and an undo would mean writing back a status known to be wrong.
+
+Recovery (#102) is the sweep's deliberate omission, added back as its own step.
+`utils/archiveRecovery.js` asks one hard-coded host — the archive's availability
+API — with the bookmark's URL only ever as a query parameter, so nothing here
+fetches a bookmark and there is no redirect to refuse. The two guards that matter
+are on either end: a URL is asked about only if it passes the same public-http(s)
+gate the checks use, and the address that comes back is validated as a public https
+URL on the archive's own host before it can reach a bookmark. It is a remote
+server's claim, which is what `redirect: "manual"` exists to distrust.
+
+Recovery proposes; it never writes. A snapshot becomes a reviewable change
+(`utils/changeReview.js`) carrying the new address and the stale verdict about the
+old one, and the user's acceptance goes through `applyBulkEdit` — so re-pointing
+thirty links is one undo, and `bulkEdit`'s field list had to grow to include `url`
+so that undo can put the original address back.
+
+That shared row shape is why the review modal is `ChangeReviewModal` rather than
+the organizer's: two features now propose rather than write, and both are only
+tolerable because disagreeing with them is cheap. The modal renders rows and owns
+which are accepted; it knows nothing about where they came from.
+
+Recovery (#102) is the sweep's deliberate omission, added back as its own step.
+`utils/archiveRecovery.js` asks one hard-coded host — the archive's availability
+API — with the bookmark's URL only ever as a query parameter, so nothing here
+fetches a bookmark and there is no redirect to refuse. The two guards that matter
+are on either end: a URL is asked about only if it passes the same public-http(s)
+gate the checks use, and the address that comes back is validated as a public https
+URL on the archive's own host before it can reach a bookmark. It is a remote
+server's claim, which is what `redirect: "manual"` exists to distrust.
+
+Recovery proposes; it never writes. A snapshot becomes a reviewable change
+(`utils/changeReview.js`) carrying the new address and the stale verdict about the
+old one, and the user's acceptance goes through `applyBulkEdit` — so re-pointing
+thirty links is one undo, and `bulkEdit`'s field list had to grow to include `url`
+so that undo can put the original address back.
+
+That shared row shape is why the review modal is `ChangeReviewModal` rather than
+the organizer's: two features now propose rather than write, and both are only
+tolerable because disagreeing with them is cheap. The modal renders rows and owns
+which are accepted; it knows nothing about where they came from.
+
+## The week
+
+`lastOpenedAt` is the only field the app observes for itself; everything else on a
+bookmark is something a user typed or imported. It is written on the single path
+that opens one (`openBookmark`), straight to the store rather than through the
+recording helpers, because opening is not an edit and an "undo opening a bookmark"
+entry would be nonsense. Absent means never, so a collection that predates the
+field reads as never opened — the honest answer, since nothing recorded otherwise.
+
+The digest is split the way link health is. `utils/digest.js` chooses the three
+sets, purely and with no provider: what arrived this week, what settled in and was
+never opened, and what has no tags. `useDigest` adds one request that only names
+the groups the week's additions fall into, and a failure, a missing provider or a
+locked key downgrades to grouping by the folder or tag the bookmarks already carry.
+The valuable half of the feature therefore never depends on an API key.
+
+Two smaller decisions follow from that split:
+
+- The neglected sets exclude the current window. Something saved yesterday is new,
+  not ignored, and including it would make the digest nag about its own first
+  section.
+- The exits are existing features, not new ones. "Show never opened" sets the
+  manual filter — so it composes with sort, folder and bulk editing, and a saved
+  view can hold it — and "Triage the untagged" is the organizer (#44) pointed at
+  that set with `fields: ["tags"]`, reviewed through the same diff.
+
+`findNeverOpened` is also an agent action, for the same reason `findBrokenLinks`
+is: it reads a field the app wrote itself, so it needs no model and no network.
+
+## Undo
+
+Undo is a property of the write path, not of the two call sites that remember to
+snapshot. `useBookmarkStore` derives the inverse of each successful write from
+the write itself — `src/utils/bookmarkUndo.js` maps an operation to a label and
+an `apply` — and hands it to `useUndoHistory`. Three consequences worth keeping:
+
+- An inverse is expressed in terms of the ordinary write helpers, so restoring
+  goes through the same paths as the original, sequential fallbacks and import
+  progress included, rather than a second and less careful copy.
+- A write with no honest inverse records nothing rather than offering an undo
+  that fails when reached for.
+- A batch is one entry. A bulk edit over forty bookmarks is one undo, and it
+  restores only the fields the edit touched.
+- The history outlives the toast. The toast is an offer with a timer; the stack
+  is what `Cmd+Z` walks back through, and writes an undo makes are not recorded,
+  so undo never turns into redo. A destructive write's offer does not expire.
+
+## Folders
+
+There is no folder anywhere in this app. `folderId` is a path string on a bookmark,
+in every store, so `utils/folderTree.js` derives the tree the collection implies
+and expresses every folder operation as a write across the bookmarks that carry the
+path: renaming replaces a prefix, renesting is the same replacement with a longer
+one, and removing a folder rewrites its contents to its parent.
+
+Three consequences that shape the code:
+
+- **Folder editing has no write path of its own.** Everything returns patches for
+  `applyBulkEdit` (#54), so a thirty-bookmark drag is one store write, one
+  `updatedAt` sweep, and one undo entry — and the Chrome store's real nested
+  folders are built by the same `folderId` handling that already existed.
+- **Nothing can delete a folder's contents.** Removal is defined as emptying
+  upwards, because a folder with nothing in it has already stopped existing, and a
+  gesture as easy to misfire as a drag must not be able to lose bookmarks.
+- **Selecting a folder is a manual filter,** not a mode: `filters.folder` alongside
+  the tag and rating criteria in `utils/manualFilters.js`. It composes with the
+  rest for free and a saved view can hold it, where a separate "current folder"
+  would have needed its own interaction with each.
+
+Paths compare case-insensitively, matching the organizer's folder cleaning (#44):
+one folder shown twice would split its count and filter as its own sibling.
+
+Two things follow from the filter being ordinary state rather than the tree's own:
+a rename has to carry the filter with it (`followFolderMove`), or the view would
+filter on a path no bookmark has any more, and selecting a folder clears the
+multi-selection. The pane is marked as keeping the selection so the selected set can
+be dragged into a folder, which makes filtering from it the one gesture that has to
+drop it — a selection the new filter hides is a bulk edit aimed at bookmarks nobody
+can see.
+
+`FolderTree.jsx` holds only what a tree needs to be operated — what is collapsed,
+what is being renamed, what a drop is carrying — and hands paths and ids outward.
+It knows nothing about stores, patches or undo.
+
+## Semantic search
+
+Search is three layers, and the order matters. `searchBookmarks` in
+`utils/bookmarkFilters.js` is substring matching: exact, free, offline, and never
+removed. `utils/semanticSearch.js` is the pure vector work — what text represents a
+bookmark, when that text has changed enough to re-embed, cosine similarity, and how
+a ranking merges with a substring result. `llm/embeddings.js` makes the requests,
+and `useSemanticSearch` owns the cached index.
+
+`llm/embeddings.js` sits beside the chat providers rather than inside them: an
+embedding is a different endpoint and a different model, and Grok has none at all,
+so putting it on the `LLMProvider` interface would mean a method a third of the
+providers cannot implement.
+
+The index is one value in extension storage: bookmark id to a vector, a fingerprint
+of the text it came from, and what produced it — provider, model, endpoint. Those two
+strings are the whole caching rule: a bookmark is embedded once, an edited one is
+re-embedded, and switching provider or embedding model invalidates every vector at
+once, because vectors from two models are not comparable rather than merely less
+accurate. A deleted bookmark is forgotten on the next pass, so no write path needs
+to know the index exists. It reads back defensively, like any other stored value, and
+a vector with no recorded origin reads as one nothing matches.
+
+Two consequences worth stating:
+
+- **A failed agent call no longer costs the search.** The fallback search is
+  announced through `onSteps` like any other step, and matching is local once
+  vectors exist, so a natural-language query still finds things.
+- **The ranking is a display step, not a query.** The app rewrites its own
+  `searchBookmarks` step into `semanticMatches`, carrying the query and the ranked
+  ids, because widening has to see what substring matching filtered out. That
+  action is deliberately absent from the normalize whitelist: it is written by the app
+  from a local ranking, never by a model. It shares `searchBookmarks`'s slot in
+  `mergeAgentPlan` — a widened search is still that search, and a second query has
+  to displace it — and saving a view turns it back into the query it came from,
+  since a ranking describes one moment and would go stale. The rewrite lands
+  whenever the widening finishes: the plan applies and the search box unlocks
+  first, and a cold or stale index spends as long as embedding takes widenin
