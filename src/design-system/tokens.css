@@ -1,0 +1,173 @@
+/*
+ * Unified UI design system tokens (#238, Storybook-first).
+ *
+ * Self-contained and additive: every token is prefixed `--ui-` and scoped to a
+ * `[data-ui-theme]` root, so nothing here can collide with the app's seven
+ * runtime theme variables in src/index.css. A surface opts in by rendering its
+ * content under `data-ui-theme="light" | "dark"` — the shared Storybook story
+ * decorator does this today; migrating an app surface means rendering it
+ * under the same attribute and importing this file once.
+ *
+ * Values come from the supplied unified UI spec: alabaster-slate surfaces,
+ * brick-crimson primary actions, unified violet for every AI-assisted action,
+ * WCAG AA on-role contrast pairs, a 4px/8px rhythm, and CSS logical properties
+ * in components.css so `dir="rtl"` mirrors without per-component overrides.
+ */
+
+[data-ui-theme] {
+  /* Typography — Red Hat Text for headings, Radio Canada Big for UI controls
+     and body copy, Fira Code for URLs, <kbd> chips and provider status pills.
+     Fonts are self-hosted via @fontsource imports (story-facing until a
+     surface migrates); all three families are OFL. Text must scale cleanly to
+     200% zoom: never fix the height of a text container. */
+  --ui-font-heading: "Red Hat Text", system-ui, sans-serif;
+  --ui-font-body: "Radio Canada Big", system-ui, sans-serif;
+  --ui-font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Type scale, as `<weight> <size>/<line-height> <family>` shorthands. The
+     letter-spacing from the spec lives on the .ui-type-* classes in
+     components.css — a font shorthand cannot carry it. */
+  --ui-type-display-lg: 600 36px/44px var(--ui-font-heading);
+  --ui-type-display-lg-mobile: 600 28px/34px var(--ui-font-heading);
+  --ui-type-headline-lg: 600 24px/30px var(--ui-font-heading);
+  --ui-type-headline-md: 600 20px/26px var(--ui-font-heading);
+  --ui-type-headline-sm: 600 16px/22px var(--ui-font-heading);
+  --ui-type-body-lg: 400 15px/22px var(--ui-font-body);
+  --ui-type-body-md: 400 14px/20px var(--ui-font-body);
+  --ui-type-body-sm: 400 12px/18px var(--ui-font-body);
+  --ui-type-label-lg: 600 14px/20px var(--ui-font-body);
+  --ui-type-label-md: 500 13px/18px var(--ui-font-body);
+  --ui-type-label-sm: 500 12px/16px var(--ui-font-body);
+  --ui-type-mono-md: 400 13px/18px var(--ui-font-mono);
+  --ui-type-mono-sm: 400 12px/16px var(--ui-font-mono);
+
+  /* Spacing — the strict 4px/8px rhythm the spec enforces on both surfaces. */
+  --ui-space-gutter-xs: 4px;
+  --ui-space-gutter-sm: 8px;
+  --ui-space-gutter-md: 16px;
+  --ui-space-gutter-lg: 24px;
+  --ui-space-gutter-xl: 32px;
+  --ui-space-section: 40px;
+  --ui-space-page-margin: 24px;
+
+  /* Shapes — 4px chips and checkboxes, 8px buttons/inputs/cards, 10px search
+     and filter bars, 12px dialogs and the extension popup, full pills and
+     avatars. */
+  --ui-radius-sm: 4px;
+  --ui-radius: 8px;
+  --ui-radius-md: 10px;
+  --ui-radius-lg: 12px;
+  --ui-radius-xl: 16px;
+  --ui-radius-full: 9999px;
+
+  /* Motion — 100ms state feedback, 200ms surface enter, 150ms surface exit.
+     components.css collapses every transition and animation to 0ms under
+     prefers-reduced-motion: reduce. */
+  --ui-duration-state: 100ms;
+  --ui-duration-enter: 200ms;
+  --ui-duration-exit: 150ms;
+  --ui-ease-state: ease-out;
+  --ui-ease-enter: cubic-bezier(0.2, 0, 0, 1);
+  --ui-ease-exit: cubic-bezier(0.3, 0, 1, 1);
+
+  /* Accents shared by both schemes. `ai-suggest` is the violet that marks
+     every model-powered action; `brand-crimson` is the ribbon-mark red. */
+  --ui-brand-crimson: #b82925;
+  --ui-ai-suggest: #6d28d9;
+  --ui-success: #1e7e34;
+  --ui-danger: #c92a2a;
+
+  /* Elevation — crisp tonal layering with hairline slate borders. The scrim
+     is the dialog backdrop value from the spec's elevation rules. */
+  --ui-shadow-card: 0 1px 2px rgba(21, 28, 36, 0.05), 0 4px 12px rgba(21, 28, 36, 0.03);
+  --ui-shadow-card-hover: 0 2px 4px rgba(21, 28, 36, 0.08), 0 8px 20px rgba(21, 28, 36, 0.12);
+  --ui-dialog-scrim: rgba(13, 20, 28, 0.5);
+
+  /* Hover treatment for filled controls: darken on light, lighten on dark.
+     color-mix reads these as `color-mix(in srgb, <role> 90%, mix-color)`. */
+  --ui-hover-mix-amount: 90%;
+  --ui-hover-mix-color: #000000;
+}
+
+[data-ui-theme="light"] {
+  color-scheme: light;
+  --ui-primary: #950b10;
+  --ui-on-primary: #ffffff;
+  --ui-primary-container: #b82925;
+  --ui-on-primary-container: #ffd2cd;
+  --ui-secondary: #99443d;
+  --ui-on-secondary: #ffffff;
+  --ui-secondary-container: #fd9489;
+  --ui-on-secondary-container: #762a25;
+  --ui-tertiary: #5d04ca;
+  --ui-on-tertiary: #ffffff;
+  --ui-tertiary-container: #7635e2;
+  --ui-on-tertiary-container: #e5d6ff;
+  --ui-error: #ba1a1a;
+  --ui-on-error: #ffffff;
+  --ui-error-container: #ffdad6;
+  --ui-on-error-container: #93000a;
+  --ui-background: #f8f9ff;
+  --ui-on-background: #151c24;
+  --ui-surface: #f8f9ff;
+  --ui-surface-dim: #d4dae6;
+  --ui-surface-bright: #ffffff;
+  --ui-surface-container-lowest: #ffffff;
+  --ui-surface-container-low: #eef4ff;
+  --ui-surface-container: #e8eefa;
+  --ui-surface-container-high: #e2e9f4;
+  --ui-surface-container-highest: #dce3ef;
+  --ui-on-surface: #151c24;
+  --ui-surface-variant: #ffdad6;
+  --ui-on-surface-variant: #404751;
+  --ui-outline: #585f69;
+  --ui-outline-variant: #c0c7d2;
+  --ui-inverse-surface: #2a313a;
+  --ui-inverse-on-surface: #eaf1fd;
+  --ui-inverse-primary: #ffb4ab;
+  --ui-shadow: #000000;
+  --ui-scrim: #000000;
+}
+
+[data-ui-theme="dark"] {
+  color-scheme: dark;
+  --ui-primary: #ffb4ab;
+  --ui-on-primary: #690005;
+  --ui-primary-container: #b82925;
+  --ui-on-primary-container: #ffd2cd;
+  --ui-secondary: #ffb4ab;
+  --ui-on-secondary: #5d1814;
+  --ui-secondary-container: #7d302a;
+  --ui-on-secondary-container: #ff9f94;
+  --ui-tertiary: #d3bbff;
+  --ui-on-tertiary: #3f008d;
+  --ui-tertiary-container: #7635e2;
+  --ui-on-tertiary-container: #e5d6ff;
+  --ui-error: #ffb4ab;
+  --ui-on-error: #690005;
+  --ui-error-container: #93000a;
+  --ui-on-error-container: #ffdad6;
+  --ui-background: #0d141c;
+  --ui-on-background: #dce3ef;
+  --ui-surface: #0d141c;
+  --ui-surface-dim: #0d141c;
+  --ui-surface-bright: #333a43;
+  --ui-surface-container-lowest: #080f17;
+  --ui-surface-container-low: #151c24;
+  --ui-surface-container: #192028;
+  --ui-surface-container-high: #242b33;
+  --ui-surface-container-highest: #2e353e;
+  --ui-on-surface: #dce3ef;
+  --ui-surface-variant: #5a403e;
+  --ui-on-surface-variant: #aeb4be;
+  --ui-outline: #8a919c;
+  --ui-outline-variant: #404751;
+  --ui-inverse-surface: #dce3ef;
+  --ui-inverse-on-surface: #2a313a;
+  --ui-inverse-primary: #b42623;
+  --ui-shadow: #000000;
+  --ui-scrim: #000000;
+
+  --ui-hover-mix-amount: 88%;
+  --ui-hover-mix-color: #ffffff;
+}
