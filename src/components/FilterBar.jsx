@@ -1,21 +1,26 @@
 // #53: Deterministic filter controls — the LLM-free path to filtering/sorting.
 // Everything here is local: no network, no provider, no API key. The agent bar is a
 // convenience layer on top of these same primitives, not a prerequisite for them.
+//
+// #250: the design system's vocabulary — the text filter is an input-field-icon
+// (40px, leading search icon, clear button on the trailing slot), the selects
+// are the tokenized native element (the design system ships no select
+// primitive), the toggles wear the mockup's pressed-state reading, and the
+// sort direction is button-with-icon. The dark on-container text swaps live in
+// index.css beside the app's other chrome compositions.
 
 import React, { useMemo, useState } from "react";
 import { SORT_FIELDS, TAG_STATE, getTagState, hasActiveFilters } from "../utils/manualFilters.js";
-import { Button, Input, Select } from "./DesignSystem.jsx";
+import { Button, InputField } from "../design-system/index.js";
+import { ArrowIcon, SearchIcon } from "./icons.jsx";
 
 const VISIBLE_TAG_LIMIT = 12;
 
 function TagChip({ tag, count, state, onClick }) {
-  const base =
-    "px-2 py-0.5 text-xs rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-accent";
-  const styles = {
-    [TAG_STATE.INCLUDE]: "bg-accent text-white border-accent",
-    [TAG_STATE.EXCLUDE]:
-      "bg-secondary-bg text-secondary-text border-border line-through opacity-70",
-    [TAG_STATE.OFF]: "bg-primary-bg text-primary-text border-border hover:bg-secondary-bg",
+  const states = {
+    [TAG_STATE.INCLUDE]: "ui-filter-chip--include",
+    [TAG_STATE.EXCLUDE]: "ui-filter-chip--exclude",
+    [TAG_STATE.OFF]: "ui-filter-chip--off",
   };
   const hint = {
     [TAG_STATE.INCLUDE]: "including",
@@ -26,17 +31,24 @@ function TagChip({ tag, count, state, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`${base} ${styles[state]}`}
+      className={`ui-filter-chip ${states[state]}`}
       // Chips are tri-state, so aria-pressed (binary) would misreport "exclude".
       // Spell the state out for screen readers instead.
       aria-label={`Tag ${tag}, ${count} bookmark${count === 1 ? "" : "s"}, ${hint[state]}. Activate to cycle include, exclude, off.`}
     >
       {state === TAG_STATE.EXCLUDE ? "−" : ""}
       {tag}
-      <span className="ml-1 opacity-60">{count}</span>
+      <span className="ui-filter-chip-count">{count}</span>
     </button>
   );
 }
+
+// The design system ships no select primitive; the mockup keeps the native
+// element and tokens it (the OptionsModal idiom, minus the label these
+// controls carry as aria-labels instead).
+const FilterSelect = ({ className, ...props }) => (
+  <select className={`ui-input ui-filter-select ${className}`} {...props} />
+);
 
 const FilterBar = React.memo(function FilterBar({
   filters,
@@ -59,7 +71,7 @@ const FilterBar = React.memo(function FilterBar({
 
   return (
     <div
-      className="mb-4 p-2 rounded-lg border border-border bg-primary-bg"
+      className="ui-filter-bar mb-4 p-2"
       style={style}
       role="search"
       aria-label="Filter bookmarks"
@@ -68,46 +80,51 @@ const FilterBar = React.memo(function FilterBar({
         {/* The text filter is grouped apart from the discrete controls: below
             40rem it takes a full row and the controls scroll as one strip
             (see the media query in index.css), instead of six wrapped lines. */}
-        <div className="ds-filter-text relative flex-1 min-w-[13.75rem]">
-          <Input
+        <div className="ui-filter-text relative flex-1 min-w-[13.75rem]">
+          <InputField
             id="filter-text"
             type="text"
+            icon={<SearchIcon />}
             value={filters.text}
             onChange={(e) => onChange({ ...filters, text: e.target.value })}
             placeholder="Filter instantly (no AI)…"
             aria-label="Filter bookmarks by text"
+            trailing={
+              filters.text ? (
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...filters, text: "" })}
+                  className="ui-filter-clear"
+                  aria-label="Clear text filter"
+                >
+                  ✕
+                </button>
+              ) : undefined
+            }
           />
-          {filters.text && (
-            <button
-              type="button"
-              onClick={() => onChange({ ...filters, text: "" })}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary-text hover:text-primary-text focus:outline-none focus:ring-2 focus:ring-accent rounded"
-              aria-label="Clear text filter"
-            >
-              ✕
-            </button>
-          )}
         </div>
 
-        <div className="ds-filter-controls flex items-center gap-2 flex-wrap">
-          <Select
+        <div className="ui-filter-controls flex items-center gap-2 flex-wrap">
+          <FilterSelect
             id="filter-rating"
             value={filters.minRating}
             onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
             aria-label="Minimum rating"
-            wrapperClassName="w-[9.375rem]"
-            options={[
-              { value: 0, label: "Any rating" },
-              ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${"★".repeat(n)}+` })),
-            ]}
-          />
+            className="w-[9.375rem]"
+          >
+            <option value={0}>Any rating</option>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {`${"★".repeat(n)}+`}
+              </option>
+            ))}
+          </FilterSelect>
 
           {/* #47: what the sweep found, as a filter — the status it reads is written
             by the link check, so this stays useful with no LLM and no network. */}
           <Button
             type="button"
-            size="sm"
-            intent={filters.brokenOnly ? "primary" : "secondary"}
+            intent={filters.brokenOnly ? "primary" : "outlined"}
             onClick={() => onChange({ ...filters, brokenOnly: !filters.brokenOnly })}
             aria-pressed={Boolean(filters.brokenOnly)}
           >
@@ -118,38 +135,42 @@ const FilterBar = React.memo(function FilterBar({
             something a user typed. */}
           <Button
             type="button"
-            size="sm"
-            intent={filters.neverOpened ? "primary" : "secondary"}
+            intent={filters.neverOpened ? "primary" : "outlined"}
             onClick={() => onChange({ ...filters, neverOpened: !filters.neverOpened })}
             aria-pressed={Boolean(filters.neverOpened)}
           >
             Never opened
           </Button>
 
-          <Select
+          <FilterSelect
             id="filter-sort"
             value={filters.sortBy}
             onChange={(e) => onChange({ ...filters, sortBy: e.target.value })}
             aria-label="Sort by"
-            wrapperClassName="w-[10.625rem]"
-            options={SORT_FIELDS}
-          />
+            className="w-[10.625rem]"
+          >
+            {SORT_FIELDS.map((field) => (
+              <option key={field.value} value={field.value}>
+                {field.label}
+              </option>
+            ))}
+          </FilterSelect>
 
           <Button
             type="button"
-            size="sm"
-            intent="secondary"
+            intent="outlined"
             onClick={() =>
               onChange({ ...filters, order: filters.order === "asc" ? "desc" : "asc" })
             }
             disabled={!filters.sortBy}
+            leadingIcon={<ArrowIcon up={filters.order === "asc"} />}
             aria-label={`Sort direction: ${filters.order === "asc" ? "ascending" : "descending"}. Activate to reverse.`}
           >
-            {filters.order === "asc" ? "↑ Asc" : "↓ Desc"}
+            {filters.order === "asc" ? "Asc" : "Desc"}
           </Button>
 
           {active && (
-            <Button type="button" intent="ghost" onClick={onClear}>
+            <Button type="button" intent="secondary" onClick={onClear}>
               Clear filters
             </Button>
           )}
@@ -171,7 +192,7 @@ const FilterBar = React.memo(function FilterBar({
             <button
               type="button"
               onClick={() => setShowAllTags(true)}
-              className="px-2 py-0.5 text-xs rounded-full border border-border text-secondary-text hover:bg-secondary-bg focus:outline-none focus:ring-2 focus:ring-accent"
+              className="ui-filter-chip ui-filter-chip--off"
             >
               +{hiddenCount} more
             </button>
@@ -180,7 +201,7 @@ const FilterBar = React.memo(function FilterBar({
             <button
               type="button"
               onClick={() => setShowAllTags(false)}
-              className="px-2 py-0.5 text-xs rounded-full border border-border text-secondary-text hover:bg-secondary-bg focus:outline-none focus:ring-2 focus:ring-accent"
+              className="ui-filter-chip ui-filter-chip--off"
             >
               Show fewer
             </button>
@@ -189,7 +210,7 @@ const FilterBar = React.memo(function FilterBar({
       )}
 
       {summary && (
-        <div className="mt-2 pt-2 border-t border-border text-sm text-secondary-text">
+        <div className="mt-2 pt-2 border-t border-[var(--ui-outline-variant)] text-sm text-[var(--ui-on-surface-variant)]">
           {summary}
         </div>
       )}
