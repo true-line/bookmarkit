@@ -10,6 +10,10 @@ import { useFocusTrap } from "../hooks/useFocusTrap.js";
 // footer button. modal-alert (alertdialog semantics) and modal-drawer stay
 // as the sticker sheet's contract; the alert keeps the error-toned heading.
 //
+// The sticker sheet's panel is 576px wide; `size` carries the screens' wider
+// shell readings as modifier classes — the help-shortcuts screen runs
+// modal-standard at max-w-2xl (`.ui-modal-panel--2xl`).
+//
 // The keyboard contract is the app's existing one, reused on purpose: the
 // focus trap, Escape-on-the-panel (stopped, so app shortcuts never fire
 // behind the dialog and a nested dialog does not close its parent) and focus
@@ -22,13 +26,18 @@ import { useFocusTrap } from "../hooks/useFocusTrap.js";
 
 const EXIT_MS = 150; // mirrors --ui-duration-exit; keep in step with tokens.css
 
-// Variant is a closed set, so tables keep the wiring decision-free. Alert
-// carries its modifier class so the stylesheet's error-toned heading rule
-// (.ui-modal-panel--alert) actually applies.
+// Variant and size are closed sets, so tables keep the wiring decision-free.
+// Alert carries its modifier class so the stylesheet's error-toned heading
+// rule (.ui-modal-panel--alert) actually applies; size carries the screens'
+// wider shell readings (the help-shortcuts screen's max-w-2xl modal-standard).
 const PANEL_CLASS = {
   standard: "ui-modal-panel",
   alert: "ui-modal-panel ui-modal-panel--alert",
   drawer: "ui-drawer-panel",
+};
+const PANEL_SIZE_CLASS = {
+  md: "",
+  "2xl": " ui-modal-panel--2xl",
 };
 const ROLE = {
   standard: "dialog",
@@ -38,6 +47,7 @@ const ROLE = {
 
 export function Modal({
   variant = "standard",
+  size = "md",
   title,
   description,
   children,
@@ -60,7 +70,7 @@ export function Modal({
 
   // An alert without a description falls back to describing itself by its
   // body; standard modals only describe by an explicit description line.
-  const describedBy = description ? descriptionId : variant === "alert" ? bodyId : undefined;
+  const describedBy = describedByLine({ variant, description, descriptionId, bodyId });
 
   return (
     <div
@@ -77,7 +87,7 @@ export function Modal({
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={describedBy}
         tabIndex={-1}
-        className={PANEL_CLASS[variant]}
+        className={PANEL_CLASS[variant] + PANEL_SIZE_CLASS[size]}
         onKeyDown={(event) => {
           if (event.key !== "Escape") return;
           event.stopPropagation();
@@ -95,10 +105,7 @@ export function Modal({
           closeDisabled={closeDisabled}
           onClose={requestClose}
         />
-        <div
-          className="ui-modal-body"
-          id={variant === "alert" && !description ? bodyId : undefined}
-        >
+        <div className="ui-modal-body" id={alertBodyId({ variant, description, bodyId })}>
           {children}
         </div>
         {footer && <div className="ui-modal-footer">{footer}</div>}
@@ -159,6 +166,19 @@ function ModalHeading({
       )}
     </div>
   );
+}
+
+// An alert without a description falls back to describing itself by its
+// body; standard modals only describe by an explicit description line.
+function describedByLine({ variant, description, descriptionId, bodyId }) {
+  if (description) return descriptionId;
+  return variant === "alert" ? bodyId : undefined;
+}
+
+// The alert's body only carries the describedby id when it is the one doing
+// the describing — never for a standard modal or a described alert.
+function alertBodyId({ variant, description, bodyId }) {
+  return variant === "alert" && !description ? bodyId : undefined;
 }
 
 // The scrim-click guard doubles as the Escape guard, matching the

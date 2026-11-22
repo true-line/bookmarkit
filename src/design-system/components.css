@@ -124,6 +124,18 @@
   padding: 2px 8px;
 }
 
+/* Example-command chips from the help-shortcuts screen: mono copy in a
+   hairline, 8px radius, container surface. The screen pairs them with the
+   ui-kbd keycaps above — a command is quoted copy, a key is a cap. */
+.ui-command-chip {
+  font: var(--ui-type-mono-sm);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface);
+  padding: 4px 10px;
+}
+
 /* Provider status pills: mono copy in a full-radius hairline. */
 .ui-pill {
   font: var(--ui-type-mono-sm);
@@ -497,6 +509,13 @@
   animation: ui-panel-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
 }
 
+/* The sticker sheet's standard panel is 576px; screens that need the wider
+   reading take a size modifier — the help-shortcuts screen's shell is the
+   max-w-2xl (672px) modal-standard. */
+.ui-modal-panel--2xl {
+  width: min(672px, 100%);
+}
+
 .ui-modal-heading {
   display: flex;
   align-items: flex-start;
@@ -545,6 +564,36 @@
   border-block-start: 1px solid var(--ui-outline-variant);
   border-end-end-radius: var(--ui-radius-lg);
   border-end-start-radius: var(--ui-radius-lg);
+}
+
+/* The help-shortcuts screen's shortcut rows: a bordered container-low row
+   with the action on the inline start and its keycaps on the inline end, laid
+   out two-up inside a wide panel. Labels follow the row's on-surface color. */
+.ui-shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-gutter-sm);
+}
+
+.ui-shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-low);
+  color: var(--ui-on-surface);
+}
+
+/* The help-shortcuts mockup is desktop-only, but the modal renders at any
+   width, and phone-width columns cannot hold a label beside an unbreakable
+   keycap like Cmd/Ctrl+Backspace — so narrow viewports stack the rows. */
+@media (max-width: 480px) {
+  .ui-shortcut-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Sticker sheet: modal-drawer — an inline-start sheet. Inset, radius corners
