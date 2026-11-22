@@ -123,6 +123,28 @@ describe("ImportExportContent unified dialog shell (#247)", () => {
     vi.useRealTimers();
   });
 
+  it("accepts a dropped file on the zone, not just a picked one", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("tab", { name: "Import JSON" }));
+    const input = screen.getByLabelText("Upload JSON File");
+    fireEvent.drop(input.closest("label"), {
+      dataTransfer: {
+        files: [
+          new File(
+            [JSON.stringify([{ title: "Dropped", url: "https://example.com/drop" }])],
+            "dropped.json",
+            { type: "application/json" }
+          ),
+        ],
+      },
+    });
+
+    // The count rides a <strong>, and findByText matches direct text nodes only,
+    // so the singular reading needs the optional plural.
+    const confirmation = await screen.findByText(/bookmarks? to your collection/);
+    expect(confirmation).toHaveTextContent("This will add 1 bookmark");
+  });
+
   it("returns to the tabs when the confirmation is cancelled", async () => {
     setup();
     chooseJsonFile(JSON.stringify([{ title: "Keep", url: "https://example.com/one" }]));
