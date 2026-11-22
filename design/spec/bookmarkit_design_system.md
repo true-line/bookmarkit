@@ -587,4 +587,158 @@ Two consequences worth stating:
   to displace it — and saving a view turns it back into the query it came from,
   since a ranking describes one moment and would go stale. The rewrite lands
   whenever the widening finishes: the plan applies and the search box unlocks
-  first, and a cold or stale index spends as long as embedding takes widenin
+  first, and a cold or stale index spends as long as embedding takes widening the
+  results in the background rather than holding the view shut. The rebuilds
+  themselves serialize: a query arriving mid-rebuild waits for the commit and
+  re-checks what is still missing, so a cold index is never embedded twice and
+  an older snapshot is never committed over a newer one.
+
+Each provider's embedding call follows that provider's own contract for a configured
+base URL, which the chat providers disagree about: OpenAI's base is the `/v1` root,
+LM Studio's is the host. Getting that wrong would break search only for the installs
+that configured one.
+
+Searching sends the query text to the provider, so it goes through the same
+`isProviderReady` gate the other model features use: a provider name is not
+consent.
+
+## Persistence boundary
+
+`src/stores/index.js` selects one of three implementations behind the shared
+bookmark-store contract:
+
+| Store                     | Responsibility                                                                                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `localCompositeStore.js`  | Default extension store: Chrome bookmarks own title and URL; `localStorage` entries prefixed `bm_meta:` own tags, rating, description, and other metadata. |
+| `chromeBookmarksStore.js` | Direct Chrome Bookmarks API adapter without metadata persistence.                                                                                          |
+| `firebaseStore.js`        | Optional Firestore store under `artifacts/<appId>/users/<uid>/bookmarks`.                                                                                  |
+
+Every implementation supports initialization, listing/subscription, single and
+bulk writes, deletion, order persistence, and `teardown()` — which must release
+every backend listener `init()` registered, because a store instance is created
+per mount rather than shared. New UI paths should depend on that behavior
+through `useBookmarkStore`, not detect or call a backend directly.
+
+A store write notifies subscribers once, when the whole write is done. Chrome
+reports bookmark changes one event per touched node, and reading the list means
+walking the tree, so treating each event as a change made an N-item write cost N
+walks. `chromeBookmarksStore` ignores the events its own writes echo back and
+coalesces bursts it did not cause. Anything added to a store must keep that
+property: one write, one notification, whatever its size.
+
+An empty list means the user has no bookmarks. A store must never emit one to
+mean "I could not read them": the app cannot tell the difference, and a save made
+from that view is made against nothing. A store that fails before it is usable
+rejects `init()`; one that fails afterwards keeps the last list it emitted and
+reports through the optional `onError` option, which `useBookmarkStore` turns
+into a message. Either way the failure is visible.
+
+A few contract methods are optional, `updateMany` among them: a store implements
+it when it can write a whole selection in one round-trip, as Firestore can with a
+batch, and callers fall back to writing one bookmark at a time. The fallback is
+part of the contract rather than a workaround, so a new store is useful before it
+is complete.
+
+## Duplicates
+
+Duplicate detection has two layers, and the order matters. `utils/duplicates.js`
+is the rule: two bookmarks are the same when `normalizeUrl` collapses them to the
+same key, and the copy carrying tags, a rating, or a description is the one kept.
+It needs no provider and is what runs by default.
+
+`utils/nearDuplicates.js` is the second layer, for what a rule cannot settle: the
+same article under a canonical and a syndicated URL. It is pure — choosing which
+pairs are worth asking about, reading a verdict back, and turning verdicts into a
+proposal — while `useSemanticDedupe` does the asking. Three properties hold it
+inside the trust boundary:
+
+- A verdict naming a pair nobody asked about is dropped, so an answer cannot
+  smuggle a bookmark into a deletion.
+- A bookmark already proposed is left out of later pairs, so three copies pairing
+  up three ways cannot delete all three.
+- The result is a proposal. It reaches the store only through the confirmation
+  dialog the delete button already uses, and each proposed pair shows the reason
+  it was proposed. Which copy survives is decided by the same rule the
+  deterministic layer uses, not by the model.
+
+With no usable provider, a locked key, or a failed request, the proposal is empty
+and the rule-based result stands on its own. "Usable" is `isProviderReady`, not a
+provider name: `gemini` is the default before anything is configured, so a feature
+that transmits on its own initiative — rather than because the user typed a query
+— would otherwise send this collection's titles to a remote API for a request
+destined to fail on its missing key. Providers running on the user's own machine
+need nothing.
+
+## LLM boundary
+
+The factory in `src/llm/index.js` exposes each provider on the Vercel AI SDK:
+`generate(prompt)` for plain text (digest, organizer, dedupe, form suggestions)
+and `generatePlan(prompt)` for the agent engine, which requests the plan
+against `PLAN_JSON_SCHEMA` (`llm/normalize.js`) so the answer arrives as JSON or
+an error — there is no response-text reconstruction. What comes back is still
+normalized through the same per-action whitelist before anything applies it,
+because the schema describes a shape, not a permission. The schema travels as
+non-strict JSON schema — the open `parameters` object is deliberate, and strict
+schema modes cannot express it — and hosted providers are addressed on the Chat
+Completions contract their configurable endpoints speak, not a newer endpoint an
+OpenAI-compatible proxy may not implement. Model discovery queries
+the endpoint and shows only what it serves; no model name is hardcoded, so a
+provider without a chosen model refuses locally with a message instead of
+failing on a request. The SDK itself is reached only through a dynamic import
+of `llm/aiVendor.js` on the first generation call, so startup never parses it.
+Provider failure falls back to ordinary bookmark search; persistence is still
+performed only by a store operation initiated by application behavior.
+
+Runtime provider settings override build-time defaults and remain in browser
+storage. They are user configuration, not repository configuration, and must
+never be committed.
+
+## Trust and privacy boundaries
+
+- Local-mode bookmark content stays in Chrome bookmarks plus the extension's
+  local metadata. Firebase mode stores it in the configured Firebase project.
+- LLM prompts leave the browser only for the provider the user selected. API
+  keys are stored in browser local storage and are never build inputs in the
+  default release.
+- URL reachability checks execute in `public/background.js`, not page context.
+  They accept only public HTTP(S) destinations and do not follow redirects, so
+  the extension's http(s)-only host permission does not become an internal-network
+  request primitive. The manifest asks for exactly the two schemes the checks can
+  ever target — `http://*/*` and `https://*/*` — and nothing broader.
+  `utils/urlStatus.js` applies both rules on the calling side
+  too, which is what keeps the web build's unprivileged fetch inside the same
+  boundary: the response may be unreadable there, but the request still leaves the
+  browser.
+- WebMCP tools (#212) are a read-only projection of the in-memory list,
+  registered from the full app page only — the popup is too short-lived and the
+  service worker has no document — after an explicit per-user opt-in, and only
+  while that tab stays open. They reuse the manual filters' pure functions, so
+  an agent's query and the UI's filters agree by construction; results are
+  bounded; there is no store write path and no fetch path through them. The
+  service worker's URL checks remain the only fetch route, and browsers that
+  have not enabled WebMCP simply never see the surface.
+- The release archive includes `LICENSE` and generated
+  `THIRD-PARTY-NOTICES.md`. The latter is derived from the locked production
+  dependency closure and checked for drift in CI.
+
+## Release model
+
+Changesets describe user-visible changes. The version-cut workflow maintains a
+reviewable version PR — published through the GitHub Git Data API so GitHub
+signs the release commit — synchronizes the npm and extension-manifest versions,
+and creates the immutable tag after that PR merges. The release workflow
+revalidates the tagged tree, builds the Chrome extension, and publishes the zip
+and checksum. Manual version edits, tags, or uploads bypass those consistency
+checks and are unsupported.
+
+## Components
+
+Component implementations live as individual HTML sticker sheet files in
+`components/`. Each file contains the canonical, styled HTML components with
+`<!-- COMPONENT: name -->` comment markers. Read each file before use.
+
+- **Button** → `@components/button.html`: `button-primary`, `button-icon`, `button-with-icon`
+- **Card** → `@components/card.html`: `card-elevated`, `card-action`, `card-interactive`, `card-interactive-2`
+- **Input Field** → `@components/input-field.html`: `input-field-text`, `input-field-icon`
+- **Modal** → `@components/modal.html`: `modal-standard`, `modal-alert`, `modal-drawer`
+- **Typography** → `@components/typography.html`: `typography-display`, `typography-body`, `typography-label`
