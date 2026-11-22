@@ -17,7 +17,9 @@ import { chunkIntoRows, columnsForWidth, rowKeyFor, COLUMN_GAP } from "../utils/
 
 const ITEM_HEIGHT = 104; // px — initial card-row estimate before measurement
 const FILTER_ROW_GAP = 16; // px — mirrors the filter panel's mb-4 spacing
-const ROW_GAP = 8; // px — vertical gap under a card row, as the single-column list had
+// #251: the mockup's card grid spaces both axes at gap-gutter-md, so the row
+// gap matches the 16px the column engine already counts between cards.
+const ROW_GAP = 16; // px — vertical gap under a card row
 
 // ARCH-10: Three distinct empty states
 function EmptyState({
@@ -189,18 +191,21 @@ function BookmarkRow({ index, style, data }) {
           }}
         >
           {row.map((bookmark) => (
-            <BookmarkCard
-              key={bookmark.id}
-              bookmark={bookmark}
-              isSelected={selectedBookmarkId === bookmark.id}
-              isMultiSelected={multiSelectedBookmarkIds.includes(bookmark.id)}
-              isPendingDelete={bookmarksToDelete.includes(bookmark.id)}
-              remoteFavicons={remoteFavicons}
-              onClick={(e) => onBookmarkClick(bookmark, e)}
-              onDoubleClick={(e) => onBookmarkDoubleClick(bookmark, e)}
-              onKeyDown={(e) => onBookmarkKeyDown(e, bookmark)}
-              onDragStart={onBookmarkDragStart && ((e) => onBookmarkDragStart(e, bookmark))}
-            />
+            // The shelf is an ARIA list, so the cell wraps the card instead of
+            // letting the card's role="button" replace the listitem slot.
+            <div key={bookmark.id} role="listitem" className="flex">
+              <BookmarkCard
+                bookmark={bookmark}
+                isSelected={selectedBookmarkId === bookmark.id}
+                isMultiSelected={multiSelectedBookmarkIds.includes(bookmark.id)}
+                isPendingDelete={bookmarksToDelete.includes(bookmark.id)}
+                remoteFavicons={remoteFavicons}
+                onClick={(e) => onBookmarkClick(bookmark, e)}
+                onDoubleClick={(e) => onBookmarkDoubleClick(bookmark, e)}
+                onKeyDown={(e) => onBookmarkKeyDown(e, bookmark)}
+                onDragStart={onBookmarkDragStart && ((e) => onBookmarkDragStart(e, bookmark))}
+              />
+            </div>
           ))}
         </div>
       </div>
@@ -399,7 +404,15 @@ const BookmarkList = React.memo(function BookmarkList({
         }
         width="100%"
         overscanCount={5}
-        style={{ overflowX: "hidden" }}
+        style={{
+          overflowX: "hidden",
+          // react-window injects an inline `direction: ltr` on the scroller,
+          // which forced the filter strip and cards to lay out left-to-right
+          // even when the document reads right-to-left (#250 investigation).
+          // The user style merges after the library's, so `inherit` hands the
+          // direction back to the document without touching the virtualizer.
+          direction: "inherit",
+        }}
       >
         {renderRow}
       </VariableSizeList>
