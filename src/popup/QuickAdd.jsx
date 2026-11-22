@@ -191,3 +191,157 @@ function QuickAddBody({ form, setForm, folderOptions, existing, status, onSave, 
     </>
   );
 }
+
+const QuickAdd = () => {
+  useTheme(); // applies the user's theme CSS variables to this popup too
+
+  const { bookmarks, isLoading, init, saveBookmark, storeRef } = useBookmarkStore();
+  useEffect(() => init(), [init]);
+
+  const [tab, setTab] = useState(null);
+  const [tabError, setTabError] = useState("");
+  const [existing, setExisting] = useState(null);
+  const [form, setForm] = useState({ title: "", url: "", tags: "", rating: 0, folderId: "" });
+  const [status, setStatus] = useState({ state: "idle", message: "" });
+
+  const folderOptions = useMemo(
+    () => [...new Set(bookmarks.map((b) => b.folderId).filter(Boolean))],
+    [bookmarks]
+  );
+
+  // #52: A right-click already knows what to bookmark, and for a link it knows
+  // something this popup could not discover — the link's target is not the active
+  // tab — so the target arrives in the query string. Otherwise the active tab is
+  // the subject. url/title/favIconUrl are readable under the manifest's http(s)
+  // host permissions (`http://*/*`, `https://*/*`); no "tabs" permission needed.
+  // Non-http(s) tabs (file:, chrome:) fall outside those patterns, so their
+  // url/title never arrive — which isSafeHttpUrl rejects anyway.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search);
+    const requestedUrl = requested.get("url");
+    if (requestedUrl) {
+      if (isSafeHttpUrl(requestedUrl))
+        setTab({ url: requestedUrl, title: requested.get("title") || "" });
+      else setTabError("That link can't be bookmarked (only http and https pages).");
+      return;
+    }
+    (async () => {
+      try {
+        const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!active || !isSafeHttpUrl(active.url)) {
+          setTabError("This page can't be bookmarked (only http and https pages).");
+          return;
+        }
+        setTab(active);
+      } catch {
+        setTabError("Couldn't read the current tab.");
+      }
+    })();
+  }, []);
+
+  // Prefill exactly once. `bookmarks` is a live subscription, so re-running this on
+  // every store push would overwrite whatever the user had typed.
+  const prefilledRef = useRef(false);
+  useEffect(() => {
+    if (prefilledRef.current || !tab || isLoading) return;
+    prefilledRef.current = true;
+
+    const url = (tab.url || "").trim();
+    const match = bookmarks.find((b) => (b.url || "").trim() === url);
+    if (match) {
+      setExisting(match);
+      setForm({
+        title: match.title || "",
+        url: match.url || "",
+        tags: (match.tags || []).join(", "),
+        rating: match.rating || 0,
+        folderId: match.folderId || "",
+      });
+    } else {
+      setForm({ title: tab.title || url, url, tags: "", rating: 0, folderId: "" });
+    }
+  }, [tab, isLoading, bookmarks]);
+
+  const handleSave = useCallback(async () => {
+    if (status.state === "saving") return;
+    const url = form.url.trim();
+    if (!isSafeHttpUrl(url)) {
+      setStatus({ state: "error", message: "Enter a valid http(s) URL." });
+      return;
+    }
+    // saveBookmark no-ops (rather than throwing) on an uninitialized store, which
+    // would otherwise show "Saved" for a write that never happened.
+    if (!storeRef.current) {
+      setStatus({ state: "error", message: "Store not ready — try again in a moment." });
+      return;
+    }
+    setStatus({ state: "saving", message: "" });
+    try {
+      // Spread the existing bookmark first so fields this popup doesn't edit
+      // (description, createdAt, urlStatus) survive an edit instead of being blanked.
+      await saveBookmark({
+        ...(existing || {}),
+        id: existing?.id ?? null,
+        title: form.title.trim() || url,
+        url,
+        tags: form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        rating: form.rating,
+        folderId: form.folderId.trim(),
+        // Prefer the favicon the tab already reports: it's accurate, and it means this
+        // bookmark never needs the Google favicon fallback (#39).
+        faviconUrl: existing?.faviconUrl || (isSafeHttpUrl(tab?.favIconUrl) ? tab.favIconUrl : ""),
+      });
+      setStatus({ state: "saved", message: existing ? "Updated" : "Saved" });
+      setTimeout(() => window.close(), 700);
+    } catch {
+      setStatus({ state: "error", message: "Couldn't save. Try the full app." });
+    }
+  }, [form, existing, tab, saveBookmark, storeRef, status.state]);
+
+  const openFullApp = useCallback(() => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
+    window.close();
+  }, []);
+
+  // Enter saves from any single-line field; Escape closes the popup.
+  const onKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Escape") {
+        window.close();
+        return;
+      }
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSave();
+      }
+    },
+    [handleSave]
+  );
+
+  return (
+    <div className="ui-root p-4 w-[22rem] flex flex-col gap-4" onKeyDown={onKeyDown}>
+      <PopupHeader existing={Boolean(existing)} />
+
+      {tabError ? (
+        <PopupError message={tabError} onOpenApp={openFullApp} />
+      ) : isLoading || !tab ? (
+        <PopupLoading />
+      ) : (
+        <QuickAddBody
+          form={form}
+          setForm={setForm}
+          folderOptions={folderOptions}
+          existing={existing}
+          status={status}
+          onSave={handleSave}
+          onOpenApp={openFullApp}
+        />
+      )}
+    </div>
+  );
+};
+
+export default QuickAdd;
