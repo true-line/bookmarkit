@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Typography } from "../design-system/index.js";
 
 // The import side of the import/export panel (#247): one body shared by the
 // JSON and Netscape HTML tabs, which differ only in strings and accept list.
 // The mockup's dashed drop zone is the file input's label, so click and
 // keyboard both open the picker while the input keeps its own accessible
-// name; the paste field follows. File text and read errors come back through
+// name, and dragover/drop make the advertised dropping real — a dropped file
+// runs through the same reader and staging path as a picked one. The paste
+// field follows. File text and read errors come back through
 // onFileText/onFileError — parsing and staging belong to the parent, because
 // JSON validates asynchronously before confirming while HTML does not.
 
@@ -15,19 +17,22 @@ import { Button, Typography } from "../design-system/index.js";
  * could not be retried without picking a different file first.
  * @returns {Promise<string|null>} the file's text, or null if nothing was chosen
  */
-const readChosenFile = (event) =>
+const readFile = (file) =>
   new Promise((resolve, reject) => {
-    const [file] = event.target.files;
-    event.target.value = "";
-    if (!file) {
-      resolve(null);
-      return;
-    }
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
     reader.onerror = () => reject(reader.error ?? new Error("The file could not be read."));
     reader.readAsText(file);
   });
+
+const readChosenFile = (event) => {
+  const [file] = event.target.files;
+  event.target.value = "";
+  if (!file) {
+    return Promise.resolve(null);
+  }
+  return readFile(file);
+};
 
 const IMPORT_FORMATS = {
   "import-json": {
@@ -66,13 +71,32 @@ export function ImportPanel({
 }) {
   const spec = IMPORT_FORMATS[format];
   const short = format === "import-json" ? "json" : "html";
+  const [dragging, setDragging] = useState(false);
   return (
     <div role="tabpanel" id={`io-panel-${format}`} aria-labelledby={`io-tab-${format}`}>
       <section aria-labelledby={`io-${format}-heading`} className="grid gap-3">
         <Typography variant="body-sm" as="p" style={mutedText}>
           {spec.intro}
         </Typography>
-        <label className="ui-dropzone">
+        <label
+          className={`ui-dropzone${dragging ? " ui-dropzone--dragging" : ""}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={async (e) => {
+            e.preventDefault();
+            setDragging(false);
+            const [file] = e.dataTransfer.files;
+            if (!file) return;
+            try {
+              onFileText(await readFile(file));
+            } catch {
+              onFileError();
+            }
+          }}
+        >
           <input
             id={`upload-${short}-file`}
             type="file"

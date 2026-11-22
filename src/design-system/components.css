@@ -646,6 +646,13 @@
   border-color: var(--ui-primary);
 }
 
+/* A file hovering over the zone: the primary border answers the drag while
+   the drop handler runs it through the same staging path as a picked file. */
+.ui-dropzone--dragging {
+  border-color: var(--ui-primary);
+  background: var(--ui-surface-container);
+}
+
 .ui-dropzone:focus-within {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
