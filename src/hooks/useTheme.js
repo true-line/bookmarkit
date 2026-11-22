@@ -26,6 +26,14 @@ const REQUIRED_THEME_KEYS = [
   "accentHover",
 ];
 
+// #240: the unified design system scopes its --ui-* tokens to a
+// [data-ui-theme="light"|"dark"] root, while this app's themes are seven
+// user-editable variables with no such attribute. applyThemeToDom is the
+// bridge: it stamps data-ui-theme on the document element — derived from the
+// theme's background so user themes land on the right palette — and maps the
+// user's accent onto the design system's brand tokens so anything tokenized
+// as brand follows the selected theme. The rest of the --ui-* palette stays
+// the canonical one from the Stitch screens; only brand follows the user.
 function applyThemeToDom(theme) {
   const t = theme || DEFAULT_THEME;
   const root = document.documentElement;
@@ -36,6 +44,57 @@ function applyThemeToDom(theme) {
   root.style.setProperty("--border", t.border || "#e4dcc9");
   root.style.setProperty("--accent", t.accent || "#c62f35");
   root.style.setProperty("--accent-hover", t.accentHover || "#a92329");
+  root.setAttribute("data-ui-theme", resolveUiTheme(t.bgPrimary));
+  root.style.setProperty("--ui-brand-crimson", t.accent || "#c62f35");
+  root.style.setProperty("--ui-brand-crimson-hover", t.accentHover || "#a92329");
+}
+
+// Light or dark, judged by the theme's own background: parse #rrggbb (what
+// the default theme and index.css use) directly, and measure anything else
+// through the DOM so rgb()/hsl()/named uploads work in real browsers. When
+// even measurement is unavailable, fall back to light.
+function resolveUiTheme(bgPrimary) {
+  const hex = /^#([0-9a-f]{6})$/i.exec(String(bgPrimary || "").trim());
+  if (hex) {
+    const n = parseInt(hex[1], 16);
+    return relativeLuminance([(n >> 16) & 255, (n >> 8) & 255, n & 255]) >= 0.5 ? "light" : "dark";
+  }
+  const rgb = measureColor(bgPrimary);
+  if (!rgb) return "light";
+  return relativeLuminance(rgb) >= 0.5 ? "light" : "dark";
+}
+
+// WCAG-style sRGB luminance, folded to 0..1 with a 0.5 light/dark threshold.
+function relativeLuminance([r, g, b]) {
+  const channel = (c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+// Computed color → rgb triple. A scratch element is what turns any valid CSS
+// color form into something numeric; browsers resolve it, and environments
+// that can't (or colors they refuse) return null rather than guessing.
+// Alpha-bearing values composite over white before returning: the page shows
+// the browser canvas behind a transparent --bg-primary, so transparent black
+// renders light and must not resolve dark (8-digit hex lands here too, since
+// the hex fast-path only takes 6 digits).
+function measureColor(cssColor) {
+  try {
+    const el = document.createElement("span");
+    el.style.color = cssColor;
+    document.body.appendChild(el);
+    const m = /^rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/.exec(getComputedStyle(el).color);
+    el.remove();
+    if (!m) return null;
+    const rgb = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const alpha = m[4] === undefined ? 1 : Number(m[4]);
+    if (alpha >= 1) return rgb;
+    return rgb.map((c) => Math.round(c * alpha + 255 * (1 - alpha)));
+  } catch {
+    return null;
+  }
 }
 
 async function saveThemeToPersistence(key, value) {

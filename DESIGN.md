@@ -101,9 +101,16 @@ Radio Canada Big / Fira Code type scale, the 4px/8px spacing rhythm, radii,
 elevation and motion as `--ui-*` variables scoped to a `[data-ui-theme]` root,
 and the components (Button, Card, InputField, Modal, Typography) style
 themselves from those tokens with CSS logical properties, so `dir="rtl"`
-mirrors without per-component overrides. Nothing in the app imports it yet:
-the Storybook preview supplies the scope root plus UI-theme and direction
-toolbars, and surfaces migrate one at a time by rendering under the same
+mirrors without per-component overrides. The app entry imports both
+stylesheets once (#240), and `useTheme`'s DOM application is the bridge: it
+stamps `data-ui-theme` on the document element — derived light/dark from the
+theme's own background, so user-uploaded themes land on the right palette —
+and maps the user's accent/accent-hover onto `--ui-brand-crimson`/`-hover`
+(the canonical `--ui-*` palette otherwise stays the one the Stitch screens
+ship; only brand follows the user). No surface renders `ui-*` components
+yet: the Storybook preview supplies the scope root plus UI-theme and
+direction toolbars, and surfaces migrate one at a time by rendering under
+the same
 attribute. The existing `DesignSystem.jsx` library and its seven runtime theme
 variables are untouched — the two systems coexist until a surface switches,
 and the unified `Modal` deliberately reuses `useFocusTrap` so both dialog
