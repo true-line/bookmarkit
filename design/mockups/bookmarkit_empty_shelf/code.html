@@ -1,0 +1,196 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookmarkIt — Empty Shelf</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'brand-crimson': '#B82925',
+        'ai-suggest': '#6D28D9',
+        'success': '#1E7E34',
+        'danger': '#C92A2A',
+        'light-primary': '#950B10',
+        'light-on-primary': '#FFFFFF',
+        'light-primary-container': '#B82925',
+        'light-on-primary-container': '#FFD2CD',
+        'light-secondary': '#99443D',
+        'light-on-secondary': '#FFFFFF',
+        'light-secondary-container': '#FD9489',
+        'light-on-secondary-container': '#762A25',
+        'light-tertiary': '#5D04CA',
+        'light-on-tertiary': '#FFFFFF',
+        'light-tertiary-container': '#7635E2',
+        'light-on-tertiary-container': '#E5D6FF',
+        'light-error': '#BA1A1A',
+        'light-on-error': '#FFFFFF',
+        'light-error-container': '#FFDAD6',
+        'light-on-error-container': '#93000A',
+        'light-background': '#F8F9FF',
+        'light-on-background': '#151C24',
+        'light-surface': '#F8F9FF',
+        'light-surface-dim': '#D4DAE6',
+        'light-surface-bright': '#FFFFFF',
+        'light-surface-container-lowest': '#FFFFFF',
+        'light-surface-container-low': '#EEF4FF',
+        'light-surface-container': '#E8EEFA',
+        'light-surface-container-high': '#E2E9F4',
+        'light-surface-container-highest': '#DCE3EF',
+        'light-on-surface': '#151C24',
+        'light-surface-variant': '#FFDAD6',
+        'light-on-surface-variant': '#404751',
+        'light-outline': '#585F69',
+        'light-outline-variant': '#C0C7D2',
+        'light-inverse-surface': '#2A313A',
+        'light-inverse-on-surface': '#EAF1FD',
+        'light-inverse-primary': '#FFB4AB',
+        'light-shadow': '#000000',
+        'light-scrim': '#000000',
+        'dark-primary': '#FFB4AB',
+        'dark-on-primary': '#690005',
+        'dark-primary-container': '#B82925',
+        'dark-on-primary-container': '#FFD2CD',
+        'dark-secondary': '#FFB4AB',
+        'dark-on-secondary': '#5D1814',
+        'dark-secondary-container': '#7D302A',
+        'dark-on-secondary-container': '#FF9F94',
+        'dark-tertiary': '#D3BBFF',
+        'dark-on-tertiary': '#3F008D',
+        'dark-tertiary-container': '#7635E2',
+        'dark-on-tertiary-container': '#E5D6FF',
+        'dark-error': '#FFB4AB',
+        'dark-on-error': '#690005',
+        'dark-error-container': '#93000A',
+        'dark-on-error-container': '#FFDAD6',
+        'dark-background': '#0D141C',
+        'dark-on-background': '#DCE3EF',
+        'dark-surface': '#0D141C',
+        'dark-surface-dim': '#0D141C',
+        'dark-surface-bright': '#333A43',
+        'dark-surface-container-lowest': '#080F17',
+        'dark-surface-container-low': '#151C24',
+        'dark-surface-container': '#192028',
+        'dark-surface-container-high': '#242B33',
+        'dark-surface-container-highest': '#2E353E',
+        'dark-on-surface': '#DCE3EF',
+        'dark-surface-variant': '#5A403E',
+        'dark-on-surface-variant': '#AEB4BE',
+        'dark-outline': '#8A919C',
+        'dark-outline-variant': '#404751',
+        'dark-inverse-surface': '#DCE3EF',
+        'dark-inverse-on-surface': '#2A313A',
+        'dark-inverse-primary': '#B42623',
+        'dark-shadow': '#000000',
+        'dark-scrim': '#000000',
+      },
+      borderRadius: {
+        'sm': '4px',
+        'DEFAULT': '8px',
+        'md': '10px',
+        'lg': '12px',
+        'xl': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '40px',
+        'page-margin': '24px',
+      },
+      fontFamily: {
+        'display': ['"Red Hat Text"', 'sans-serif'],
+        'headline': ['"Red Hat Text"', 'sans-serif'],
+        'body': ['"Radio Canada Big"', 'sans-serif'],
+        'label': ['"Radio Canada Big"', 'sans-serif'],
+        'mono': ['"Fira Code"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-lg': ['24px', { lineHeight: '30px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-md': ['20px', { lineHeight: '26px', letterSpacing: '-0.1px', fontWeight: '600' }],
+        'headline-sm': ['16px', { lineHeight: '22px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-lg': ['15px', { lineHeight: '22px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'label-md': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.1px', fontWeight: '500' }],
+        'mono-md': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '400' }],
+        'mono-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+      },
+      transitionDuration: {
+        'state-change': '100ms',
+        'surface-enter': '200ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+        'surface-enter': 'cubic-bezier(0.2, 0, 0, 1)',
+        'surface-exit': 'cubic-bezier(0.3, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&amp;family=Radio+Canada+Big:wght@400;500;600;700&amp;family=Red+Hat+Text:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      line-height: 1 !important;
+      box-sizing: content-box;
+      overflow: hidden;
+      white-space: nowrap;
+      direction: ltr;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-light-surface text-light-on-surface font-body antialiased">
+  <div class="min-h-[1024px] flex flex-col lg:flex-row" data-stitch-vh="min-h-[1024px]===min-h-screen">
+    <!-- Persistent Navigation Sidebar -->
+    <aside class="w-full lg:w-64 shrink-0 bg-light-surface-container-low border-b lg:border-b-0 lg:border-e border-light-outline-variant p-5 flex flex-col gap-6">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded bg-light-primary-container text-light-on-primary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">bookmark</span>
+          </div>
+          <div class="min-w-0 text-start">
+            <span data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface block truncate">BookmarkIt</span>
+            <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant block">Local-first</span>
+          </div>
+        </div>
+        <button data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" aria-label="Help and keyboard shortcuts" class="inline-flex items-center justify-center min-w-9 min-h-9 rounded bg-light-surface-container text-light-on-surface-variant border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">help</span>
+        </button>
+      </div>
+
+      <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="w-full inline-flex items-center justify-center gap-2 min-h-10 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
+        <span data-design-text-token="label-lg" class="text-label-lg">Add Bookmark</span>
+      </button>
+
+      <nav aria-label="Smart views" class="flex flex-col gap-1 text-start">
+        <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant px-2.5 pb-1">Views</span>
+        <button type="button" aria-current="page" class="w-full flex items-center justify-between gap-2 min-h-9 px-2.5 py-1.5 rounded bg-light-surface-container-highest text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px] text-light-primary" aria-hidden="true">bookmarks</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">All Bookmarks</span>
+          </span>
+          <span data-design-text-token="lab
