@@ -1,5 +1,16 @@
 # bookmarkit
 
+## 0.9.0
+
+### Minor Changes
+
+- c6aacbe: The edit-bookmark dialog moves onto the unified design system: the divided-header `ui-Modal` shell with a tinted footer band, 40px input fields with on-surface labels, the URL field's mono/success/error presentation with explicit status lines, and secondary/primary footer actions beside the violet AI Suggest buttons. Validation, LLM suggestions, the folder autocomplete and the keyboard contract are unchanged — only the presentation layer migrates (first surface of the #256 adoption plan).
+- 4b77e49: Migrate the help/shortcuts modal to the unified design system
+
+  HelpModal now renders the design system's modal-standard shell (divided header, tinted footer) at the help-shortcuts mockup's wide 2xl reading, with design-system typography, `ui-kbd` keycap chips for every real binding (including undo via Cmd/Ctrl+Z), example-command chips for agent search, and the mockup's shortcut-row recipe. The design-system Modal gains a `size` prop for the wider shell reading.
+
+- 49c6c57: The delete-confirmation and message dialogs render through the unified design system's modal: a divided header carrying the title — the deletion question rides it as the dialog's accessible description — the banner in the body for messages, and the tinted footer band with the tonal bordered Cancel/Close. The destructive confirm wears the filled-danger recipe with its shadow. The keyboard contract — focus trap, Escape, focus restoration, and the guard that refuses to abandon a deletion in flight — is unchanged.
+
 ## 0.8.0
 
 ### Minor Changes
