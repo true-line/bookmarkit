@@ -465,6 +465,12 @@ const BookmarkForm = ({
           }
           required
         />
+        {/* A11Y-04 (restored per Codex on #262): the debounced failure is an
+            async result, so it keeps announcing through a live region — the
+            visible error line alone is only wired into aria-describedby. */}
+        <span role="alert" className="sr-only">
+          {urlState.error ?? ""}
+        </span>
 
         <div className="ui-field">
           <div className="flex items-center justify-between gap-2">

@@ -276,6 +276,8 @@ describe("BookmarkForm on the unified design system (#242)", () => {
     expect(input).toHaveAttribute("aria-invalid", "true");
     const describedBy = () => document.getElementById(input.getAttribute("aria-describedby"));
     expect(describedBy()).toHaveTextContent("URL not found.");
+    // The async failure keeps its live announcement (the legacy role="alert").
+    expect(screen.getByRole("alert")).toHaveTextContent("URL not found.");
 
     fireEvent.click(screen.getByRole("button", { name: "Ignore URL validation error" }));
     expect(describedBy()).toHaveTextContent("Validation ignored.");
