@@ -451,6 +451,11 @@ body {
    roundel with the 20px icon, headline-sm title, the mono URL line, and the
    tag row with the trailing rating — composed from --ui-* tokens. */
 .ui-bookmark-card {
+  /* The card positions its own chrome — the unreachable marker sits in its
+     corner (codex P2 on #278: without a positioned ancestor the absolute
+     marker's containing block was the virtualized row, so the dot landed at
+     the row edge and sibling markers overlapped). */
+  position: relative;
   flex: 1;
   min-width: 0;
   min-height: 96px;
