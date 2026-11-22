@@ -411,7 +411,11 @@ body {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
 }
-.ui-tree-row > button:not(.ui-tree-toggle) {
+/* The folder-name button only — the row's rename/remove affordances are
+   .ui-icon-buttons and must keep their own border, fill and 36px box
+   (codex P2 on #276: without the exclusion this rule out-specifics
+   .ui-icon-button and stretched the actions into bare folder-labels). */
+.ui-tree-row > button:not(.ui-tree-toggle):not(.ui-icon-button) {
   flex: 1;
   min-width: 0;
   text-align: start;
@@ -426,7 +430,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ui-tree-row > button:not(.ui-tree-toggle):focus-visible {
+.ui-tree-row > button:focus-visible {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
 }
