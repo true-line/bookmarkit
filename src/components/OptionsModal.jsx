@@ -609,3 +609,135 @@ const OptionsModal = ({
                 Upload a JSON or YAML theme file.
               </Typography>
             </div>
+            {/* Decorative 3D effects: pure presentation, on by default, off in
+                one click. Nothing about the collection changes with them. */}
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={effects}
+                onChange={(e) => onEffectsChange?.(e.target.checked)}
+                className="mt-0.5"
+                style={{ accentColor: "var(--ui-primary-container)" }}
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="ui-type-label-md">Show 3D effects</span>
+                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+                  A dimensional brand mark in the header and a small animated card stack on an empty
+                  shelf. Both are rendered locally and stay still when your system asks for reduced
+                  motion; turning this off shows the static marks instead.
+                </span>
+              </span>
+            </label>
+          </section>
+          {/* #39: favicons are a privacy decision, so the choice is explicit and off by default. */}
+          <section style={sectionDivided} aria-labelledby="options-privacy-heading">
+            <Typography
+              variant="headline-sm"
+              as="h3"
+              id="options-privacy-heading"
+              style={headingStyle}
+            >
+              Privacy
+            </Typography>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={remoteFavicons}
+                onChange={(e) => onRemoteFaviconsChange?.(e.target.checked)}
+                className="mt-0.5"
+                style={{ accentColor: "var(--ui-primary-container)" }}
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="ui-type-label-md">Load site icons from the web</span>
+                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+                  Off by default: no icon is fetched over the network. BookmarkIt uses your
+                  browser&rsquo;s own icon cache when the extension can, and a neutral placeholder
+                  otherwise. When on, each visible bookmark fetches its icon &mdash; from the
+                  address saved with it, or from google.com by domain when it has none.
+                </span>
+              </span>
+            </label>
+          </section>
+          {/* #212: agent access — who may read the collection is the user's
+                call, so like favicons it is a choice, made explicitly, and off
+                until made. */}
+          <section style={sectionDivided} aria-labelledby="options-agents-heading">
+            <Typography
+              variant="headline-sm"
+              as="h3"
+              id="options-agents-heading"
+              style={headingStyle}
+            >
+              Agent access
+            </Typography>
+            <label className={`flex items-start gap-3 ${webMcpAvailable ? "cursor-pointer" : ""}`}>
+              <input
+                type="checkbox"
+                checked={webMcpEnabled}
+                disabled={!webMcpAvailable}
+                onChange={(e) => onWebMcpEnabledChange?.(e.target.checked)}
+                className="mt-0.5 disabled:cursor-not-allowed"
+                style={{ accentColor: "var(--ui-primary-container)" }}
+              />
+              <span className="flex flex-col gap-0.5">
+                <span
+                  className="ui-type-label-md"
+                  style={webMcpAvailable ? undefined : { color: "var(--ui-on-surface-variant)" }}
+                >
+                  Let browser agents search my bookmarks
+                </span>
+                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+                  {webMcpAvailable
+                    ? "Off by default. When on, this tab offers two read-only tools — search and folder listing — to AI agents running in this browser, for as long as it stays open. Agents can look, never change or fetch anything. Requires a browser with WebMCP enabled."
+                    : "This browser does not expose WebMCP, so there is nothing to turn on here yet."}
+                </span>
+              </span>
+            </label>
+          </section>
+        </div>
+      </Modal>
+
+      {showExample && (
+        <Modal
+          title="Theme File Format"
+          closeLabel="Close example"
+          onClose={() => setShowExample(false)}
+          footer={<Button onClick={() => setShowExample(false)}>Close</Button>}
+        >
+          <div style={{ display: "grid", gap: "var(--ui-space-gutter-md)" }}>
+            <Typography variant="body-md" style={{ margin: 0 }}>
+              Upload a JSON or YAML file with the following structure:
+            </Typography>
+            <pre
+              style={{
+                margin: 0,
+                padding: "var(--ui-space-gutter-md)",
+                font: "var(--ui-type-mono-sm)",
+                background: "var(--ui-surface-container)",
+                border: "1px solid var(--ui-outline-variant)",
+                borderRadius: "var(--ui-radius)",
+                overflowX: "auto",
+                color: "var(--ui-on-surface)",
+              }}
+            >
+              {`{
+  "bgPrimary": "#1f2937",
+  "bgSecondary": "#111827",
+  "textPrimary": "#f9fafb",
+  "textSecondary": "#d1d5db",
+  "border": "#374151",
+  "accent": "#3b82f6",
+  "accentHover": "#2563eb"
+}`}
+            </pre>
+            <Typography variant="body-sm" style={hintStyle}>
+              All properties are required. Colors should be in hex format (#rrggbb).
+            </Typography>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+};
+
+export default OptionsModal;
