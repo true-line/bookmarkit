@@ -547,6 +547,45 @@ body {
   color: var(--ui-primary);
 }
 
+/* ─── Selection bar (#252) ────────────────────────────────────────────────
+   The bulk-edit bar wears the manager mockup's selection-context reading: a
+   surface-container band under a hairline outline-variant border, the count
+   on label-md tabular numerals with the check_box marker in primary, and
+   the what-would-change summary on body-sm on-surface-variant. The bar's
+   #54 contract is untouched — the inline confirmation stays one step of the
+   same bar so the selection stays visible behind it, and keeps-selection
+   still guards every control inside — only the vocabulary moved: the text
+   fields are the design system's input-field, the folder/rating pickers the
+   tokenized native element (the design system ships no select primitive),
+   and the actions the canonical button intents. */
+.ui-bulk-bar {
+  padding: var(--ui-space-gutter-md);
+  background: var(--ui-surface-container);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-lg);
+}
+.ui-bulk-count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+  color: var(--ui-on-surface);
+  /* The label type's font shorthand resets font-variant-numeric, so the
+     tabular reading is re-asserted here rather than relying on .ui-numeric
+     winning the cascade against components.css. */
+  font-variant-numeric: tabular-nums;
+}
+.ui-bulk-count svg {
+  color: var(--ui-primary);
+}
+.ui-bulk-select {
+  /* A picker is a fixed-width control, not a flex filler. */
+  flex: none;
+}
+.ui-bulk-summary {
+  color: var(--ui-on-surface-variant);
+  font: var(--ui-type-body-sm);
+}
+
 /* ─── Narrow viewports ────────────────────────────────────────────────────
    The action row is one nowrap, horizontally scrollable strip: once the view
    selector joined, the buttons outgrew the reading measure, so the header

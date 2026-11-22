@@ -11,7 +11,8 @@
 import React, { useMemo, useState } from "react";
 import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
 import { describeBulkEdit, isEmptyChange, planBulkEdit } from "../utils/bulkEdit.js";
-import { Button, Input, Select } from "./DesignSystem.jsx";
+import { Button, InputField } from "../design-system/index.js";
+import { SelectionIcon } from "./icons.jsx";
 
 // Above this many bookmarks, applying takes a second press. Small enough that a
 // slip on a big selection is caught, large enough not to nag.
@@ -85,15 +86,18 @@ const BulkEditBar = React.memo(function BulkEditBar({
   return (
     // Clicking a control here must not dismiss the selection it acts on.
     <div
-      className="mb-4 p-3 rounded-lg border border-accent bg-primary-bg"
+      className="ui-bulk-bar mb-4"
       {...keepsSelectionProps}
       role="group"
       aria-label={`Bulk edit ${count} selected bookmark${count === 1 ? "" : "s"}`}
     >
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-primary-text">{count} selected</span>
+        <span className="ui-bulk-count ui-type-label-md ui-numeric">
+          <SelectionIcon />
+          {count} selected
+        </span>
 
-        <Input
+        <InputField
           id="bulk-add-tags"
           type="text"
           value={form.addTags}
@@ -103,7 +107,7 @@ const BulkEditBar = React.memo(function BulkEditBar({
           wrapperClassName="w-[11.25rem]"
         />
 
-        <Input
+        <InputField
           id="bulk-remove-tags"
           type="text"
           value={form.removeTags}
@@ -113,22 +117,25 @@ const BulkEditBar = React.memo(function BulkEditBar({
           wrapperClassName="w-[11.25rem]"
         />
 
-        <Select
+        <select
           id="bulk-folder"
+          className="ui-input ui-bulk-select w-[11.25rem]"
           value={form.folder}
           onChange={set("folder")}
           aria-label="Folder to move the selection into"
-          wrapperClassName="w-[11.25rem]"
-          options={[
-            { value: KEEP, label: "Keep folders" },
-            { value: ROOT, label: "No folder" },
-            ...folders.map((folder) => ({ value: folder, label: folder })),
-            { value: NEW_FOLDER, label: "New folder…" },
-          ]}
-        />
+        >
+          <option value={KEEP}>Keep folders</option>
+          <option value={ROOT}>No folder</option>
+          {folders.map((folder) => (
+            <option key={folder} value={folder}>
+              {folder}
+            </option>
+          ))}
+          <option value={NEW_FOLDER}>New folder…</option>
+        </select>
 
         {form.folder === NEW_FOLDER && (
-          <Input
+          <InputField
             id="bulk-new-folder"
             type="text"
             value={form.newFolder}
@@ -140,36 +147,39 @@ const BulkEditBar = React.memo(function BulkEditBar({
           />
         )}
 
-        <Select
+        <select
           id="bulk-rating"
+          className="ui-input ui-bulk-select w-[9.375rem]"
           value={form.rating}
           onChange={set("rating")}
           aria-label="Rating to set"
-          wrapperClassName="w-[9.375rem]"
-          options={[
-            { value: KEEP, label: "Keep ratings" },
-            { value: 0, label: "Clear rating" },
-            ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: "★".repeat(n) })),
-          ]}
-        />
+        >
+          <option value={KEEP}>Keep ratings</option>
+          <option value={0}>Clear rating</option>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {"★".repeat(n)}
+            </option>
+          ))}
+        </select>
 
         <Button type="button" onClick={apply} disabled={nothingToDo}>
           {confirming ? `Apply to ${patches.length}?` : "Apply"}
         </Button>
 
         {onDelete && (
-          <Button type="button" intent="secondary" onClick={onDelete}>
+          <Button type="button" intent="destructive" onClick={onDelete}>
             Delete
           </Button>
         )}
 
-        <Button type="button" intent="ghost" onClick={onClearSelection}>
+        <Button type="button" intent="secondary" onClick={onClearSelection}>
           Clear selection
         </Button>
       </div>
 
       {/* Says what would happen before it happens, and stays quiet when nothing would. */}
-      <div className="mt-2 text-xs text-secondary-text" aria-live="polite">
+      <div className="ui-bulk-summary mt-2" aria-live="polite">
         {isEmptyChange(change)
           ? "Tags are added and removed, not replaced."
           : nothingToDo

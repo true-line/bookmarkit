@@ -84,6 +84,16 @@ export function HealthIcon({ size = 16 }) {
   );
 }
 
+/** The selection bar's count marker (check_box). */
+export function SelectionIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M8.5 12.5l2.5 2.5 4.5-5" />
+    </svg>
+  );
+}
+
 /** The card's rating reading (mockup: one filled star beside the count). */
 export function StarIcon({ size = 14 }) {
   // Filled by design — the mockup's star reads solid (`FILL 1`), unlike the
