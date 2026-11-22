@@ -207,4 +207,47 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
     </section>
 
     <!-- Add / Remove Tags -->
-    <sect
+    <section class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between gap-2">
+        <h2 data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Tags</h2>
+        <button data-component-id="button-tertiary" data-component-type="button" data-component-variant="tertiary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-3 py-1.5 rounded bg-light-tertiary-container text-light-on-tertiary shadow-sm hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-tertiary">
+          <span class="material-symbols-outlined text-[15px]" aria-hidden="true">auto_awesome</span>
+          <span data-design-text-token="label-md" class="text-label-md">Auto-Tag</span>
+        </button>
+      </div>
+
+      <label class="flex flex-col gap-1.5">
+        <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Add tags</span>
+        <input type="text" dir="auto" placeholder="e.g., reference, Q4" class="w-full min-h-11 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
+      </label>
+
+      <label class="flex flex-col gap-1.5">
+        <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Remove tags</span>
+        <input type="text" dir="auto" placeholder="e.g., unread, temp" class="w-full min-h-11 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
+      </label>
+    </section>
+
+    <!-- Danger Zone -->
+    <section class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-4 shadow-sm flex flex-col gap-3">
+      <h2 data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Danger Zone</h2>
+      <p data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Permanently delete all 4 selected bookmarks from this browser.</p>
+      <button data-component-id="button-destructive" data-component-type="button" data-component-variant="destructive" type="button" class="w-full inline-flex items-center justify-center gap-1.5 min-h-11 px-4 py-2 rounded bg-danger text-light-on-primary shadow-sm hover:bg-light-error focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger">
+        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span>
+        <span data-design-text-token="label-lg" class="text-label-lg">Delete 4 Bookmarks</span>
+      </button>
+    </section>
+  </main>
+
+  <!-- Sticky Bottom Action Footer -->
+  <footer class="fixed bottom-0 inset-x-0 z-20 bg-light-surface-container-low/95 backdrop-blur-sm border-t border-light-outline-variant px-4 py-3 flex items-center gap-3">
+    <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="flex-1 inline-flex items-center justify-center min-h-11 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+      <span data-design-text-token="label-lg" class="text-label-lg">Cancel</span>
+    </button>
+    <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="flex-1 inline-flex items-center justify-center min-h-11 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+      <span data-design-text-token="label-lg" class="text-label-lg">Apply Changes</span>
+    </button>
+  </footer>
+
+
+
+</body></html>
