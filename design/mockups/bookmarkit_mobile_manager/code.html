@@ -194,4 +194,121 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
       <label for="mobile-search" class="sr-only">Search bookmarks or ask AI</label>
       <div class="relative flex items-center">
         <span class="material-symbols-outlined text-[20px] text-light-on-surface-variant absolute start-3 pointer-events-none" aria-hidden="true">search</span>
-        <input id="mobile-search" type="search" dir="auto" placeholder="Search or ask AI..." class="w-full min-h-11 ps-10 pe-24 py-2 rounded-md bg-light-surface-container-lowest border border-light-outline-variant text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20 transition-colors durat
+        <input id="mobile-search" type="search" dir="auto" placeholder="Search or ask AI..." class="w-full min-h-11 ps-10 pe-24 py-2 rounded-md bg-light-surface-container-lowest border border-light-outline-variant text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20 transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-light-tertiary-container text-light-on-tertiary text-label-sm absolute end-2 pointer-events-none">
+          <span class="material-symbols-outlined text-[14px]" aria-hidden="true">auto_awesome</span>
+          <span>AI Ready</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Compact Filter & Sort Row -->
+    <div class="mt-2.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <label for="mobile-rating-filter" class="sr-only">Filter by rating</label>
+        <select id="mobile-rating-filter" class="min-h-11 ps-3 pe-8 py-2 rounded bg-light-surface-container-lowest border border-light-outline-variant text-label-md text-light-on-surface focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
+          <option value="all">Any rating</option>
+          <option value="5">5 stars</option>
+          <option value="4">4+ stars</option>
+          <option value="unrated">Unrated</option>
+        </select>
+
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="material-symbols-outlined text-[16px] text-light-on-surface-variant" aria-hidden="true">swap_vert</span>
+          <span data-design-text-token="label-md" class="text-label-md">Newest</span>
+        </button>
+      </div>
+
+      <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" aria-pressed="true" class="inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none shrink-0">
+        <span class="material-symbols-outlined text-[16px] text-light-primary" aria-hidden="true">check_box</span>
+        <span data-design-text-token="label-md" class="text-label-md tabular-nums">1</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Single-Column Bookmark Feed -->
+  <main class="flex-1 px-4 py-4 pb-24 flex flex-col gap-3" aria-label="Bookmarks list">
+
+    <!-- Card 1: Standard -->
+    <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-3.5 shadow-sm flex flex-col gap-2.5">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-light-surface-container-high flex items-center justify-center shrink-0 text-light-outline">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">public</span>
+        </div>
+        <div class="min-w-0 flex-1 text-start">
+          <a href="#bookmark-1" class="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">
+            <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface line-clamp-2">Context7 — Up-to-date documentation for LLMs</h2>
+            <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://context7.com/</p>
+          </a>
+        </div>
+        <button data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" aria-label="Edit Context7 bookmark" class="inline-flex items-center justify-center min-w-11 min-h-11 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none shrink-0">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+        </button>
+      </div>
+
+      <p dir="auto" data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant line-clamp-2 text-start">
+        Pulls version-specific documentation and code examples directly into AI coding prompts.
+      </p>
+
+      <div class="flex items-center justify-between gap-2 pt-1 border-t border-light-outline-variant/60">
+        <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-light-surface-container text-label-sm text-light-on-surface-variant">
+            <span class="material-symbols-outlined text-[14px]" aria-hidden="true">folder</span>
+            <span>AI &amp; Agents</span>
+          </span>
+          <span class="px-2 py-0.5 rounded bg-light-surface-container-low border border-light-outline-variant text-label-sm text-light-on-surface-variant">#mcp</span>
+          <span class="px-2 py-0.5 rounded bg-light-surface-container-low border border-light-outline-variant text-label-sm text-light-on-surface-variant">#docs</span>
+        </div>
+        <div class="flex items-center gap-0.5 text-light-primary shrink-0" aria-label="Rated 5 out of 5 stars">
+          <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+          <span class="text-label-sm font-semibold tabular-nums">5</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 2: Selected State -->
+    <article data-component-id="card-interactive-2" data-component-type="card" data-component-variant="interactive" aria-selected="true" class="bg-light-surface-container-lowest border-2 border-light-primary rounded-md p-3.5 shadow-sm flex flex-col gap-2.5">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-light-primary/10 flex items-center justify-center shrink-0 text-light-primary">
+          <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">check_circle</span>
+        </div>
+        <div class="min-w-0 flex-1 text-start">
+          <a href="#bookmark-2" class="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">
+            <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface line-clamp-2">Frequently Asked Questions — kitty</h2>
+            <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://sw.kovidgoyal.net/kitty/faq/</p>
+          </a>
+        </div>
+        <button data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" aria-label="Edit kitty FAQ bookmark" class="inline-flex items-center justify-center min-w-11 min-h-11 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none shrink-0">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+        </button>
+      </div>
+
+      <p dir="auto" data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant line-clamp-2 text-start">
+        GPU-accelerated terminal troubleshooting, ligature configuration, and SSH terminfo fixes.
+      </p>
+
+      <div class="flex items-center justify-between gap-2 pt-1 border-t border-light-outline-variant/60">
+        <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-light-surface-container text-label-sm text-light-on-surface-variant">
+            <span class="material-symbols-outlined text-[14px]" aria-hidden="true">folder</span>
+            <span>Terminal &amp; CLI</span>
+          </span>
+          <span class="px-2 py-0.5 rounded bg-light-surface-container-low border border-light-outline-variant text-label-sm text-light-on-surface-variant">#terminal</span>
+        </div>
+        <div class="flex items-center gap-0.5 text-light-primary shrink-0" aria-label="Rated 4 out of 5 stars">
+          <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+          <span class="text-label-sm font-semibold tabular-nums">4</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 3: Standard -->
+    <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-3.5 shadow-sm flex flex-col gap-2.5">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-light-surface-container-high flex items-center justify-center shrink-0 text-light-outline">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">palette</span>
+        </div>
+        <div class="min-w-0 flex-1 text-start">
+          <a href="#bookmark-3" class="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">
+            <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface line-clamp-2">CSS Logical Properties and Values — MDN</h2>
+            <p dir="ltr" data-design-text-token="mono-sm" class="font-mono t
