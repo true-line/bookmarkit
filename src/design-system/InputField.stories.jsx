@@ -2,10 +2,11 @@ import React from "react";
 import { InputField } from "./InputField.jsx";
 import { UiScope } from "./story-decorator.jsx";
 
-// Input field stories mirroring the spec's sticker-sheet variants:
-// input-field-text and input-field-icon. Validation never rides on color
-// alone: the error state pairs the border color with an explicit message and
-// aria-invalid.
+// Input field stories mirroring the screens' sticker-sheet variants:
+// input-field-text, input-field-icon, and the edit-bookmark screen's
+// input-field-valid. Validation never rides on color alone: the error state
+// pairs the border with an explicit message and aria-invalid; the valid
+// state pairs the success border and check icon with a role=status line.
 
 const meta = {
   decorators: [UiScope],
@@ -14,7 +15,7 @@ const meta = {
     docs: {
       description: {
         component:
-          '36px minimum height, 1px outline border (the spec\'s ≥ 3:1 boundary token), 8px radius, focus turns the border primary under the shared 2px ring. Inputs default to dir="auto" for user-entered copy; raw URL fields take dir="ltr" at the call site.',
+          '40px minimum height, 1px outline border (the spec\'s ≥ 3:1 boundary token), 8px radius, focus turns the border primary under the shared 2px ring. Inputs default to dir="auto" for user-entered copy; raw URL fields take dir="ltr" and mono (Fira Code) at the call site.',
       },
     },
   },
@@ -41,18 +42,16 @@ const searchIcon = (
 export const Text = {
   render: () => (
     <div style={{ display: "grid", gap: "16px", maxWidth: "420px" }}>
-      <InputField id="field-title" label="Title" defaultValue="GitHub" />
+      <InputField id="field-title" label="Title" defaultValue="macOS Login Shells — Ghostty Help" />
       <InputField
-        id="field-url"
-        label="URL"
-        dir="ltr"
-        defaultValue="https://github.com"
-        hint="Stored as typed; never redirected silently."
+        id="field-folder"
+        label="Folder"
+        defaultValue="Engineering/Terminal & CLI"
+        hint="Use / for nested subfolders"
       />
       <InputField
         id="field-title-error"
         label="Title"
-        defaultValue=" "
         validity="invalid"
         error="Enter a title before saving."
       />
@@ -63,21 +62,30 @@ export const Text = {
 
 export const Icon = {
   render: () => (
-    <div style={{ display: "grid", gap: "16px", maxWidth: "420px" }}>
+    <div style={{ display: "grid", gap: "16px", maxWidth: "480px" }}>
       <InputField
         id="field-search"
-        label="Search bookmarks"
+        label="Search or filter bookmarks"
         icon={searchIcon}
-        placeholder="Find github"
+        placeholder='Filter instantly or ask AI (e.g. "docs tagged cli with 4+ stars")'
       />
       <InputField
-        id="field-url-icon"
+        id="field-url"
         label="URL"
         dir="ltr"
-        icon={searchIcon}
-        defaultValue="https://github.com"
-        hint="The leading icon is decorative; the label names the field."
+        mono
+        validity="valid"
+        defaultValue="https://ghostty.org/docs/help/macos-login-shells"
+        success="Valid public http(s) URL"
       />
     </div>
   ),
+  parameters: {
+    docs: {
+      description: {
+        component:
+          "input-field-icon (leading decorative icon) and the edit-bookmark screen's input-field-valid: success border, trailing check icon and a role=status line — color always paired with text.",
+      },
+    },
+  },
 };

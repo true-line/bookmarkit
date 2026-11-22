@@ -271,7 +271,7 @@ export const Composition = {
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
         <Button>Add New</Button>
         <Button intent="tertiary">Suggest Tags</Button>
-        <Button intent="quiet">Import</Button>
+        <Button intent="secondary">Import</Button>
         <span style={{ flex: 1 }} />
         <IconButton label="Open options">
           <svg

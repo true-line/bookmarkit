@@ -32,7 +32,7 @@ const standardBody = (
 
 const standardFooter = (
   <>
-    <Button intent="quiet">Cancel</Button>
+    <Button intent="secondary">Cancel</Button>
     <Button>Save Bookmark</Button>
   </>
 );
@@ -46,8 +46,8 @@ const alertBody = (
 
 const alertFooter = (
   <>
-    <Button intent="quiet">Keep Bookmark</Button>
-    <Button intent="danger">Remove Bookmark</Button>
+    <Button intent="secondary">Keep Bookmark</Button>
+    <Button intent="destructive">Remove Bookmark</Button>
   </>
 );
 
@@ -74,7 +74,12 @@ function StandardHost() {
     <>
       <Button onClick={() => setOpen(true)}>Edit Bookmark</Button>
       {open && (
-        <Modal title="Edit Bookmark" onClose={() => setOpen(false)} footer={standardFooter}>
+        <Modal
+          title="Edit Bookmark"
+          description="Update details, organize into folders, or generate AI suggestions."
+          onClose={() => setOpen(false)}
+          footer={standardFooter}
+        >
           {standardBody}
         </Modal>
       )}
@@ -88,7 +93,12 @@ export const Standard = {
 
 export const StandardOpen = {
   render: () => (
-    <Modal title="Edit Bookmark" onClose={() => {}} footer={standardFooter}>
+    <Modal
+      title="Edit Bookmark"
+      description="Update details, organize into folders, or generate AI suggestions."
+      onClose={() => {}}
+      footer={standardFooter}
+    >
       {standardBody}
     </Modal>
   ),
@@ -98,7 +108,7 @@ function AlertHost() {
   const [open, setOpen] = React.useState(false);
   return (
     <>
-      <Button intent="danger" onClick={() => setOpen(true)}>
+      <Button intent="destructive" onClick={() => setOpen(true)}>
         Delete Bookmark
       </Button>
       {open && (
@@ -121,7 +131,13 @@ export const Alert = {
 
 export const AlertOpen = {
   render: () => (
-    <Modal variant="alert" title="Remove “MDN Web Docs”?" onClose={() => {}} footer={alertFooter}>
+    <Modal
+      variant="alert"
+      title="Remove “MDN Web Docs”?"
+      description="This proposal never writes on its own; the undo toast offers it back."
+      onClose={() => {}}
+      footer={alertFooter}
+    >
       {alertBody}
     </Modal>
   ),
