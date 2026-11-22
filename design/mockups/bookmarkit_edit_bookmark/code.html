@@ -284,4 +284,23 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
           var val = Number(btn.getAttribute('data-star'));
           stars.forEach(function (s) {
             var sVal = Number(s.getAttribute('data-star'));
-         
+            var icon = s.querySelector('.material-symbols-outlined');
+            s.setAttribute('aria-checked', sVal === val ? 'true' : 'false');
+            if (sVal <= val) {
+              s.classList.add('text-light-primary');
+              s.classList.remove('text-light-outline');
+              icon.style.fontVariationSettings = "'FILL' 1";
+            } else {
+              s.classList.remove('text-light-primary');
+              s.classList.add('text-light-outline');
+              icon.style.fontVariationSettings = "'FILL' 0";
+            }
+          });
+          label.textContent = val + ' / 5';
+        });
+      });
+    })();
+  </script>
+
+
+</body></html>
