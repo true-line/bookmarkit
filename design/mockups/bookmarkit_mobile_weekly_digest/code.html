@@ -198,4 +198,88 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
           <span class="font-headline text-headline-md text-light-tertiary block tabular-nums">4</span>
           <span class="text-label-sm text-light-on-surface-variant block">Untagged</span>
         </div>
-      </div
+      </div>
+    </section>
+
+    <!-- Triage Queue -->
+    <div class="flex items-center justify-between">
+      <h2 data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Needs Review</h2>
+      <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant tabular-nums">4 items</span>
+    </div>
+
+    <!-- Triage Card 1 -->
+    <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-3.5 shadow-sm flex flex-col gap-3 text-start">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-light-surface-container-high flex items-center justify-center shrink-0 text-light-outline">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">article</span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Vite 6 Environment API Guide</h3>
+          <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://vite.dev/guide/api-environment</p>
+          <p data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant mt-1">Saved 2 days ago · Untagged</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-2 border-t border-light-outline-variant/60">
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">open_in_new</span>
+          <span data-design-text-token="label-md" class="text-label-md">Open</span>
+        </button>
+        <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">edit</span>
+          <span data-design-text-token="label-md" class="text-label-md">Tag &amp; File</span>
+        </button>
+      </div>
+    </article>
+
+    <!-- Triage Card 2 -->
+    <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-3.5 shadow-sm flex flex-col gap-3 text-start">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-light-surface-container-high flex items-center justify-center shrink-0 text-light-outline">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">accessibility_new</span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">WAI-ARIA Authoring Practices</h3>
+          <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://www.w3.org/WAI/ARIA/apg/</p>
+          <p data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant mt-1">Saved 4 days ago · Never opened</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-2 border-t border-light-outline-variant/60">
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">open_in_new</span>
+          <span data-design-text-token="label-md" class="text-label-md">Open</span>
+        </button>
+        <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">edit</span>
+          <span data-design-text-token="label-md" class="text-label-md">Tag &amp; File</span>
+        </button>
+      </div>
+    </article>
+
+    <!-- Triage Card 3 -->
+    <article class="bg-light-surface-container-lowest border border-light-outline-variant rounded-md p-3.5 shadow-sm flex flex-col gap-3 text-start">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-light-surface-container-high flex items-center justify-center shrink-0 text-light-outline">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">terminal</span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Ripgrep User Guide</h3>
+          <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate mt-0.5">https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md</p>
+          <p data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant mt-1">Saved 5 days ago · Untagged</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-2 border-t border-light-outline-variant/60">
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">open_in_new</span>
+          <span data-design-text-token="label-md" class="text-label-md">Open</span>
+        </button>
+        <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">edit</span>
+          <span data-design-text-token="label-md" class="text-label-md">Tag &amp; File</span>
+        </button>
+      </div>
+    </article>
+  </main>
+
+
+
+</body></html>
