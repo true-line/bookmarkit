@@ -28,6 +28,13 @@ const baseProps = {
 };
 
 describe("OptionsModal encryption UI (#29)", () => {
+  it("renders through the unified design system's 2xl modal panel", () => {
+    render(<OptionsModal {...baseProps} />);
+    const panel = screen.getByRole("dialog");
+    expect(panel).toHaveClass("ui-modal-panel");
+    expect(panel).toHaveClass("ui-modal-panel--2xl");
+  });
+
   it("enables encryption when the passphrase is valid and confirmed", async () => {
     const onEnableEncryption = vi.fn().mockResolvedValue(undefined);
     render(
