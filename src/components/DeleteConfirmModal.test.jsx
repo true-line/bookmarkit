@@ -28,6 +28,22 @@ const reasons = [
 ];
 
 describe("DeleteConfirmModal", () => {
+  // #243: the destructive reading of the unified modal — standard panel with a
+  // filled-danger confirm and the tonal bordered Cancel, the question staying
+  // the body text it always was.
+  it("renders the unified modal with the destructive footer recipe", () => {
+    setup();
+
+    const panel = screen.getByRole("dialog");
+    expect(panel).toHaveClass("ui-modal-panel");
+    expect(panel).toHaveAttribute("aria-modal", "true");
+
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    expect(cancel).toHaveClass("ui-button--secondary");
+    const confirm = screen.getByRole("button", { name: "Delete" });
+    expect(confirm).toHaveClass("ui-button--destructive");
+  });
+
   it("asks before deleting, and reports which way the user went", () => {
     const { onConfirm, onCancel } = setup();
 

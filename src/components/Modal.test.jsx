@@ -1,12 +1,20 @@
 import React, { useState } from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Button, Modal } from "./DesignSystem.jsx";
 import HelpModal from "./HelpModal.jsx";
 import MessageModal from "./MessageModal.jsx";
 import DeleteConfirmModal from "./DeleteConfirmModal.jsx";
 
 const dialog = () => screen.getByRole("dialog");
+
+// The migrated dialogs (#243) close through the unified Modal: without a
+// scrim guard the exit animation defers onClose by its 150ms duration, so
+// these tests advance past it. The delete confirmation refuses through its
+// own guard instead, which answers synchronously like it always has.
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("Modal keyboard and focus behaviour (#27, #23)", () => {
   it("moves focus into the dialog and restores it on close", () => {
@@ -143,10 +151,14 @@ describe("every dialog closes on Escape (#23)", () => {
   });
 
   it("message", () => {
+    vi.useFakeTimers();
     const onClose = vi.fn();
     render(<MessageModal message="Saved" type="success" onClose={onClose} />);
 
     fireEvent.keyDown(document.activeElement, { key: "Escape" });
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -157,7 +169,7 @@ describe("every dialog closes on Escape (#23)", () => {
       <DeleteConfirmModal message="Delete 2 bookmarks?" onCancel={onCancel} onConfirm={vi.fn()} />
     );
 
-    fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     expect(onCancel).toHaveBeenCalledTimes(1);
 
     rerender(
@@ -168,7 +180,7 @@ describe("every dialog closes on Escape (#23)", () => {
         isLoading
       />
     );
-    fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });
