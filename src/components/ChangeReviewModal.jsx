@@ -39,14 +39,7 @@ const TagList = ({ tags, added = [] }) => {
     <span className="inline-flex flex-wrap gap-1">
       {tags.length === 0 && <span style={{ color: "var(--ui-on-surface-variant)" }}>none</span>}
       {tags.map((tag) => (
-        <Tag
-          key={tag}
-          style={
-            isNew.has(tag.toLowerCase())
-              ? { background: "var(--ui-tertiary-container)", color: "var(--ui-on-tertiary)" }
-              : undefined
-          }
-        >
+        <Tag key={tag} className={isNew.has(tag.toLowerCase()) ? "ui-tag--accent" : undefined}>
           {tag}
         </Tag>
       ))}
