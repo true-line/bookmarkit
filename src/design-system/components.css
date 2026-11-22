@@ -499,7 +499,12 @@
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-dialog);
   width: min(576px, 100%);
-  max-height: min(90dvh, 100%);
+  /* Both cap arms must stay viewport-definite: a percentage here is cyclic
+     inside the scrim's grid track sizing, so Chrome drops the whole min()
+     and sizes the row to the panel's unclamped height — the panel then
+     renders centered in that oversized row, pushed down and clipped past
+     the viewport (help/options modals, 2026-11-22). */
+  max-height: min(90dvh, calc(100dvh - 2 * var(--ui-space-gutter-lg)));
   display: flex;
   flex-direction: column;
   animation: ui-panel-in var(--ui-duration-enter) var(--ui-ease-enter);
