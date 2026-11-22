@@ -1,4 +1,3 @@
-import React from "react";
 import { renderHook, act } from "@testing-library/react";
 import { useTheme } from "./useTheme.js";
 
@@ -50,6 +49,29 @@ describe("useTheme → design system bridge", () => {
     renderHook(() => useTheme());
     expect(root().style.getPropertyValue("--ui-brand-crimson")).toBe("#c62f35");
     expect(root().style.getPropertyValue("--ui-brand-crimson-hover")).toBe("#a92329");
+  });
+
+  it("composites alpha-bearing backgrounds over the canvas before judging", async () => {
+    localStorage.setItem(
+      "bm_themes",
+      JSON.stringify({
+        ghost: {
+          bgPrimary: "rgba(0, 0, 0, 0)",
+          bgSecondary: "#f6f1e7",
+          textPrimary: "#211d18",
+          textSecondary: "#6d675c",
+          border: "#e4dcc9",
+          accent: "#c62f35",
+          accentHover: "#a92329",
+        },
+      })
+    );
+    const { result } = renderHook(() => useTheme());
+    await act(async () => {
+      result.current.selectTheme("ghost");
+    });
+    // Transparent black renders as the light canvas behind the page.
+    expect(root().getAttribute("data-ui-theme")).toBe("light");
   });
 
   it("keeps brand tokens following a custom accent after a theme switch", async () => {

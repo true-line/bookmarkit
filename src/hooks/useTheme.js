@@ -76,14 +76,22 @@ function relativeLuminance([r, g, b]) {
 // Computed color → rgb triple. A scratch element is what turns any valid CSS
 // color form into something numeric; browsers resolve it, and environments
 // that can't (or colors they refuse) return null rather than guessing.
+// Alpha-bearing values composite over white before returning: the page shows
+// the browser canvas behind a transparent --bg-primary, so transparent black
+// renders light and must not resolve dark (8-digit hex lands here too, since
+// the hex fast-path only takes 6 digits).
 function measureColor(cssColor) {
   try {
     const el = document.createElement("span");
     el.style.color = cssColor;
     document.body.appendChild(el);
-    const m = /^rgba?\((\d+), (\d+), (\d+)/.exec(getComputedStyle(el).color);
+    const m = /^rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/.exec(getComputedStyle(el).color);
     el.remove();
-    return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+    if (!m) return null;
+    const rgb = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const alpha = m[4] === undefined ? 1 : Number(m[4]);
+    if (alpha >= 1) return rgb;
+    return rgb.map((c) => Math.round(c * alpha + 255 * (1 - alpha)));
   } catch {
     return null;
   }
