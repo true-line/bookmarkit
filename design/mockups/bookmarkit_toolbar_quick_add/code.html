@@ -202,4 +202,59 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
 
         <label class="flex flex-col gap-1">
           <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface">Tags</span>
-          <input type="text" dir="auto" value="llm, docs" class="w-full min-h-9 rounded border border-light-outline bg-light-surface-container-lowest px-3 py-1.5 text-body-sm text-light-on-surface focus:bo
+          <input type="text" dir="auto" value="llm, docs" class="w-full min-h-9 rounded border border-light-outline bg-light-surface-container-lowest px-3 py-1.5 text-body-sm text-light-on-surface focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+        </label>
+      </div>
+
+      <footer class="flex items-center justify-between gap-2 pt-2 border-t border-light-outline-variant">
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="min-h-9 px-3 py-1.5 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Open BookmarkIt</button>
+
+        <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="min-h-9 px-4 py-1.5 rounded bg-light-primary-container text-light-on-primary hover:bg-light-primary text-label-md shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Save Bookmark</button>
+      </footer>
+    </form>
+
+    <!-- Non-HTTP(S) Fallback State -->
+    <div id="quickadd-blocked" class="hidden flex-col gap-4 py-2">
+      <div class="flex items-start gap-2.5 p-3 rounded bg-light-surface-container border border-light-outline-variant">
+        <span class="material-symbols-outlined text-[20px] text-light-on-surface-variant shrink-0 mt-0.5" aria-hidden="true">info</span>
+        <p data-design-text-token="body-md" class="text-body-md text-light-on-surface-variant">This page can&#39;t be bookmarked (only http and https pages).</p>
+      </div>
+      <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="w-full min-h-9 px-4 py-2 rounded bg-light-primary-container text-light-on-primary hover:bg-light-primary text-label-lg shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Open BookmarkIt</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var validBtn = document.getElementById('state-valid-btn');
+      var blockedBtn = document.getElementById('state-blocked-btn');
+      var form = document.getElementById('quickadd-form');
+      var blocked = document.getElementById('quickadd-blocked');
+
+      validBtn.addEventListener('click', function () {
+        validBtn.setAttribute('aria-pressed', 'true');
+        blockedBtn.setAttribute('aria-pressed', 'false');
+        validBtn.classList.add('bg-light-primary-container', 'text-light-on-primary');
+        validBtn.classList.remove('text-light-on-surface-variant');
+        blockedBtn.classList.remove('bg-light-primary-container', 'text-light-on-primary');
+        blockedBtn.classList.add('text-light-on-surface-variant');
+        form.classList.remove('hidden');
+        blocked.classList.add('hidden');
+        blocked.classList.remove('flex');
+      });
+
+      blockedBtn.addEventListener('click', function () {
+        blockedBtn.setAttribute('aria-pressed', 'true');
+        validBtn.setAttribute('aria-pressed', 'false');
+        blockedBtn.classList.add('bg-light-primary-container', 'text-light-on-primary');
+        blockedBtn.classList.remove('text-light-on-surface-variant');
+        validBtn.classList.remove('bg-light-primary-container', 'text-light-on-primary');
+        validBtn.classList.add('text-light-on-surface-variant');
+        form.classList.add('hidden');
+        blocked.classList.remove('hidden');
+        blocked.classList.add('flex');
+      });
+    })();
+  </script>
+
+
+</body></html>
