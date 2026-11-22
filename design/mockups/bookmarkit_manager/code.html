@@ -488,4 +488,44 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
                 <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">a11y</span>
                 <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">standards</span>
                 <span class="ms-auto inline-flex items-center gap-0.5 text-light-primary" aria-label="Rated 5 out of 5 stars">
-                  <span class="material-symbols-outlined text-[14px]" style="font
+                  <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+                  <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">5</span>
+                </span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var grid = document.getElementById('bookmark-grid');
+      var viewButtons = document.querySelectorAll('.view-btn');
+      viewButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          viewButtons.forEach(function (b) {
+            b.setAttribute('aria-pressed', 'false');
+            b.classList.remove('bg-light-primary-container', 'text-light-on-primary', 'shadow-sm');
+            b.classList.add('text-light-on-surface-variant');
+          });
+          btn.setAttribute('aria-pressed', 'true');
+          btn.classList.add('bg-light-primary-container', 'text-light-on-primary', 'shadow-sm');
+          btn.classList.remove('text-light-on-surface-variant');
+
+          var mode = btn.getAttribute('data-view');
+          grid.className = 'grid gap-gutter-md items-stretch ' + (
+            mode === 'single'
+              ? 'grid-cols-1'
+              : mode === 'grid'
+                ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                : 'grid-cols-1 md:grid-cols-2'
+          );
+        });
+      });
+    })();
+  </script>
+
+
+</body></html>
