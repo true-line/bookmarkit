@@ -190,4 +190,47 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
         <!-- Keyboard Shortcuts -->
         <section aria-labelledby="shortcuts-heading" class="flex flex-col gap-3 pt-5 border-t border-light-outline-variant">
           <h2 id="shortcuts-heading" data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Keyboard Shortcuts</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-gu
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter-sm">
+            <div class="flex items-center justify-between gap-3 p-2.5 rounded bg-light-surface-container-low border border-light-outline-variant">
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface">Edit selected</span>
+              <kbd class="px-2 py-0.5 rounded-sm bg-light-surface-container-lowest border border-light-outline-variant font-mono text-mono-sm text-light-on-surface">E</kbd>
+            </div>
+            <div class="flex items-center justify-between gap-3 p-2.5 rounded bg-light-surface-container-low border border-light-outline-variant">
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface">Open in new tab</span>
+              <kbd class="px-2 py-0.5 rounded-sm bg-light-surface-container-lowest border border-light-outline-variant font-mono text-mono-sm text-light-on-surface">Shift+Enter</kbd>
+            </div>
+            <div class="flex items-center justify-between gap-3 p-2.5 rounded bg-light-surface-container-low border border-light-outline-variant">
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface">Select all visible</span>
+              <kbd class="px-2 py-0.5 rounded-sm bg-light-surface-container-lowest border border-light-outline-variant font-mono text-mono-sm text-light-on-surface">Cmd/Ctrl+A</kbd>
+            </div>
+            <div class="flex items-center justify-between gap-3 p-2.5 rounded bg-light-surface-container-low border border-light-outline-variant">
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface">Delete selected</span>
+              <kbd class="px-2 py-0.5 rounded-sm bg-light-surface-container-lowest border border-light-outline-variant font-mono text-mono-sm text-light-on-surface">D</kbd>
+            </div>
+            <div class="flex items-center justify-between gap-3 p-2.5 rounded bg-light-surface-container-low border border-light-outline-variant">
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface">Undo last edit</span>
+              <kbd class="px-2 py-0.5 rounded-sm bg-light-surface-container-lowest border border-light-outline-variant font-mono text-mono-sm text-light-on-surface">Cmd/Ctrl+Z</kbd>
+            </div>
+            <div class="flex items-center justify-between gap-3 p-2.5 rounded bg-light-surface-container-low border border-light-outline-variant">
+              <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface">Clear selection</span>
+              <kbd class="px-2 py-0.5 rounded-sm bg-light-surface-container-lowest border border-light-outline-variant font-mono text-mono-sm text-light-on-surface">Esc</kbd>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-light-surface-container-low border-t border-light-outline-variant rounded-b-lg">
+        <div class="flex flex-wrap items-center gap-3 text-body-sm text-light-on-surface-variant">
+          <span class="font-mono text-mono-sm">v2.4.0 · MIT</span>
+          <span aria-hidden="true">·</span>
+          <a href="#privacy-policy" class="text-light-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">Privacy Policy</a>
+          <span aria-hidden="true">·</span>
+          <a href="#open-source-licenses" class="text-light-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">Licenses</a>
+        </div>
+        <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="inline-flex items-center justify-center min-h-10 px-5 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary text-label-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">Got it</button>
+      </footer>
+    </dialog>
+  </div>
+
+
+</body></html>
