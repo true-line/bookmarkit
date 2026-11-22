@@ -106,6 +106,7 @@ describe("Modal (unified design system)", () => {
     );
     const alert = screen.getByRole("alertdialog");
     expect(alert).toHaveAttribute("aria-modal", "true");
+    expect(alert).toHaveClass("ui-modal-panel--alert");
     const describedBy = alert.getAttribute("aria-describedby");
     expect(document.getElementById(describedBy)).toHaveTextContent(
       "This removes the bookmark from your collection."
