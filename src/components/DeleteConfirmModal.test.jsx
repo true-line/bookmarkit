@@ -28,6 +28,33 @@ const reasons = [
 ];
 
 describe("DeleteConfirmModal", () => {
+  // #243: the destructive reading of the unified modal — standard panel with a
+  // filled-danger confirm and the tonal bordered Cancel. The question rides
+  // the header description, which the unified modal wires into the dialog's
+  // aria-describedby: the legacy modal described the dialog with this message
+  // and the migration must not drop that.
+  it("renders the unified modal with the destructive footer recipe", () => {
+    setup();
+
+    const panel = screen.getByRole("dialog");
+    expect(panel).toHaveClass("ui-modal-panel");
+    expect(panel).toHaveAttribute("aria-modal", "true");
+
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    expect(cancel).toHaveClass("ui-button--secondary");
+    const confirm = screen.getByRole("button", { name: "Delete" });
+    expect(confirm).toHaveClass("ui-button--destructive");
+  });
+
+  it("describes the dialog with the question it asks", () => {
+    setup({ message: "Are you sure you want to delete 2 bookmark(s)?" });
+
+    const describedBy = screen.getByRole("dialog").getAttribute("aria-describedby");
+    expect(document.getElementById(describedBy)).toHaveTextContent(
+      "Are you sure you want to delete 2 bookmark(s)?"
+    );
+  });
+
   it("asks before deleting, and reports which way the user went", () => {
     const { onConfirm, onCancel } = setup();
 
