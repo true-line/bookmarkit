@@ -62,7 +62,7 @@ describe("QuickAdd popup (#51)", () => {
     render(<QuickAdd />);
     await waitFor(() => expect(screen.getByLabelText("Title")).toHaveValue("Example Page"));
     expect(screen.getByLabelText("URL")).toHaveValue("https://example.com/page");
-    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save Bookmark" })).toBeInTheDocument();
   });
 
   it("saves a new bookmark with tags, rating, folder and the tab's own favicon", async () => {
@@ -74,12 +74,12 @@ describe("QuickAdd popup (#51)", () => {
     render(<QuickAdd />);
     await waitFor(() => expect(screen.getByLabelText("Title")).toHaveValue("Example Page"));
 
-    fireEvent.change(screen.getByLabelText("Tags, comma separated"), {
+    fireEvent.change(screen.getByLabelText("Tags"), {
       target: { value: "a, b ,, c" },
     });
     fireEvent.change(screen.getByLabelText("Folder"), { target: { value: "Work/API" } });
     fireEvent.click(screen.getByRole("button", { name: /^3 stars/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save Bookmark" }));
 
     await waitFor(() => expect(store.create).toHaveBeenCalled());
     const saved = store.create.mock.calls[0][0];
@@ -104,10 +104,10 @@ describe("QuickAdd popup (#51)", () => {
     await waitFor(() => expect(screen.getByText("Already saved")).toBeInTheDocument());
     // Prefills from the stored bookmark, not the tab.
     expect(screen.getByLabelText("Title")).toHaveValue("Saved already");
-    expect(screen.getByLabelText("Tags, comma separated")).toHaveValue("old");
+    expect(screen.getByLabelText("Tags")).toHaveValue("old");
     expect(screen.getByLabelText("Folder")).toHaveValue("Work");
 
-    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    fireEvent.click(screen.getByRole("button", { name: "Update Bookmark" }));
     await waitFor(() => expect(store.update).toHaveBeenCalled());
     expect(store.create).not.toHaveBeenCalled();
 
@@ -122,7 +122,7 @@ describe("QuickAdd popup (#51)", () => {
     mockChrome({ title: "Settings", url: "chrome://settings" });
     render(<QuickAdd />);
     await waitFor(() => expect(screen.getByText(/can't be bookmarked/i)).toBeInTheDocument());
-    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save Bookmark" })).not.toBeInTheDocument();
   });
 
   it("does not overwrite what the user typed when the store pushes an update", async () => {
@@ -152,7 +152,7 @@ describe("QuickAdd popup (#51)", () => {
     render(<QuickAdd />);
     await waitFor(() => expect(screen.getByLabelText("Title")).toHaveValue("Example Page"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save Bookmark" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/Couldn't save/));
     expect(globalThis.close).not.toHaveBeenCalled();
   });
@@ -162,8 +162,31 @@ describe("QuickAdd popup (#51)", () => {
     render(<QuickAdd />);
     await waitFor(() => expect(screen.getByLabelText("Title")).toHaveValue("Example Page"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Open full app" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open BookmarkIt" }));
     expect(chrome.tabs.create).toHaveBeenCalledWith({ url: "chrome-extension://abc/index.html" });
+  });
+});
+
+// #245: the popup renders the quick-add mockup's recipes through the unified
+// design system — labeled fields, the URL field in Fira Code with a forced
+// LTR reading, and the footer's secondary/primary pairing.
+describe("QuickAdd popup on the unified design system (#245)", () => {
+  it("renders the mockup's field and button recipes", async () => {
+    mockChrome({ title: "Example Page", url: "https://example.com/page" });
+    render(<QuickAdd />);
+    await waitFor(() => expect(screen.getByLabelText("Title")).toHaveValue("Example Page"));
+
+    const url = screen.getByLabelText("URL");
+    expect(url).toHaveAttribute("dir", "ltr");
+    expect(url).toHaveClass("ui-input--mono");
+    // The input's bidirectionality default comes from InputField itself; only
+    // the URL field overrides it.
+    expect(screen.getByLabelText("Title")).toHaveAttribute("dir", "auto");
+
+    expect(screen.getByRole("button", { name: "Save Bookmark" })).toHaveClass("ui-button--primary");
+    expect(screen.getByRole("button", { name: "Open BookmarkIt" })).toHaveClass(
+      "ui-button--secondary"
+    );
   });
 });
 
