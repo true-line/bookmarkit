@@ -586,6 +586,53 @@ body {
   font: var(--ui-type-body-sm);
 }
 
+/* ─── Empty shelf (#254) ──────────────────────────────────────────────────
+   The manager mockup's empty-shelf centerpiece: a centered column — the
+   card-stack mark, the copy block, the actions — on headline/body type with
+   the canonical button intents. The compact reading serves the filtered
+   variants (a finished agent action or a search that matched nothing):
+   same column at headline-md. The layered card stack itself is the app's
+   EmptyStack effect, unchanged — effects are logic, not styling. */
+.ui-empty {
+  max-width: 28rem;
+  margin-inline: auto;
+  padding: var(--ui-space-section) var(--ui-space-gutter-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--ui-space-gutter-lg); /* the mockup's gap-5 between the blocks */
+}
+.ui-empty--compact {
+  max-width: 36rem;
+  gap: var(--ui-space-gutter-md);
+}
+.ui-empty-icon {
+  display: flex;
+  justify-content: center;
+  color: var(--ui-on-surface-variant);
+}
+.ui-empty-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-sm); /* the mockup's gap-2 inside the copy */
+}
+.ui-empty-title {
+  margin: 0;
+  color: var(--ui-on-surface);
+}
+.ui-empty-description {
+  margin: 0;
+  color: var(--ui-on-surface-variant);
+}
+.ui-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ui-space-gutter-md);
+  padding-block-start: var(--ui-space-gutter-xs);
+}
+
 /* ─── Narrow viewports ────────────────────────────────────────────────────
    The action row is one nowrap, horizontally scrollable strip: once the view
    selector joined, the buttons outgrew the reading measure, so the header

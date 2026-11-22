@@ -44,6 +44,16 @@ export function AddIcon({ size = 18 }) {
   );
 }
 
+/** The empty shelf's Import reading (upload_file). */
+export function UploadIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+      <path d="M12 3v12M7 8l5-5 5 5" />
+    </svg>
+  );
+}
+
 /** Import/Export (swap_vert). */
 export function SwapIcon({ size = 16 }) {
   return (
