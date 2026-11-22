@@ -596,6 +596,97 @@
   }
 }
 
+/* The import/export screen's format tabs (#247): an underline row over the
+   dialog's divided reading. The mockup merges both import formats onto one
+   chooser, but the app's round-trip keeps JSON and HTML on separate tabs, so
+   the row carries the spec's label type with the primary role marking the
+   selected tab. */
+.ui-tabs {
+  display: flex;
+  overflow-x: auto;
+  border-block-end: 1px solid var(--ui-outline-variant);
+}
+
+.ui-tab {
+  padding: var(--ui-space-gutter-sm) var(--ui-space-gutter-md);
+  font: var(--ui-type-label-md);
+  color: var(--ui-on-surface-variant);
+  background: none;
+  border: 0;
+  border-block-end: 2px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ui-tab[aria-selected="true"] {
+  color: var(--ui-primary);
+  border-block-end-color: var(--ui-primary);
+}
+
+/* The import/export screen's file drop zone: the mockup's dashed
+   container-low area with the primary upload glyph. The whole zone is the
+   file input's label, so click and keyboard (the input stays in the a11y
+   tree with its own name) both open the picker; :focus-within carries the
+   shared ring while the input itself is visually hidden. */
+.ui-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--ui-space-gutter-sm);
+  padding: var(--ui-space-gutter-lg) var(--ui-space-gutter-md);
+  border: 2px dashed var(--ui-outline);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-low);
+  cursor: pointer;
+  transition: border-color var(--ui-duration-state) var(--ui-ease-state);
+}
+
+.ui-dropzone:hover {
+  border-color: var(--ui-primary);
+}
+
+/* A file hovering over the zone: the primary border answers the drag while
+   the drop handler runs it through the same staging path as a picked file. */
+.ui-dropzone--dragging {
+  border-color: var(--ui-primary);
+  background: var(--ui-surface-container);
+}
+
+.ui-dropzone:focus-within {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+/* The import/export screen's paste and preview fields: the input recipe's
+   multi-line reading — same border, focus ring and mono treatment as
+   ui-input, sized for rows of bookmarks rather than a single line. */
+.ui-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--ui-outline);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-lowest);
+  color: var(--ui-on-surface);
+  font: var(--ui-type-body-md);
+  transition: border-color var(--ui-duration-state) var(--ui-ease-state);
+  resize: vertical;
+}
+
+.ui-textarea:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+  border-color: var(--ui-primary);
+}
+
+.ui-textarea::placeholder {
+  color: var(--ui-on-surface-variant);
+}
+
+.ui-textarea--mono {
+  font: var(--ui-type-mono-sm);
+}
+
 /* Sticker sheet: modal-drawer — an inline-start sheet. Inset, radius corners
    and the slide are all logical: the border-radius sets the start edge square
    and the end edge rounded, and the slide direction flips via the custom

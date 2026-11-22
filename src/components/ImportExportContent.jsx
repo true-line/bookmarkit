@@ -1,27 +1,26 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { generateNetscapeHtml, parseNetscapeHtml } from "../utils/netscapeBookmarks.js";
 import { readImportedBookmarks } from "../utils/importedBookmarks.js";
-import { Button, Tabs, Textarea } from "./DesignSystem.jsx";
+import { Button, Card, Modal, Tag, Typography } from "../design-system/index.js";
+import { ImportPanel } from "./ImportPanel.jsx";
 
-/**
- * #25: Read the chosen file and clear the input. Without the reset the browser
- * fires no change event when the same file is picked again, so a failed import
- * could not be retried without picking a different file first.
- * @returns {Promise<string|null>} the file's text, or null if nothing was chosen
- */
-const readChosenFile = (event) =>
-  new Promise((resolve, reject) => {
-    const [file] = event.target.files;
-    event.target.value = "";
-    if (!file) {
-      resolve(null);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(reader.error ?? new Error("The file could not be read."));
-    reader.readAsText(file);
-  });
+// Migrated to the unified design system (#247): the import/export panel runs
+// as the modal-standard dialog itself (title plus the mockup's description
+// line, Close on the tinted footer band) instead of living inside the legacy
+// Modal. The mockup's recipes carry the presentation — the dashed drop zone
+// for file import, the export section's live bookmark-count tag, primary for
+// the JSON download and the tab's import action, tonal secondary for the
+// rest — while the tabbed JSON/HTML structure stays the app's own: the
+// mockup merges both formats onto one chooser, and the round-trip behavior
+// (per-format parse, paste, preview, append/replace confirmation) is pinned
+// by tests and unchanged here. Netscape parse/export logic is untouched.
+//
+// The tabs, drop zone and textarea have no unified primitives, so they join
+// components.css as screen recipes (.ui-tabs/.ui-tab, .ui-dropzone,
+// .ui-textarea) alongside the help screen's shortcut rows. The tab keyboard
+// contract is the legacy Tabs' exactly — roving tabindex and the
+// Arrow/Home/End rotations — carried over rather than re-decided. The
+// per-format import body lives in ImportPanel.jsx.
 
 // How many entries an import will actually add, and what it had to leave behind.
 const describeRejected = (rejectedCount) =>
@@ -32,8 +31,51 @@ const describeRejected = (rejectedCount) =>
 // UX-03: Memoize JSON/HTML export strings and data URIs to prevent recomputing on every render.
 // UX-04: Add confirmation step before import with append vs replace option.
 
-const ImportExportContent = ({ bookmarks, onClose, onImportJson, onImportHtml, showMessage }) => {
-  const [activeTab, setActiveTab] = useState("export");
+const TABS = [
+  { value: "export", label: "Export" },
+  { value: "import-json", label: "Import JSON" },
+  { value: "import-html", label: "Import HTML" },
+];
+
+// The export buttons' download/code glyphs, per the mockup's icons.
+const ICON_PATHS = {
+  download:
+    "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  code: "M16 18l6-6-6-6M8 6l-6 6 6 6",
+};
+
+function IoIcon({ path }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path} />
+    </svg>
+  );
+}
+
+const mutedText = { margin: 0, color: "var(--ui-on-surface-variant)" };
+const radioRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: "var(--ui-space-gutter-sm)",
+  cursor: "pointer",
+};
+
+const ImportExportContent = ({
+  bookmarks,
+  onClose,
+  onImportJson,
+  onImportHtml,
+  showMessage,
+  initialTab = "export",
+}) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [importJsonText, setImportJsonText] = useState("");
   const [importHtmlText, setImportHtmlText] = useState("");
   // UX-03: Loading state for async JSON parse
@@ -41,6 +83,30 @@ const ImportExportContent = ({ bookmarks, onClose, onImportJson, onImportHtml, s
   // UX-04: Confirmation state before executing import
   const [pendingImport, setPendingImport] = useState(null); // { type: 'json'|'html', data: any, count: number }
   const [replaceAll, setReplaceAll] = useState(false);
+
+  // Roving tabindex for the format tabs, the legacy Tabs' keyboard contract.
+  const tabRefs = useRef([]);
+  const activateTabAt = (index) => {
+    const tab = TABS[index];
+    if (!tab) return;
+    setActiveTab(tab.value);
+    tabRefs.current[index]?.focus();
+  };
+  const handleTabKeyDown = (event, index) => {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      activateTabAt((index + 1) % TABS.length);
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      activateTabAt((index - 1 + TABS.length) % TABS.length);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      activateTabAt(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      activateTabAt(TABS.length - 1);
+    }
+  };
 
   // UX-03: Memoize expensive serializations so they run at most once per bookmarks change
   const jsonExport = useMemo(() => JSON.stringify(bookmarks, null, 2), [bookmarks]);
@@ -107,15 +173,11 @@ const ImportExportContent = ({ bookmarks, onClose, onImportJson, onImportHtml, s
   const executeImport = async () => {
     if (!pendingImport) return;
     try {
+      // JSON hands the store the normalized entries; HTML hands the file text
+      // — await so status is only shown after completion.
       if (pendingImport.type === "json") {
-        if (replaceAll) {
-          // Replace all existing bookmarks
-          await onImportJson(pendingImport.data, true);
-        } else {
-          await onImportJson(pendingImport.data, false);
-        }
+        await onImportJson(pendingImport.data, replaceAll);
       } else {
-        // HTML import — await so status is only shown after completion
         await onImportHtml(pendingImport.data, replaceAll);
       }
     } catch {
@@ -132,229 +194,197 @@ const ImportExportContent = ({ bookmarks, onClose, onImportJson, onImportHtml, s
   };
 
   return (
-    <div>
+    <Modal
+      title="Import & Export"
+      description="Back up your collection or migrate from another browser."
+      closeLabel="Close dialog"
+      onClose={onClose}
+      footer={
+        <Button intent="secondary" onClick={onClose}>
+          Close
+        </Button>
+      }
+    >
       {/* UX-04: Confirmation step shown instead of the normal tabs UI */}
       {pendingImport ? (
-        <div className="space-y-4">
-          <p className="text-primary-text">
+        <Card
+          actions={
+            <>
+              <Button intent="secondary" onClick={cancelImport}>
+                Cancel
+              </Button>
+              <Button onClick={executeImport}>Import</Button>
+            </>
+          }
+        >
+          <Typography variant="body-md" as="p" style={{ margin: 0 }}>
             This will add <strong>{pendingImport.count}</strong> bookmark
             {pendingImport.count !== 1 ? "s" : ""} to your collection.
-          </p>
-          <div className="space-y-2">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="radio"
-                name="import-mode"
-                checked={!replaceAll}
-                onChange={() => setReplaceAll(false)}
-                className="accent-accent"
-              />
-              <span className="text-primary-text text-sm">Append to existing bookmarks</span>
-            </label>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="radio"
-                name="import-mode"
-                checked={replaceAll}
-                onChange={() => setReplaceAll(true)}
-                className="accent-accent"
-              />
-              <span className="text-primary-text text-sm">Replace all existing bookmarks</span>
-            </label>
+          </Typography>
+          <div
+            style={{
+              display: "grid",
+              gap: "var(--ui-space-gutter-sm)",
+              marginBlockStart: "var(--ui-space-gutter-md)",
+            }}
+          >
+            {[
+              {
+                label: "Append to existing bookmarks",
+                checked: !replaceAll,
+                set: () => setReplaceAll(false),
+              },
+              {
+                label: "Replace all existing bookmarks",
+                checked: replaceAll,
+                set: () => setReplaceAll(true),
+              },
+            ].map(({ label, checked, set }) => (
+              <label key={label} style={radioRow}>
+                <input
+                  type="radio"
+                  name="import-mode"
+                  checked={checked}
+                  onChange={set}
+                  style={{ accentColor: "var(--ui-primary)" }}
+                />
+                <Typography variant="body-sm" as="span">
+                  {label}
+                </Typography>
+              </label>
+            ))}
           </div>
-          <div className="flex space-x-3">
-            <Button onClick={executeImport}>Import</Button>
-            <Button intent="secondary" onClick={cancelImport}>
-              Cancel
-            </Button>
-          </div>
-        </div>
+        </Card>
       ) : (
-        <>
-          <div className="mb-4">
-            <Tabs
-              active={activeTab}
-              onChange={setActiveTab}
-              tabs={[
-                { value: "export", label: "Export" },
-                { value: "import-json", label: "Import JSON" },
-                { value: "import-html", label: "Import HTML" },
-              ]}
-            />
+        <div className="grid gap-4">
+          <div role="tablist" aria-label="Import or export bookmarks" className="ui-tabs">
+            {TABS.map((tab, index) => {
+              const selected = tab.value === activeTab;
+              return (
+                <button
+                  key={tab.value}
+                  ref={(node) => {
+                    tabRefs.current[index] = node;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={`io-tab-${tab.value}`}
+                  aria-selected={selected}
+                  aria-controls={`io-panel-${tab.value}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setActiveTab(tab.value)}
+                  onKeyDown={(event) => handleTabKeyDown(event, index)}
+                  className="ui-tab"
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
           {activeTab === "export" && (
-            <div className="space-y-4">
-              <p className="text-secondary-text">
-                Export your bookmarks as JSON or Netscape HTML format.
-              </p>
-              <div>
-                <Textarea
-                  label="JSON Export"
-                  id="export-json"
-                  readOnly
-                  value={jsonExport}
-                  mono
-                  rows={8}
-                />
-                <a
-                  href={jsonDataUri}
-                  download="bookmarks.json"
-                  className="ds-button ds-button--primary ds-button--md mt-2"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            <div role="tabpanel" id="io-panel-export" aria-labelledby="io-tab-export">
+              <section aria-labelledby="io-export-heading" className="grid gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Typography
+                    variant="headline-sm"
+                    as="h3"
+                    id="io-export-heading"
+                    style={{ margin: 0 }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Download JSON
-                </a>
-              </div>
-              <div>
-                <Textarea
-                  label="HTML Export (Netscape Bookmark File)"
-                  id="export-html"
-                  readOnly
-                  value={htmlExport}
-                  mono
-                  rows={8}
-                />
-                <a
-                  href={htmlDataUri}
-                  download="bookmarks.html"
-                  className="ds-button ds-button--primary ds-button--md mt-2"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    Export collection
+                  </Typography>
+                  <Tag className="ui-numeric">{bookmarks.length.toLocaleString()} bookmarks</Tag>
+                </div>
+                <Typography variant="body-sm" as="p" style={mutedText}>
+                  Export your bookmarks as JSON or Netscape HTML format.
+                </Typography>
+                <div className="ui-field">
+                  <label htmlFor="export-json">JSON Export</label>
+                  <textarea
+                    id="export-json"
+                    readOnly
+                    value={jsonExport}
+                    className="ui-textarea ui-textarea--mono"
+                    rows={8}
+                  />
+                </div>
+                {/* Download needs the anchor's native download attribute, so the
+                    link wears the ui-button recipe directly — the Button component
+                    can only render a real <button>. */}
+                <div>
+                  <a
+                    href={jsonDataUri}
+                    download="bookmarks.json"
+                    className="ui-button ui-button--primary"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Download HTML
-                </a>
-              </div>
+                    <IoIcon path={ICON_PATHS.download} />
+                    Download JSON
+                  </a>
+                </div>
+                <div className="ui-field">
+                  <label htmlFor="export-html">HTML Export (Netscape Bookmark File)</label>
+                  <textarea
+                    id="export-html"
+                    readOnly
+                    value={htmlExport}
+                    className="ui-textarea ui-textarea--mono"
+                    rows={8}
+                  />
+                </div>
+                <div>
+                  <a
+                    href={htmlDataUri}
+                    download="bookmarks.html"
+                    className="ui-button ui-button--secondary"
+                  >
+                    <IoIcon path={ICON_PATHS.code} />
+                    Download HTML
+                  </a>
+                </div>
+              </section>
             </div>
           )}
 
-          {activeTab === "import-json" && (
-            <div className="space-y-4">
-              <p className="text-secondary-text">
-                Paste your JSON bookmarks here or upload a file.
-              </p>
-              <label
-                htmlFor="upload-json-file"
-                className="block text-sm font-medium text-primary-text mb-2"
-              >
-                Upload JSON File
-              </label>
-              <input
-                id="upload-json-file"
-                type="file"
-                accept=".json"
-                onChange={async (e) => {
-                  try {
-                    const text = await readChosenFile(e);
-                    if (text !== null) stageJsonImport(text);
-                  } catch {
-                    showMessage(
-                      "Error parsing JSON file. Please ensure it is valid JSON.",
-                      "error"
-                    );
-                  }
-                }}
-                className="block w-full text-sm text-secondary-text file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-secondary-bg file:text-accent hover:file:bg-primary-bg focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-              />
-              <div className="my-4 text-center text-sm text-secondary-text">— OR —</div>
-              <Textarea
-                label="Paste JSON Data"
-                id="import-json-text"
-                value={importJsonText}
-                onChange={(e) => setImportJsonText(e.target.value)}
-                rows={8}
-                mono
-                placeholder='[{"title": "Example", "url": "https://example.com", "tags": ["test"]}]'
-              />
-              <Button
-                onClick={requestJsonImport}
-                disabled={isParsing || !importJsonText.trim()}
-                loading={isParsing}
-              >
-                {isParsing ? "Parsing…" : "Import JSON Data"}
-              </Button>
-            </div>
+          {activeTab !== "export" && (
+            <ImportPanel
+              format={activeTab}
+              text={activeTab === "import-json" ? importJsonText : importHtmlText}
+              onTextChange={(e) =>
+                activeTab === "import-json"
+                  ? setImportJsonText(e.target.value)
+                  : setImportHtmlText(e.target.value)
+              }
+              onImport={activeTab === "import-json" ? requestJsonImport : requestHtmlImport}
+              isParsing={activeTab === "import-json" && isParsing}
+              onFileText={(text) => {
+                if (activeTab === "import-json") {
+                  if (text !== null) stageJsonImport(text);
+                } else if (text === null) {
+                  return;
+                } else {
+                  // #40: what the reader will actually find, rather than a count
+                  // of <DT> rows — a folder is a <DT> too.
+                  setPendingImport({
+                    type: "html",
+                    data: text,
+                    count: parseNetscapeHtml(text).length,
+                  });
+                }
+              }}
+              onFileError={() =>
+                showMessage(
+                  activeTab === "import-json"
+                    ? "Error parsing JSON file. Please ensure it is valid JSON."
+                    : "The HTML file could not be read. Please try again.",
+                  "error"
+                )
+              }
+            />
           )}
-
-          {activeTab === "import-html" && (
-            <div className="space-y-4">
-              <p className="text-secondary-text">
-                Upload an HTML bookmark file or paste its content.
-              </p>
-              <label
-                htmlFor="upload-html-file"
-                className="block text-sm font-medium text-primary-text mb-2"
-              >
-                Upload HTML File (Browser Export)
-              </label>
-              <input
-                id="upload-html-file"
-                type="file"
-                accept=".html,.htm"
-                onChange={async (e) => {
-                  try {
-                    const text = await readChosenFile(e);
-                    if (text === null) return;
-                    // #40: what the reader will actually find, rather than a count
-                    // of <DT> rows — a folder is a <DT> too.
-                    setPendingImport({
-                      type: "html",
-                      data: text,
-                      count: parseNetscapeHtml(text).length,
-                    });
-                  } catch {
-                    showMessage("The HTML file could not be read. Please try again.", "error");
-                  }
-                }}
-                className="block w-full text-sm text-secondary-text file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-secondary-bg file:text-accent hover:file:bg-primary-bg focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-              />
-              <div className="my-4 text-center text-sm text-secondary-text">— OR —</div>
-              <Textarea
-                label="Paste HTML Data"
-                id="import-html-text"
-                value={importHtmlText}
-                onChange={(e) => setImportHtmlText(e.target.value)}
-                rows={8}
-                mono
-                placeholder="<!DOCTYPE NETSCAPE-Bookmark-file-1>..."
-              />
-              <Button onClick={requestHtmlImport} disabled={!importHtmlText.trim()}>
-                Import HTML Data
-              </Button>
-            </div>
-          )}
-        </>
+        </div>
       )}
-
-      <div className="flex justify-end mt-6">
-        <Button type="button" intent="secondary" onClick={onClose}>
-          Close
-        </Button>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

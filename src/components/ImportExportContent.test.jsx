@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import ImportExportContent from "./ImportExportContent.jsx";
 
 const setup = () => {
@@ -84,5 +84,76 @@ describe("ImportExportContent file upload (#25)", () => {
         "error"
       )
     );
+  });
+});
+
+// The unified-dialog migration (#247) moved the panel into the design-system
+// Modal itself — the shell it now owns is worth pinning, since the round-trip
+// tests above only exercise the content.
+describe("ImportExportContent unified dialog shell (#247)", () => {
+  it("describes the dialog with the mockup's description line", () => {
+    setup();
+
+    const describedBy = screen.getByRole("dialog").getAttribute("aria-describedby");
+    expect(document.getElementById(describedBy)).toHaveTextContent(
+      "Back up your collection or migrate from another browser."
+    );
+  });
+
+  it("closes through the dialog footer", () => {
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+    render(
+      <ImportExportContent
+        bookmarks={[]}
+        onClose={onClose}
+        onImportJson={() => {}}
+        onImportHtml={() => {}}
+        showMessage={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    // The unified modal closes through its 150ms exit animation.
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("accepts a dropped file on the zone, not just a picked one", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("tab", { name: "Import JSON" }));
+    const input = screen.getByLabelText("Upload JSON File");
+    fireEvent.drop(input.closest("label"), {
+      dataTransfer: {
+        files: [
+          new File(
+            [JSON.stringify([{ title: "Dropped", url: "https://example.com/drop" }])],
+            "dropped.json",
+            { type: "application/json" }
+          ),
+        ],
+      },
+    });
+
+    // The count rides a <strong>, and findByText matches direct text nodes only,
+    // so the singular reading needs the optional plural.
+    const confirmation = await screen.findByText(/bookmarks? to your collection/);
+    expect(confirmation).toHaveTextContent("This will add 1 bookmark");
+  });
+
+  it("returns to the tabs when the confirmation is cancelled", async () => {
+    setup();
+    chooseJsonFile(JSON.stringify([{ title: "Keep", url: "https://example.com/one" }]));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Import" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(await screen.findByRole("tab", { name: "Import JSON" })).toBeInTheDocument();
+    // The staged import is fully discarded, not just hidden.
+    expect(screen.getByRole("button", { name: "Import JSON Data" })).toBeDisabled();
   });
 });

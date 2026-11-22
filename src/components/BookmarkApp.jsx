@@ -64,7 +64,7 @@ import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
 import SmartViewBar from "./SmartViewBar.jsx";
 import BrandMark from "./effects/BrandMark.jsx";
-import { AgentPlan, Button, IconButton, Kbd, Modal, SearchBar, Toast } from "./DesignSystem.jsx";
+import { AgentPlan, Button, IconButton, Kbd, SearchBar, Toast } from "./DesignSystem.jsx";
 
 // Plan steps that write a new order to the store, rather than sorting the view.
 const REORDER_ACTIONS = ["reorder", "reorderAscending", "reorderDescending", "persistSortedOrder"];
@@ -1363,15 +1363,13 @@ const BookmarkApp = () => {
           />
         )}
         {isImportExportModalOpen && (
-          <Modal title="Import / Export Bookmarks" onClose={handleImportExportClose} size="lg">
-            <ImportExportContent
-              bookmarks={bookmarks}
-              onClose={handleImportExportClose}
-              onImportJson={handleImportJson}
-              onImportHtml={handleImportHtml}
-              showMessage={showCustomMessage}
-            />
-          </Modal>
+          <ImportExportContent
+            bookmarks={bookmarks}
+            onClose={handleImportExportClose}
+            onImportJson={handleImportJson}
+            onImportHtml={handleImportHtml}
+            showMessage={showCustomMessage}
+          />
         )}
         {isDeleteConfirmModalOpen && (
           <DeleteConfirmModal
