@@ -162,8 +162,8 @@ describe("FilterBar narrow-viewport structure (#151)", () => {
   it("groups the text filter apart from the discrete controls", () => {
     setup();
 
-    const text = document.querySelector(".ds-filter-text");
-    const controls = document.querySelector(".ds-filter-controls");
+    const text = document.querySelector(".ui-filter-text");
+    const controls = document.querySelector(".ui-filter-controls");
     expect(text).not.toBeNull();
     expect(controls).not.toBeNull();
 
@@ -180,7 +180,7 @@ describe("FilterBar narrow-viewport structure (#151)", () => {
       filters: { ...EMPTY_FILTERS, minRating: 3 },
     });
 
-    const controls = document.querySelector(".ds-filter-controls");
+    const controls = document.querySelector(".ui-filter-controls");
     const clear = screen.getByRole("button", { name: /clear filters/i });
     expect(controls.contains(clear)).toBe(true);
 

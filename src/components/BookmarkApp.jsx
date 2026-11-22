@@ -64,7 +64,21 @@ import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
 import SmartViewBar from "./SmartViewBar.jsx";
 import BrandMark from "./effects/BrandMark.jsx";
-import { AgentPlan, Button, IconButton, Kbd, SearchBar, Toast } from "./DesignSystem.jsx";
+import { AgentPlan, Kbd, Toast } from "./DesignSystem.jsx";
+// #250: the header/toolbar chrome speaks the unified design system — buttons,
+// icon buttons and the search input-field-icon (leading search icon, trailing
+// provider-ready badge). AgentPlan/Kbd/Toast stay legacy until their surface
+// migrates. Row/state compositions live in index.css.
+import { Button, IconButton, InputField } from "../design-system/index.js";
+import {
+  AddIcon,
+  CalendarIcon,
+  CopiesIcon,
+  HealthIcon,
+  SearchIcon,
+  SparkIcon,
+  SwapIcon,
+} from "./icons.jsx";
 
 // Plan steps that write a new order to the store, rather than sorting the view.
 const REORDER_ACTIONS = ["reorder", "reorderAscending", "reorderDescending", "persistSortedOrder"];
@@ -1045,7 +1059,7 @@ const BookmarkApp = () => {
         className={`bookmarkit-header fixed top-0 left-0 right-0 z-10 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
         role="banner"
       >
-        <div className="bg-primary-bg shadow-sm border-b border-border">
+        <div className="bg-[var(--ui-surface-container-lowest)] shadow-sm border-b border-[var(--ui-outline-variant)]">
           {/* Full width on purpose: capped at the reading measure, the action
               strip (Add New through the view selector) overflowed and clipped
               its last buttons at the window edge. Each row centers its own
@@ -1054,10 +1068,11 @@ const BookmarkApp = () => {
             <h1 className="sr-only">BookmarkIt</h1>
             <div className="flex justify-center items-center gap-3">
               <BrandMark enabled={effects} size={44} />
-              <div className="relative w-full max-w-md">
-                <SearchBar
+              <div className="w-full max-w-md">
+                <InputField
                   id="search-input"
                   type="text"
+                  icon={<SearchIcon />}
                   placeholder={
                     isAgentConfigured
                       ? "Type natural language queries (e.g., 'find github')"
@@ -1066,13 +1081,24 @@ const BookmarkApp = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchInputKeyDown}
-                  processing={isProcessing}
-                  disabled={!isAgentConfigured}
-                  size="lg"
+                  disabled={!isAgentConfigured || isProcessing}
                   aria-label="Natural language search"
+                  trailing={
+                    isProcessing ? (
+                      <span className="ui-spinner" aria-hidden="true" />
+                    ) : isAgentConfigured ? (
+                      // The mockup's AI Ready reading: the provider badge rides the
+                      // trailing slot without taking pointer events (the search
+                      // itself does the AI ask).
+                      <span className="ui-ai-badge" aria-hidden="true">
+                        <SparkIcon />
+                        AI Ready
+                      </span>
+                    ) : undefined
+                  }
                 />
               </div>
-              <IconButton label="Help" variant="bordered" onClick={() => setIsHelpModalOpen(true)}>
+              <IconButton label="Help" onClick={() => setIsHelpModalOpen(true)}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -1093,48 +1119,46 @@ const BookmarkApp = () => {
             {/* One horizontally scrollable strip: at phone widths the buttons
                 used to wrap into five rows and eat the viewport. */}
             <div className="bookmarkit-header-actions flex items-center gap-2">
-              <Button size="sm" onClick={handleAddNewBookmark}>
+              <Button onClick={handleAddNewBookmark} leadingIcon={<AddIcon />}>
                 Add New
               </Button>
               <Button
                 ref={folderToggleRef}
-                size="sm"
-                intent="secondary"
+                intent="outlined"
                 onClick={() => setIsFolderPaneOpen((open) => !open)}
                 aria-pressed={isFolderPaneOpen}
               >
                 {isFolderPaneOpen ? "Hide Folders" : "Folders"}
               </Button>
-              <Button size="sm" intent="secondary" onClick={handleImportExportOpen}>
+              <Button intent="outlined" onClick={handleImportExportOpen} leadingIcon={<SwapIcon />}>
                 Import/Export
               </Button>
               <Button
-                size="sm"
-                intent="secondary"
+                intent="outlined"
                 onClick={handleRemoveDuplicates}
                 loading={isAskingAboutDuplicates}
+                leadingIcon={<CopiesIcon />}
               >
                 {isAskingAboutDuplicates ? "Comparing…" : "Remove Duplicates"}
               </Button>
               <Button
-                size="sm"
-                intent="secondary"
+                intent="outlined"
                 onClick={showDigest}
                 loading={digestEngine.running}
+                leadingIcon={<CalendarIcon />}
               >
                 Digest
               </Button>
               <Button
-                size="sm"
-                intent="secondary"
+                intent="outlined"
                 onClick={sweep.running ? sweep.stop : sweep.start}
+                leadingIcon={<HealthIcon />}
               >
                 {sweep.running ? "Stop Check" : "Check Links"}
               </Button>
               {deadLinksInReach > 0 && (
                 <Button
-                  size="sm"
-                  intent="secondary"
+                  intent="outlined"
                   onClick={archive.running ? archive.stop : handleRecoverDeadLinks}
                   title="Ask the Internet Archive for a saved copy of each dead link"
                   // Without this the pointer-down clears the selection the button
@@ -1147,7 +1171,7 @@ const BookmarkApp = () => {
                 </Button>
               )}
               {lastAction && (
-                <Button size="sm" intent="ghost" onClick={resetSearch}>
+                <Button intent="outlined" onClick={resetSearch}>
                   Clear Search
                 </Button>
               )}
@@ -1160,7 +1184,7 @@ const BookmarkApp = () => {
                   setViewMode(mode);
                 }}
               />
-              <IconButton label="Options" variant="bordered" onClick={() => setIsOptionsOpen(true)}>
+              <IconButton label="Options" onClick={() => setIsOptionsOpen(true)}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -1178,7 +1202,7 @@ const BookmarkApp = () => {
                 </svg>
               </IconButton>
             </div>
-            <div className="bookmarkit-hint text-center text-xs text-secondary-text">
+            <div className="bookmarkit-hint text-center text-xs text-[var(--ui-on-surface-variant)]">
               Click to select, <Kbd>Shift</Kbd>
               +click to open, double-click or <Kbd>E</Kbd> to edit.
             </div>
@@ -1250,7 +1274,7 @@ const BookmarkApp = () => {
                 <span className="text-sm text-primary-text">
                   Reading your bookmarks… {organizer.done} of {organizer.total}
                 </span>
-                <Button type="button" intent="secondary" size="sm" onClick={organizer.stop}>
+                <Button type="button" intent="secondary" onClick={organizer.stop}>
                   Stop
                 </Button>
               </div>
