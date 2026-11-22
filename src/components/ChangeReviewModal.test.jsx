@@ -81,3 +81,33 @@ describe("ChangeReviewModal (#44)", () => {
     expect(onCancel).not.toHaveBeenCalled();
   });
 });
+
+// #249: the migration to the unified design system is presentation only — the
+// review contract above is untouched, and these pin the mockup family's
+// reading: the wide modal-standard shell, rows on ui-cards, the tertiary chip
+// on a gained tag, and the live selection count in the footer.
+describe("ChangeReviewModal on the unified design system (#249)", () => {
+  it("renders the wide modal-standard shell and a ui-card per row", () => {
+    setup();
+
+    expect(document.querySelector(".ui-modal-panel--2xl")).toBeInTheDocument();
+    expect(document.querySelectorAll(".ui-card")).toHaveLength(rows.length);
+  });
+
+  it("marks a gained tag with the screens' tertiary reading", () => {
+    setup();
+
+    expect(screen.getByText("memory").getAttribute("style")).toContain(
+      "var(--ui-tertiary-container)"
+    );
+    expect(screen.getByText("rust").getAttribute("style")).toBe(null);
+  });
+
+  it("reports the live selection count from the footer", () => {
+    setup();
+
+    expect(screen.getByText("2 of 2 selected")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    expect(screen.getByText("1 of 2 selected")).toBeInTheDocument();
+  });
+});
