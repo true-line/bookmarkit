@@ -12,3 +12,9 @@ src/assets
 # their formatting is owned upstream, not by this repo. See #123.
 tools/agent-guard
 tools/models
+
+# Third-party design reference: the design/ tree is the Stitch export checked
+# in verbatim (see #241). Reformatting it here would desync the mockups from
+# the export they document, so its formatting is owned by the export, not by
+# this repo. (design/README.md is repo-owned but harmless to skip.)
+design/

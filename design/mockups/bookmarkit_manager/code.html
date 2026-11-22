@@ -1,0 +1,531 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookmarkIt — Manager</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'brand-crimson': '#B82925',
+        'ai-suggest': '#6D28D9',
+        'success': '#1E7E34',
+        'danger': '#C92A2A',
+        'light-primary': '#950B10',
+        'light-on-primary': '#FFFFFF',
+        'light-primary-container': '#B82925',
+        'light-on-primary-container': '#FFD2CD',
+        'light-secondary': '#99443D',
+        'light-on-secondary': '#FFFFFF',
+        'light-secondary-container': '#FD9489',
+        'light-on-secondary-container': '#762A25',
+        'light-tertiary': '#5D04CA',
+        'light-on-tertiary': '#FFFFFF',
+        'light-tertiary-container': '#7635E2',
+        'light-on-tertiary-container': '#E5D6FF',
+        'light-error': '#BA1A1A',
+        'light-on-error': '#FFFFFF',
+        'light-error-container': '#FFDAD6',
+        'light-on-error-container': '#93000A',
+        'light-background': '#F8F9FF',
+        'light-on-background': '#151C24',
+        'light-surface': '#F8F9FF',
+        'light-surface-dim': '#D4DAE6',
+        'light-surface-bright': '#FFFFFF',
+        'light-surface-container-lowest': '#FFFFFF',
+        'light-surface-container-low': '#EEF4FF',
+        'light-surface-container': '#E8EEFA',
+        'light-surface-container-high': '#E2E9F4',
+        'light-surface-container-highest': '#DCE3EF',
+        'light-on-surface': '#151C24',
+        'light-surface-variant': '#FFDAD6',
+        'light-on-surface-variant': '#404751',
+        'light-outline': '#585F69',
+        'light-outline-variant': '#C0C7D2',
+        'light-inverse-surface': '#2A313A',
+        'light-inverse-on-surface': '#EAF1FD',
+        'light-inverse-primary': '#FFB4AB',
+        'light-shadow': '#000000',
+        'light-scrim': '#000000',
+        'dark-primary': '#FFB4AB',
+        'dark-on-primary': '#690005',
+        'dark-primary-container': '#B82925',
+        'dark-on-primary-container': '#FFD2CD',
+        'dark-secondary': '#FFB4AB',
+        'dark-on-secondary': '#5D1814',
+        'dark-secondary-container': '#7D302A',
+        'dark-on-secondary-container': '#FF9F94',
+        'dark-tertiary': '#D3BBFF',
+        'dark-on-tertiary': '#3F008D',
+        'dark-tertiary-container': '#7635E2',
+        'dark-on-tertiary-container': '#E5D6FF',
+        'dark-error': '#FFB4AB',
+        'dark-on-error': '#690005',
+        'dark-error-container': '#93000A',
+        'dark-on-error-container': '#FFDAD6',
+        'dark-background': '#0D141C',
+        'dark-on-background': '#DCE3EF',
+        'dark-surface': '#0D141C',
+        'dark-surface-dim': '#0D141C',
+        'dark-surface-bright': '#333A43',
+        'dark-surface-container-lowest': '#080F17',
+        'dark-surface-container-low': '#151C24',
+        'dark-surface-container': '#192028',
+        'dark-surface-container-high': '#242B33',
+        'dark-surface-container-highest': '#2E353E',
+        'dark-on-surface': '#DCE3EF',
+        'dark-surface-variant': '#5A403E',
+        'dark-on-surface-variant': '#AEB4BE',
+        'dark-outline': '#8A919C',
+        'dark-outline-variant': '#404751',
+        'dark-inverse-surface': '#DCE3EF',
+        'dark-inverse-on-surface': '#2A313A',
+        'dark-inverse-primary': '#B42623',
+        'dark-shadow': '#000000',
+        'dark-scrim': '#000000',
+      },
+      borderRadius: {
+        'sm': '4px',
+        'DEFAULT': '8px',
+        'md': '10px',
+        'lg': '12px',
+        'xl': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '40px',
+        'page-margin': '24px',
+      },
+      fontFamily: {
+        'display': ['"Red Hat Text"', 'sans-serif'],
+        'headline': ['"Red Hat Text"', 'sans-serif'],
+        'body': ['"Radio Canada Big"', 'sans-serif'],
+        'label': ['"Radio Canada Big"', 'sans-serif'],
+        'mono': ['"Fira Code"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-lg': ['24px', { lineHeight: '30px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-md': ['20px', { lineHeight: '26px', letterSpacing: '-0.1px', fontWeight: '600' }],
+        'headline-sm': ['16px', { lineHeight: '22px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-lg': ['15px', { lineHeight: '22px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'label-md': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.1px', fontWeight: '500' }],
+        'mono-md': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '400' }],
+        'mono-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+      },
+      transitionDuration: {
+        'state-change': '100ms',
+        'surface-enter': '200ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+        'surface-enter': 'cubic-bezier(0.2, 0, 0, 1)',
+        'surface-exit': 'cubic-bezier(0.3, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&amp;family=Radio+Canada+Big:wght@400;500;600;700&amp;family=Red+Hat+Text:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      line-height: 1 !important;
+      box-sizing: content-box;
+      overflow: hidden;
+      white-space: nowrap;
+      direction: ltr;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-light-surface text-light-on-surface font-body antialiased">
+  <div class="min-h-[1024px] flex flex-col lg:flex-row" data-stitch-vh="min-h-[1024px]===min-h-screen">
+    <!-- Persistent Navigation Sidebar -->
+    <aside class="w-full lg:w-64 shrink-0 bg-light-surface-container-low border-b lg:border-b-0 lg:border-e border-light-outline-variant p-5 flex flex-col gap-6">
+      <!-- Brand Header -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded bg-light-primary-container text-light-on-primary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">bookmark</span>
+          </div>
+          <div class="min-w-0 text-start">
+            <span data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface block truncate">BookmarkIt</span>
+            <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant block">Local-first</span>
+          </div>
+        </div>
+        <button data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" aria-label="Help and keyboard shortcuts" class="inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded bg-light-surface-container text-light-on-surface-variant border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">help</span>
+        </button>
+      </div>
+
+      <!-- Primary Action -->
+      <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="w-full inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
+        <span data-design-text-token="label-lg" class="text-label-lg">Add Bookmark</span>
+      </button>
+
+      <!-- Smart Views -->
+      <nav aria-label="Smart views" class="flex flex-col gap-1 text-start">
+        <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant px-2.5 pb-1">Views</span>
+        <button type="button" aria-current="page" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded bg-light-surface-container-highest text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px] text-light-primary" aria-hidden="true">bookmarks</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">All Bookmarks</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant tabular-nums">2,089</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">calendar_today</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Weekly Digest</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">14</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">visibility_off</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Never Opened</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">183</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">label_off</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Untagged</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">42</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px] text-danger" aria-hidden="true">link_off</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Broken Links</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm text-danger tabular-nums">7</span>
+        </button>
+      </nav>
+
+      <!-- Folders Tree -->
+      <nav aria-label="Folders" class="flex flex-col gap-1 text-start">
+        <div class="flex items-center justify-between px-2.5 pb-1">
+          <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant">Folders</span>
+          <button type="button" aria-label="Manage folders" class="text-label-sm text-light-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">Edit</button>
+        </div>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">AI &amp; Agents</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">412</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Terminal &amp; CLI</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">98</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Design Systems</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">64</span>
+        </button>
+        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="text-label-md truncate">Reading List</span>
+          </span>
+          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">127</span>
+        </button>
+      </nav>
+
+      <!-- Maintenance & Options Footer -->
+      <div class="mt-auto pt-4 border-t border-light-outline-variant flex flex-col gap-1 text-start">
+        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">health_and_safety</span>
+          <span data-design-text-token="label-md" class="text-label-md">Check Links</span>
+        </button>
+        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">filter_none</span>
+          <span data-design-text-token="label-md" class="text-label-md">Remove Duplicates</span>
+        </button>
+        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">swap_vert</span>
+          <span data-design-text-token="label-md" class="text-label-md">Import / Export</span>
+        </button>
+        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">settings</span>
+          <span data-design-text-token="label-md" class="text-label-md">Options</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 min-w-0 flex flex-col">
+      <!-- Unified Command & Filter Header -->
+      <header class="bg-light-surface-container-lowest border-b border-light-outline-variant px-6 py-4 flex flex-col gap-4">
+        <!-- Unified Search Bar -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <label class="relative flex-1 flex items-center" data-component-id="input-field-icon" data-component-type="input-field" data-component-variant="with-icon">
+            <span class="sr-only">Search or filter bookmarks</span>
+            <span class="material-symbols-outlined text-light-outline text-[20px] absolute start-3.5 pointer-events-none" aria-hidden="true">search</span>
+            <input id="bookmark-search" type="search" dir="auto" placeholder="Filter instantly or ask AI (e.g. &#34;docs tagged cli with 4+ stars&#34;)..." class="w-full min-h-10 rounded-md border border-light-outline bg-light-surface-container-lowest ps-10 pe-32 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+            <div class="absolute end-2 flex items-center gap-1.5">
+              <button type="button" id="ai-mode-toggle" aria-pressed="true" class="inline-flex items-center gap-1 min-h-[28px] px-2.5 py-1 rounded-sm bg-light-tertiary-container text-light-on-tertiary hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+                <span class="material-symbols-outlined text-[14px]" aria-hidden="true">auto_awesome</span>
+                <span data-design-text-token="label-sm" class="text-label-sm">AI Ready</span>
+              </button>
+            </div>
+          </label>
+        </div>
+
+        <!-- Secondary Filter & View Controls Row -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <label class="sr-only" for="rating-filter">Filter by rating</label>
+            <select id="rating-filter" class="min-h-[36px] rounded border border-light-outline-variant bg-light-surface-container-lowest ps-3 pe-8 py-1.5 text-label-md text-light-on-surface focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+              <option>Any rating</option>
+              <option>4+ stars</option>
+              <option>5 stars</option>
+              <option>Unrated</option>
+            </select>
+
+            <label class="sr-only" for="sort-order">Sort order</label>
+            <select id="sort-order" class="min-h-[36px] rounded border border-light-outline-variant bg-light-surface-container-lowest ps-3 pe-8 py-1.5 text-label-md text-light-on-surface focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+              <option>Default order</option>
+              <option>Recently added</option>
+              <option>Last opened</option>
+              <option>Title (A–Z)</option>
+            </select>
+
+            <button data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" type="button" class="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded bg-light-surface-container-lowest text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+              <span class="material-symbols-outlined text-[16px] text-light-on-surface-variant" aria-hidden="true">arrow_upward</span>
+              <span data-design-text-token="label-md" class="text-label-md">Asc</span>
+            </button>
+
+            <span role="status" aria-live="polite" data-design-text-token="label-md" class="text-label-md text-light-on-surface-variant tabular-nums ps-1">
+              2,089 bookmarks
+            </span>
+          </div>
+
+          <!-- Segmented View-Mode Control -->
+          <div role="group" aria-label="Layout view mode" class="inline-flex items-center gap-1 p-1 rounded bg-light-surface-container border border-light-outline-variant">
+            <button type="button" data-view="single" class="view-btn min-h-[28px] px-2.5 py-1 rounded-sm text-label-sm text-light-on-surface-variant hover:text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Single</button>
+            <button type="button" data-view="flow" aria-pressed="true" class="view-btn min-h-[28px] px-2.5 py-1 rounded-sm bg-light-primary-container text-light-on-primary text-label-sm shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Flow</button>
+            <button type="button" data-view="grid" class="view-btn min-h-[28px] px-2.5 py-1 rounded-sm text-label-sm text-light-on-surface-variant hover:text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Grid</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Selection Context Bar (Shown when 1+ bookmarks selected) -->
+      <div class="bg-light-surface-container border-b border-light-outline-variant px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px] text-light-primary" aria-hidden="true">check_box</span>
+          <span data-design-text-token="label-md" class="text-label-md text-light-on-surface tabular-nums">1 selected</span>
+          <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant hidden sm:inline">· Press E to edit, Shift+Enter to open, Esc to clear</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" class="min-h-[36px] px-3 py-1.5 rounded bg-light-surface-container-lowest text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Edit</button>
+          <button type="button" class="min-h-[36px] px-3 py-1.5 rounded bg-light-surface-container-lowest text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Move</button>
+          <button type="button" class="min-h-[36px] px-3 py-1.5 rounded bg-danger text-light-on-primary hover:bg-light-error text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger">Delete</button>
+        </div>
+      </div>
+
+      <!-- Bookmark Collection Grid -->
+      <section aria-label="Bookmarks" class="p-6 max-w-7xl w-full mx-auto">
+        <div id="bookmark-grid" class="grid grid-cols-1 md:grid-cols-2 gap-gutter-md items-stretch">
+          <!-- Card 1 -->
+          <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" tabindex="0" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm hover:border-light-outline hover:shadow transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-primary">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">code_blocks</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Context7 — Up-to-date documentation for LLMs</h2>
+                <button type="button" aria-label="Edit Context7 bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant opacity-80 group-hover:opacity-100 hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://context7.com/</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">llm</span>
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">docs</span>
+                <span class="ms-auto inline-flex items-center gap-0.5 text-light-primary" aria-label="Rated 5 out of 5 stars">
+                  <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+                  <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">5</span>
+                </span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2 (Selected State) -->
+          <article data-component-id="card-interactive-2" data-component-type="card" data-component-variant="interactive" tabindex="0" aria-pressed="true" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border-2 border-light-primary rounded p-4 shadow-sm cursor-pointer transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-on-surface-variant">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">terminal</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Frequently Asked Questions — kitty</h2>
+                <button type="button" aria-label="Edit kitty FAQ bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://sw.kovidgoyal.net/kitty/faq/</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">terminal</span>
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">reference</span>
+                <span class="ms-auto inline-flex items-center gap-0.5 text-light-primary" aria-label="Rated 4 out of 5 stars">
+                  <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+                  <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">4</span>
+                </span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3 -->
+          <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" tabindex="0" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm hover:border-light-outline hover:shadow transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-on-surface-variant">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">terminal</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">macOS Login Shells — Ghostty Help</h2>
+                <button type="button" aria-label="Edit Ghostty Help bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant opacity-80 group-hover:opacity-100 hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://ghostty.org/docs/help/macos-login-shells</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">macos</span>
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">shell</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 4 -->
+          <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" tabindex="0" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm hover:border-light-outline hover:shadow transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-tertiary">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">article</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Writing a good CLAUDE.md | HumanLayer Blog</h2>
+                <button type="button" aria-label="Edit HumanLayer Blog bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant opacity-80 group-hover:opacity-100 hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://www.humanlayer.dev/blog/writing-a-good-claude-md</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">agents</span>
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">workflow</span>
+                <span class="ms-auto inline-flex items-center gap-0.5 text-light-primary" aria-label="Rated 5 out of 5 stars">
+                  <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+                  <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">5</span>
+                </span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 5 -->
+          <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" tabindex="0" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm hover:border-light-outline hover:shadow transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-tertiary">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">science</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Chroma Context-1: Self-Editing Search Agent</h2>
+                <button type="button" aria-label="Edit Chroma Context-1 bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant opacity-80 group-hover:opacity-100 hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://www.trychroma.com/research/context-1</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">retrieval</span>
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">research</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 6 -->
+          <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" tabindex="0" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm hover:border-light-outline hover:shadow transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-on-surface-variant">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">accessibility_new</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">ARIA Authoring Practices Guide (APG)</h2>
+                <button type="button" aria-label="Edit ARIA Authoring Practices Guide bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant opacity-80 group-hover:opacity-100 hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://www.w3.org/WAI/ARIA/apg/</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">a11y</span>
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">standards</span>
+                <span class="ms-auto inline-flex items-center gap-0.5 text-light-primary" aria-label="Rated 5 out of 5 stars">
+                  <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+                  <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">5</span>
+                </span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var grid = document.getElementById('bookmark-grid');
+      var viewButtons = document.querySelectorAll('.view-btn');
+      viewButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          viewButtons.forEach(function (b) {
+            b.setAttribute('aria-pressed', 'false');
+            b.classList.remove('bg-light-primary-container', 'text-light-on-primary', 'shadow-sm');
+            b.classList.add('text-light-on-surface-variant');
+          });
+          btn.setAttribute('aria-pressed', 'true');
+          btn.classList.add('bg-light-primary-container', 'text-light-on-primary', 'shadow-sm');
+          btn.classList.remove('text-light-on-surface-variant');
+
+          var mode = btn.getAttribute('data-view');
+          grid.className = 'grid gap-gutter-md items-stretch ' + (
+            mode === 'single'
+              ? 'grid-cols-1'
+              : mode === 'grid'
+                ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                : 'grid-cols-1 md:grid-cols-2'
+          );
+        });
+      });
+    })();
+  </script>
+
+
+</body></html>
