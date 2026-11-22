@@ -192,4 +192,23 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
         <!-- Export Section -->
         <section aria-labelledby="export-heading" class="flex flex-col gap-3 pt-5 border-t border-light-outline-variant">
           <div class="flex items-center justify-between gap-2">
-      
+            <h2 id="export-heading" data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface">Export collection</h2>
+            <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant tabular-nums">2,089 bookmarks</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter-sm">
+            <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="inline-flex items-center justify-center gap-2 min-h-10 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">download</span>
+              <span>Export JSON</span>
+            </button>
+            <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-2 min-h-9 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">code</span>
+              <span>Export HTML</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+  </div>
+
+
+</body></html>
