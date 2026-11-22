@@ -55,7 +55,7 @@ const HelpModal = ({ onClose }) => {
       closeLabel="Close help"
       onClose={onClose}
       size="2xl"
-      footer={<Button onClick={onClose}>Got it</Button>
+      footer={<Button onClick={onClose}>Got it</Button>}
     >
       <div
         style={{
