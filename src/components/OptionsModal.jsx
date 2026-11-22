@@ -396,3 +396,216 @@ const OptionsModal = ({
                   onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
                   hasApiKey={hasApiKey}
                   onClear={clearApiKey}
+                  hint="Neither provider needs a key. Set one only when your server sits behind an authenticating proxy; it is sent as a Bearer token."
+                />
+              )}
+            </div>
+
+            {hosted && (
+              <>
+                <ModelField
+                  id="model"
+                  value={providerOptions.model}
+                  onChange={modelChange}
+                  models={models}
+                  error={modelsError}
+                  loading={isLoadingModels}
+                  onRefresh={() => fetchModels(true)}
+                />
+                {(provider === LLM_PROVIDERS.OPENAI || provider === LLM_PROVIDERS.GROK) && (
+                  <div className="ui-field">
+                    <InputField
+                      label="Base URL (optional)"
+                      id="base-url"
+                      type="text"
+                      dir="ltr"
+                      mono
+                      placeholder={
+                        provider === LLM_PROVIDERS.OPENAI
+                          ? "https://api.openai.com/v1"
+                          : "https://api.x.ai/v1"
+                      }
+                      value={providerOptions.baseUrl || ""}
+                      onChange={(e) => onChangeOptions?.({ baseUrl: e.target.value })}
+                      error={baseUrlError || undefined}
+                    />
+                    {baseUrlStatus(baseUrlError)}
+                  </div>
+                )}
+              </>
+            )}
+            {local && (
+              <>
+                <ModelField
+                  id="ollama-model"
+                  value={providerOptions.model}
+                  onChange={modelChange}
+                  models={models}
+                  error={modelsError}
+                  loading={isLoadingModels}
+                  onRefresh={() => fetchModels(true)}
+                />
+                <div className="ui-field">
+                  <InputField
+                    label="Base URL"
+                    id="ollama-url"
+                    type="text"
+                    dir="ltr"
+                    mono
+                    placeholder={
+                      provider === LLM_PROVIDERS.OLLAMA
+                        ? "http://localhost:11434"
+                        : "http://localhost:1234"
+                    }
+                    value={providerOptions.baseUrl || ""}
+                    onChange={(e) => onChangeOptions?.({ baseUrl: e.target.value })}
+                    error={baseUrlError || undefined}
+                  />
+                  {baseUrlStatus(baseUrlError)}
+                </div>
+              </>
+            )}
+            {/* Temperature */}
+            {(() => {
+              const supportsTemp = modelSupportsTemperature(provider, providerOptions.model);
+              const isEnabled = supportsTemp && !!providerOptions.enableTemperature;
+              const tempValue =
+                typeof providerOptions.temperature === "number" ? providerOptions.temperature : 1;
+              return (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="enable-temperature"
+                      checked={isEnabled}
+                      disabled={!supportsTemp}
+                      onChange={(e) => onChangeOptions?.({ enableTemperature: e.target.checked })}
+                      className="cursor-pointer disabled:cursor-not-allowed"
+                      style={{ accentColor: "var(--ui-primary-container)" }}
+                    />
+                    <label
+                      htmlFor="enable-temperature"
+                      className="ui-type-label-md cursor-pointer"
+                      style={{
+                        color: supportsTemp
+                          ? "var(--ui-on-surface)"
+                          : "var(--ui-on-surface-variant)",
+                      }}
+                    >
+                      Set temperature
+                    </label>
+                    {!supportsTemp && (
+                      <Typography variant="body-sm" as="span" style={hintStyle}>
+                        (not supported by this model)
+                      </Typography>
+                    )}
+                    {isEnabled && (
+                      <span className="ui-numeric ui-type-body-md ms-auto">
+                        {tempValue.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                  <Typography variant="body-sm" style={{ margin: "8px 0 0", ...hintStyle }}>
+                    Higher values make responses more varied. Leave off to use the provider default.
+                  </Typography>
+                  {isEnabled && (
+                    <div className="mt-2 flex items-center gap-3">
+                      <Typography variant="body-sm" as="span" style={hintStyle}>
+                        0
+                      </Typography>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={tempValue}
+                        onChange={(e) =>
+                          onChangeOptions?.({ temperature: parseFloat(e.target.value) })
+                        }
+                        className="flex-1"
+                        style={{ accentColor: "var(--ui-primary-container)" }}
+                        aria-label="Temperature value"
+                      />
+                      <Typography variant="body-sm" as="span" style={hintStyle}>
+                        2
+                      </Typography>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </section>
+          {/* #29: encryption controls — shown for every provider so a locked key
+                can always be unlocked, even on providers that need no key
+                (ollama/lmstudio, whose optional proxy key is protected too). */}
+          <KeyEncryptionSection
+            encryption={encryption}
+            onEnableEncryption={onEnableEncryption}
+            onDisableEncryption={onDisableEncryption}
+            onUnlock={onUnlock}
+          />
+          {/* Theme settings */}
+          <section style={sectionDivided} aria-labelledby="options-appearance-heading">
+            <Typography
+              variant="headline-sm"
+              as="h3"
+              id="options-appearance-heading"
+              style={headingStyle}
+            >
+              Appearance
+            </Typography>
+            <TokenSelect
+              label="Theme"
+              id="theme-select"
+              value={currentTheme}
+              onChange={(e) => onThemeChange?.(e.target.value)}
+              options={Object.keys(themes)}
+              hint="Select a theme to apply."
+            />
+            <div className="ui-field">
+              <div className="flex items-center justify-between gap-2">
+                <span className="ui-type-label-md">Upload custom theme</span>
+                <IconButton label="Show theme example" onClick={() => setShowExample(true)}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 115.82 1c-.44.86-1.26 1.3-1.91 1.63-.51.26-.75.52-.75.87v.5" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                </IconButton>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* The mockup's Choose File row: the visible button carries the
+                    picker action; the native input stays the event source so
+                    re-picking the same file keeps firing change (#25). */}
+                <Button intent="secondary" onClick={() => fileInputRef.current?.click()}>
+                  Choose File
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,.yaml,.yml"
+                  onChange={(e) => {
+                    // #25: Clear the input so re-picking the same file after a
+                    // rejected theme fires another change event.
+                    const [file] = e.target.files;
+                    e.target.value = "";
+                    if (file) onThemeUpload?.(file);
+                  }}
+                  style={{ display: "none" }}
+                />
+              </div>
+              <Typography variant="body-sm" style={hintStyle}>
+                Upload a JSON or YAML theme file.
+              </Typography>
+            </div>
