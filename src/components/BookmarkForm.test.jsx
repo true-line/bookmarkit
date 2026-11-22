@@ -219,3 +219,107 @@ describe("BookmarkForm folder autocomplete (#55)", () => {
     expect(document.querySelectorAll("#known-folders option")).toHaveLength(0);
   });
 });
+
+// #242: the presentation layer moves onto the unified design system; the
+// validation flow, the guarded actions and the labels the other suites pin
+// stay exactly as they were.
+describe("BookmarkForm on the unified design system (#242)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("renders the canonical dialog shell", () => {
+    renderForm();
+
+    expect(document.querySelector(".ui-modal-panel")).not.toBeNull();
+    expect(screen.getByRole("dialog", { name: "Edit Bookmark" })).not.toBeNull();
+    expect(
+      screen.getByText("Update details, organize into folders, or generate AI suggestions.")
+    ).not.toBeNull();
+  });
+
+  it("wears the canonical intents on the footer and the AI actions", () => {
+    renderForm();
+
+    expect(screen.getByRole("button", { name: "Save Bookmark" })).toHaveClass("ui-button--primary");
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveClass("ui-button--secondary");
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("ui-button--destructive");
+    expect(screen.getByRole("button", { name: /Suggest description/i })).toHaveClass(
+      "ui-button--tertiary"
+    );
+  });
+
+  it("pairs the settled valid URL with the success border, check icon and status line", async () => {
+    const fetchUrlStatus = vi.fn().mockResolvedValue({ status: "valid" });
+    renderForm({ fetchUrlStatus });
+
+    await advancePastUrlCheck();
+
+    const input = screen.getByLabelText("URL");
+    expect(input).toHaveClass("ui-input--valid");
+    const status = document.getElementById(input.getAttribute("aria-describedby"));
+    expect(status).toHaveAttribute("role", "status");
+    expect(status).toHaveTextContent("Valid public http(s) URL");
+  });
+
+  it("reports an unreachable URL as an error line and keeps the Ignore affordance", async () => {
+    const fetchUrlStatus = vi.fn().mockResolvedValue({ status: "invalid" });
+    renderForm({ fetchUrlStatus });
+
+    await advancePastUrlCheck();
+
+    const input = screen.getByLabelText("URL");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    const describedBy = () => document.getElementById(input.getAttribute("aria-describedby"));
+    expect(describedBy()).toHaveTextContent("URL not found.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Ignore URL validation error" }));
+    expect(describedBy()).toHaveTextContent("Validation ignored.");
+
+    // Dismissing the ignored state returns the field to live validation.
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    await advancePastUrlCheck();
+    expect(describedBy()).toHaveTextContent("URL not found.");
+  });
+
+  it("saves and closes through the tinted footer's guarded actions", () => {
+    const onSave = vi.fn();
+    const onClose = vi.fn();
+    const onDelete = vi.fn();
+    renderForm({ onSave, onClose, onDelete });
+
+    fireEvent.submit(document.querySelector("#bookmark-form"));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave.mock.calls[0][0].tags).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(onDelete).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks before saving while a suggestion is still generating", () => {
+    // The suggestion never settles; the guard must hold either way.
+    generate.mockImplementationOnce(() => new Promise(() => {}));
+    const onSave = vi.fn();
+    setup({ id: null, title: "Ownership", url: "https://example.com/p/8812" }, { onSave });
+
+    fireEvent.click(screen.getByRole("button", { name: /Suggest description/i }));
+    fireEvent.submit(document.querySelector("#bookmark-form"));
+
+    expect(screen.getByText("An AI suggestion is still loading. Proceed anyway?")).not.toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep waiting" }));
+    expect(screen.queryByText("An AI suggestion is still loading. Proceed anyway?")).toBeNull();
+
+    fireEvent.submit(document.querySelector("#bookmark-form"));
+    fireEvent.click(screen.getByRole("button", { name: "Proceed" }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+});

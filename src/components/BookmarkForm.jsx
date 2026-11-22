@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { contained } from "../llm/containment.js";
 import { createLLM, LLM_PROVIDERS } from "../llm/index.js";
 import { usePageMetadata } from "../hooks/usePageMetadata.js";
-import { Banner, Button, Input, Modal, StarRating, Textarea } from "./DesignSystem.jsx";
+import { Button, InputField, Modal } from "../design-system/index.js";
+// StarRating stays on the legacy library for now: it carries the #24 rating
+// contract (string clamping, radiogroup keyboard nav) and the sticker sheet
+// defines no rating control to migrate onto. Its retirement rides #255.
+import { StarRating } from "./DesignSystem.jsx";
 
 /**
  * #48: What the page said about itself, as prompt lines. Fetched page content is
@@ -19,6 +23,45 @@ const pageLines = (meta) => {
   if (meta.text) parts.push(`Page text: <bookmark_data>${contained(meta.text)}</bookmark_data>`);
   return parts.length > 0 ? `\n${parts.join("\n")}` : "";
 };
+
+// The URL field's canonical states (input-field-mono + input-field-valid on
+// the edit-bookmark mockup): the check pipeline below is untouched, this only
+// maps its outcome onto the InputField contract — validity for the border,
+// and the explicit color-plus-text status line so state is never color alone.
+const urlFieldState = ({ currentUrlValidity, ignoreUrlValidation }) => {
+  if (ignoreUrlValidation) {
+    return { validity: "valid", error: undefined, success: "Validation ignored." };
+  }
+  if (currentUrlValidity === "invalid") {
+    return { validity: "invalid", error: "URL not found.", success: undefined };
+  }
+  if (currentUrlValidity === "valid") {
+    return { validity: "valid", error: undefined, success: "Valid public http(s) URL" };
+  }
+  return { validity: "idle", error: undefined, success: undefined };
+};
+
+// The delete confirmation's leading glyph, per the mockup footer (button-
+// destructive with a 16px trash icon).
+function DeleteIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+      <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+    </svg>
+  );
+}
 
 const BookmarkForm = ({
   bookmark,
@@ -285,136 +328,198 @@ const BookmarkForm = ({
     }
   };
 
+  const urlState = urlFieldState({ currentUrlValidity, ignoreUrlValidation });
+  const urlChecking = currentUrlValidity === "checking" && Boolean(formData.url);
+  const closeGuarded = () => guardedAction("close", onClose);
+  // A field-level failure line with its dismiss control, shared by the two
+  // suggestion errors (role="alert" like the banner it replaces).
+  const suggestionError = (message, onDismiss) => (
+    <div className="mt-1.5 flex items-center justify-between gap-2">
+      <p className="ui-field-error" role="alert">
+        {message}
+      </p>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss"
+        className="shrink-0 text-xs leading-none"
+        style={{ color: "var(--ui-on-surface-variant)" }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+
   return (
     <Modal
       title={bookmark ? "Edit Bookmark" : "Add New Bookmark"}
-      titleId="bookmark-form-title"
-      size="md"
-      onClose={() => guardedAction("close", onClose)}
-      onScrimClick={() => guardedAction("close", onClose)}
+      description={
+        bookmark
+          ? "Update details, organize into folders, or generate AI suggestions."
+          : "Enter the details, organize into folders, or generate AI suggestions."
+      }
+      onClose={closeGuarded}
+      onScrimClick={closeGuarded}
+      footer={
+        pendingAction ? (
+          <div className="flex w-full flex-wrap items-center justify-between gap-3">
+            <p
+              className="ui-type-body-md"
+              role="status"
+              style={{ color: "var(--ui-on-surface-variant)" }}
+            >
+              An AI suggestion is still loading. Proceed anyway?
+            </p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button intent="secondary" onClick={() => setPendingAction(null)}>
+                Keep waiting
+              </Button>
+              <Button
+                intent="primary"
+                onClick={() => {
+                  const fn = pendingAction.fn;
+                  setPendingAction(null);
+                  fn();
+                }}
+              >
+                Proceed
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex w-full flex-wrap items-center gap-3">
+            {bookmark && bookmark.id && (
+              <Button
+                intent="destructive"
+                leadingIcon={<DeleteIcon />}
+                onClick={() => guardedAction("delete", () => onDelete(bookmark.id))}
+              >
+                Delete
+              </Button>
+            )}
+            <div className="ms-auto flex flex-wrap items-center gap-2.5">
+              <Button intent="secondary" onClick={closeGuarded}>
+                Cancel
+              </Button>
+              {/* Outside the scrolled body, joined to the form by id so Enter
+                  in any field and this submit share one guarded path. */}
+              <Button intent="primary" type="submit" form="bookmark-form">
+                Save Bookmark
+              </Button>
+            </div>
+          </div>
+        )
+      }
     >
-      <form onSubmit={handleSubmit}>
+      <form id="bookmark-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
         {/* A11Y-04: Visually-hidden live regions for screen reader announcements */}
         <span ref={descLiveRef} aria-live="polite" className="sr-only" />
         <span ref={tagsLiveRef} aria-live="polite" className="sr-only" />
 
-        <div className="grid grid-cols-1 gap-4 mb-6">
-          <Input
-            label="Title"
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
+        <InputField
+          label="Title"
+          type="text"
+          id="title"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          required
+        />
+
+        <InputField
+          label="URL"
+          type="url"
+          id="url"
+          name="url"
+          value={formData.url}
+          onChange={handleChange}
+          mono
+          dir="ltr"
+          validity={urlState.validity}
+          error={urlState.error}
+          success={urlState.success}
+          trailing={
+            urlChecking ? (
+              <span className="ui-spinner" aria-hidden="true" />
+            ) : currentUrlValidity === "invalid" && !ignoreUrlValidation ? (
+              <button
+                type="button"
+                onClick={() => setIgnoreUrlValidation(true)}
+                className="shrink-0 text-xs font-medium"
+                style={{ color: "var(--ui-success)" }}
+                aria-label="Ignore URL validation error"
+              >
+                Ignore
+              </button>
+            ) : ignoreUrlValidation ? (
+              <button
+                type="button"
+                onClick={() => setIgnoreUrlValidation(false)}
+                aria-label="Dismiss"
+                className="shrink-0 text-xs leading-none"
+                style={{ color: "var(--ui-on-surface-variant)" }}
+              >
+                ✕
+              </button>
+            ) : undefined
+          }
+          required
+        />
+
+        <div className="ui-field">
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="description" className="ui-type-label-md">
+              Description
+            </label>
+            <Button
+              intent="tertiary"
+              onClick={generateDescriptionWithGemini}
+              disabled={isGeneratingDescription || !formData.url || !formData.title}
+              loading={isGeneratingDescription}
+              aria-label="Suggest description using AI"
+            >
+              Suggest
+            </Button>
+          </div>
+          <textarea
+            id="description"
+            name="description"
+            dir="auto"
+            rows={3}
+            value={formData.description}
             onChange={handleChange}
-            required
+            placeholder="Add notes or generate a concise summary..."
+            className="ui-input py-2.5"
           />
-          <div className="space-y-1">
-            <Input
-              label="URL"
-              type="url"
-              id="url"
-              name="url"
-              value={formData.url}
-              onChange={handleChange}
-              validity={
-                currentUrlValidity === "invalid" && !ignoreUrlValidation
-                  ? "invalid"
-                  : currentUrlValidity === "valid" || ignoreUrlValidation
-                    ? "valid"
-                    : currentUrlValidity
-              }
-              aria-invalid={currentUrlValidity === "invalid" && !ignoreUrlValidation}
-              aria-describedby="url-validation-msg"
-              trailing={
-                currentUrlValidity === "checking" && formData.url ? (
-                  <span className="ds-spinner text-accent" />
-                ) : currentUrlValidity === "valid" && !ignoreUrlValidation ? (
-                  <span className="text-green-500">✓</span>
-                ) : currentUrlValidity === "invalid" && !ignoreUrlValidation ? (
-                  <button
-                    type="button"
-                    onClick={() => setIgnoreUrlValidation(true)}
-                    className="text-xs font-medium text-green-600 hover:text-green-700"
-                    aria-label="Ignore URL validation error"
-                  >
-                    Ignore
-                  </button>
-                ) : null
-              }
-              required
-            />
-            <span id="url-validation-msg" role="alert" className="sr-only">
-              {currentUrlValidity === "invalid" && !ignoreUrlValidation ? "URL not found." : ""}
-            </span>
-            {currentUrlValidity === "invalid" && !ignoreUrlValidation && (
-              <Banner tone="warning">Not Found</Banner>
-            )}
-            {ignoreUrlValidation && (
-              <Banner tone="success" onDismiss={() => setIgnoreUrlValidation(false)}>
-                Ignored
-              </Banner>
-            )}
-          </div>
-          <div>
-            <Textarea
-              label="Description"
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={3}
-              action={
-                <Button
-                  type="button"
-                  onClick={generateDescriptionWithGemini}
-                  disabled={isGeneratingDescription || !formData.url || !formData.title}
-                  loading={isGeneratingDescription}
-                  aria-label="Suggest description using AI"
-                >
-                  Suggest
-                </Button>
-              }
-            />
-            {descriptionError && (
-              <Banner tone="error" onDismiss={() => showDescError("")} className="mt-1">
-                {descriptionError}
-              </Banner>
-            )}
-          </div>
-          <div>
-            <Input
-              label="Tags (comma-separated)"
-              type="text"
-              id="tags"
-              name="tags"
-              value={formData.tags}
-              onChange={handleChange}
-              placeholder="e.g., development, web, reference"
-              trailing={
-                <Button
-                  type="button"
-                  intent="ai"
-                  size="sm"
-                  onClick={generateTagsWithGemini}
-                  disabled={isGeneratingTags || !formData.url || !formData.title}
-                  loading={isGeneratingTags}
-                  aria-label="Suggest tags using AI"
-                  style={{ marginRight: "-0.65rem" }}
-                >
-                  Suggest
-                </Button>
-              }
-              style={{ paddingRight: "6.25rem" }}
-            />
-            {tagsError && (
-              <Banner tone="error" onDismiss={() => showTagsError("")} className="mt-1">
-                {tagsError}
-              </Banner>
-            )}
-          </div>
-          {/* #55: completing against the folders that exist, because a typo here
-              silently creates a folder rather than failing. */}
-          <Input
+          {descriptionError && suggestionError(descriptionError, () => showDescError(""))}
+        </div>
+
+        <InputField
+          label="Tags (comma-separated)"
+          type="text"
+          id="tags"
+          name="tags"
+          value={formData.tags}
+          onChange={handleChange}
+          placeholder="e.g., development, web, reference"
+          trailing={
+            <Button
+              intent="tertiary"
+              onClick={generateTagsWithGemini}
+              disabled={isGeneratingTags || !formData.url || !formData.title}
+              loading={isGeneratingTags}
+              aria-label="Suggest tags using AI"
+            >
+              Suggest
+            </Button>
+          }
+        />
+        {tagsError && suggestionError(tagsError, () => showTagsError(""))}
+
+        {/* #55: completing against the folders that exist, because a typo here
+            silently creates a folder rather than failing. */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <InputField
             label="Folder"
             type="text"
             id="folderId"
@@ -430,66 +535,23 @@ const BookmarkForm = ({
               <option key={path} value={path} />
             ))}
           </datalist>
-          <Input
+          <InputField
             label="Favicon URL"
             type="url"
             id="faviconUrl"
             name="faviconUrl"
             value={formData.faviconUrl}
             onChange={handleChange}
+            mono
+            dir="ltr"
             placeholder="e.g., https://example.com/favicon.ico"
           />
-          <div>
-            <p className="text-sm font-medium text-primary-text mb-1">Rating</p>
-            <StarRating value={formData.rating} onChange={handleRatingChange} />
-          </div>
         </div>
-        {pendingAction ? (
-          <Banner tone="warning">
-            <p className="mb-2">An AI suggestion is still loading. Proceed anyway?</p>
-            <div className="flex gap-2 justify-end">
-              <Button
-                type="button"
-                intent="secondary"
-                size="sm"
-                onClick={() => setPendingAction(null)}
-              >
-                Keep waiting
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => {
-                  const fn = pendingAction.fn;
-                  setPendingAction(null);
-                  fn();
-                }}
-              >
-                Proceed
-              </Button>
-            </div>
-          </Banner>
-        ) : (
-          <div className="flex justify-end gap-3">
-            {bookmark && bookmark.id && (
-              <Button
-                type="button"
-                intent="danger"
-                onClick={() => guardedAction("delete", () => onDelete(bookmark.id))}
-              >
-                Delete
-              </Button>
-            )}
-            <Button
-              type="button"
-              intent="secondary"
-              onClick={() => guardedAction("close", onClose)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Save Bookmark</Button>
-          </div>
-        )}
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="ui-type-label-md">Rating</legend>
+          <StarRating value={formData.rating} onChange={handleRatingChange} />
+        </fieldset>
       </form>
     </Modal>
   );
