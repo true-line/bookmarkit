@@ -1,10 +1,22 @@
 import React, { useState } from "react";
-import { Banner, Button, Input } from "./DesignSystem.jsx";
+import { Button, InputField, Typography } from "../design-system/index.js";
 
 // #29: passphrase encryption-at-rest controls. Rendered regardless of the
 // selected provider so a locked key can always be unlocked (a provider that
 // needs no key, like ollama/lmstudio, must not strand the user with no unlock
 // UI — Codex #36).
+//
+// Migrated to the unified design system (#246): the options-settings token
+// styling — a headline-sm section heading over body-sm copy, ui-InputField
+// passphrase fields, the error line as the field-error text (role="alert",
+// like the banner it replaces), and the canonical intents — primary commits
+// the encryption action, secondary discards it. The three states and both
+// flows are unchanged — presentation only.
+
+const headingStyle = { margin: 0, color: "var(--ui-on-surface)" };
+const copyStyle = { margin: 0, color: "var(--ui-on-surface-variant)" };
+const fieldGap = { display: "grid", gap: "var(--ui-space-gutter-sm)" };
+
 const KeyEncryptionSection = ({
   encryption = { encrypted: false, locked: false },
   onEnableEncryption,
@@ -50,15 +62,29 @@ const KeyEncryptionSection = ({
   };
 
   return (
-    <section className="border-t border-border pt-4 space-y-3">
-      <h3 className="text-lg font-semibold text-primary-text">API key encryption</h3>
+    <section
+      aria-labelledby="options-encryption-heading"
+      style={{
+        ...fieldGap,
+        borderTop: "1px solid var(--ui-outline-variant)",
+        paddingTop: "20px",
+      }}
+    >
+      <Typography
+        variant="headline-sm"
+        as="h3"
+        id="options-encryption-heading"
+        style={headingStyle}
+      >
+        API key encryption
+      </Typography>
       {!encryption.encrypted && (
-        <div className="space-y-3">
-          <p className="text-xs text-secondary-text">
+        <div style={fieldGap}>
+          <Typography variant="body-sm" style={copyStyle}>
             Optionally encrypt your stored API key with a passphrase. You'll enter it once per
             session; if you forget it you'll need to re-enter your API key.
-          </p>
-          <Input
+          </Typography>
+          <InputField
             label="Passphrase"
             id="encryption-passphrase"
             type="password"
@@ -66,7 +92,7 @@ const KeyEncryptionSection = ({
             value={passInput}
             onChange={(e) => setPassInput(e.target.value)}
           />
-          <Input
+          <InputField
             label="Confirm passphrase"
             id="encryption-passphrase-confirm"
             type="password"
@@ -77,18 +103,24 @@ const KeyEncryptionSection = ({
               if (e.key === "Enter") submitEnable();
             }}
           />
-          {error && <Banner tone="error">{error}</Banner>}
-          <Button type="button" disabled={busy} loading={busy} onClick={submitEnable}>
-            Encrypt API key
-          </Button>
+          {error && (
+            <p className="ui-field-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div>
+            <Button type="button" disabled={busy} loading={busy} onClick={submitEnable}>
+              Encrypt API key
+            </Button>
+          </div>
         </div>
       )}
       {encryption.encrypted && encryption.locked && (
-        <div className="space-y-3">
-          <p className="text-xs text-secondary-text">
+        <div style={fieldGap}>
+          <Typography variant="body-sm" style={copyStyle}>
             🔒 Your API key is encrypted. Enter your passphrase to unlock it for this session.
-          </p>
-          <Input
+          </Typography>
+          <InputField
             label="Passphrase"
             id="encryption-unlock-passphrase"
             type="password"
@@ -99,25 +131,31 @@ const KeyEncryptionSection = ({
               if (e.key === "Enter") submitUnlock();
             }}
           />
-          {error && <Banner tone="error">{error}</Banner>}
+          {error && (
+            <p className="ui-field-error" role="alert">
+              {error}
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <Button type="button" disabled={busy} loading={busy} onClick={submitUnlock}>
               Unlock
             </Button>
-            <Button type="button" intent="ghost" size="sm" onClick={() => onDisableEncryption?.()}>
+            <Button type="button" intent="secondary" onClick={() => onDisableEncryption?.()}>
               Forgot passphrase? Remove encryption
             </Button>
           </div>
         </div>
       )}
       {encryption.encrypted && !encryption.locked && (
-        <div className="space-y-3">
-          <p className="text-xs text-secondary-text">
+        <div style={fieldGap}>
+          <Typography variant="body-sm" style={copyStyle}>
             🔓 Your API key is encrypted (unlocked for this session).
-          </p>
-          <Button type="button" intent="secondary" onClick={() => onDisableEncryption?.()}>
-            Remove encryption
-          </Button>
+          </Typography>
+          <div>
+            <Button type="button" intent="secondary" onClick={() => onDisableEncryption?.()}>
+              Remove encryption
+            </Button>
+          </div>
         </div>
       )}
     </section>
