@@ -194,4 +194,87 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
       <label class="flex flex-col gap-1.5">
         <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">URL</span>
         <div class="relative flex items-center">
-          <input type="url" dir="ltr" value="https://ghostty.org/docs/help/macos-login-shells" aria-describedby="mobile-url-status" class="w-full min-h-11 rounded border border-success bg-light-surface-container-lowest ps-3.5 pe-10 py-2.5 font-mono text-mono-sm text-light-on-surface focus:border-success focus:outline-none focus:ring-2 focus:ring-success/20 transi
+          <input type="url" dir="ltr" value="https://ghostty.org/docs/help/macos-login-shells" aria-describedby="mobile-url-status" class="w-full min-h-11 rounded border border-success bg-light-surface-container-lowest ps-3.5 pe-10 py-2.5 font-mono text-mono-sm text-light-on-surface focus:border-success focus:outline-none focus:ring-2 focus:ring-success/20 transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="material-symbols-outlined text-success text-[18px] absolute end-3 pointer-events-none" aria-hidden="true">check_circle</span>
+        </div>
+        <span id="mobile-url-status" role="status" data-design-text-token="body-sm" class="text-body-sm text-success">Valid public http(s) URL</span>
+      </label>
+
+      <!-- Description + Unified AI Suggest -->
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between gap-2">
+          <label for="mobile-bm-desc" data-design-text-token="label-md" class="text-label-md text-light-on-surface">Description</label>
+          <button data-component-id="button-tertiary" data-component-type="button" data-component-variant="tertiary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-3 py-1.5 rounded bg-light-tertiary-container text-light-on-tertiary shadow-sm hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+            <span class="material-symbols-outlined text-[15px]" aria-hidden="true">auto_awesome</span>
+            <span data-design-text-token="label-md" class="text-label-md">Suggest</span>
+          </button>
+        </div>
+        <textarea id="mobile-bm-desc" dir="auto" rows="3" placeholder="Add notes or generate a concise summary..." class="w-full rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2.5 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20 transition-colors duration-state-change ease-state-change motion-reduce:transition-none">Official Ghostty documentation explaining how macOS login shells initialize PATH and environment variables.</textarea>
+      </div>
+
+      <!-- Tags + Unified AI Suggest -->
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between gap-2">
+          <label for="mobile-bm-tags" data-design-text-token="label-md" class="text-label-md text-light-on-surface">Tags</label>
+          <button data-component-id="button-tertiary" data-component-type="button" data-component-variant="tertiary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-3 py-1.5 rounded bg-light-tertiary-container text-light-on-tertiary shadow-sm hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+            <span class="material-symbols-outlined text-[15px]" aria-hidden="true">auto_awesome</span>
+            <span data-design-text-token="label-md" class="text-label-md">Suggest</span>
+          </button>
+        </div>
+        <input id="mobile-bm-tags" type="text" dir="auto" value="macos, shell, terminal" placeholder="e.g., development, web, reference" class="w-full min-h-11 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2.5 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
+        <div class="flex flex-wrap gap-1.5 pt-1">
+          <span class="px-2.5 py-1 rounded bg-light-surface-container-low border border-light-outline-variant text-label-sm text-light-on-surface-variant">#macos</span>
+          <span class="px-2.5 py-1 rounded bg-light-surface-container-low border border-light-outline-variant text-label-sm text-light-on-surface-variant">#shell</span>
+          <span class="px-2.5 py-1 rounded bg-light-surface-container-low border border-light-outline-variant text-label-sm text-light-on-surface-variant">#terminal</span>
+        </div>
+      </div>
+
+      <!-- Folder -->
+      <label class="flex flex-col gap-1.5">
+        <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Folder</span>
+        <select class="w-full min-h-11 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2.5 text-body-md text-light-on-surface focus:border-light-primary focus:outline-none focus:ring-2 focus:ring-light-primary/20">
+          <option value="terminal" selected>Terminal &amp; CLI</option>
+          <option value="ai">AI &amp; Agents</option>
+          <option value="design">Design Systems</option>
+          <option value="none">No folder</option>
+        </select>
+      </label>
+
+      <!-- Rating (44px tap targets) -->
+      <fieldset class="flex flex-col gap-2">
+        <legend data-design-text-token="label-md" class="text-label-md text-light-on-surface">Rating</legend>
+        <div class="flex items-center gap-1.5" role="radiogroup" aria-label="Bookmark rating">
+          <button type="button" aria-label="1 star" class="min-w-11 min-h-11 inline-flex items-center justify-center rounded bg-light-surface-container-lowest border border-light-outline-variant text-light-primary">
+            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+          </button>
+          <button type="button" aria-label="2 stars" class="min-w-11 min-h-11 inline-flex items-center justify-center rounded bg-light-surface-container-lowest border border-light-outline-variant text-light-primary">
+            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+          </button>
+          <button type="button" aria-label="3 stars" class="min-w-11 min-h-11 inline-flex items-center justify-center rounded bg-light-surface-container-lowest border border-light-outline-variant text-light-primary">
+            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+          </button>
+          <button type="button" aria-label="4 stars" aria-pressed="true" class="min-w-11 min-h-11 inline-flex items-center justify-center rounded bg-light-surface-container-lowest border border-light-outline-variant text-light-primary">
+            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+          </button>
+          <button type="button" aria-label="5 stars" class="min-w-11 min-h-11 inline-flex items-center justify-center rounded bg-light-surface-container-lowest border border-light-outline-variant text-light-outline">
+            <span class="material-symbols-outlined text-[22px]" aria-hidden="true">star</span>
+          </button>
+          <span class="ms-2 text-label-md text-light-on-surface-variant tabular-nums">4 / 5</span>
+        </div>
+      </fieldset>
+    </form>
+  </main>
+
+  <!-- Sticky Bottom Action Footer -->
+  <footer class="fixed bottom-0 inset-x-0 z-20 bg-light-surface-container-low/95 backdrop-blur-sm border-t border-light-outline-variant px-4 py-3 flex items-center gap-3">
+    <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="flex-1 inline-flex items-center justify-center min-h-11 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+      <span data-design-text-token="label-lg" class="text-label-lg">Cancel</span>
+    </button>
+    <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="flex-1 inline-flex items-center justify-center min-h-11 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+      <span data-design-text-token="label-lg" class="text-label-lg">Save Changes</span>
+    </button>
+  </footer>
+
+
+
+</body></html>
