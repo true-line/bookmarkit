@@ -189,4 +189,99 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
           <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">URL</span>
           <div class="relative flex items-center">
             <input type="url" dir="ltr" value="https://ghostty.org/docs/help/macos-login-shells" aria-describedby="url-validation-status" class="w-full min-h-10 rounded border border-success bg-light-surface-container-lowest ps-3.5 pe-10 py-2 font-mono text-mono-sm text-light-on-surface focus:border-success focus:ring-1 focus:ring-success transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
-            <span class="material-symbols-outlined 
+            <span class="material-symbols-outlined text-success text-[18px] absolute end-3 pointer-events-none" aria-hidden="true">check_circle</span>
+          </div>
+          <span id="url-validation-status" role="status" data-design-text-token="body-sm" class="text-body-sm text-success">Valid public http(s) URL</span>
+        </label>
+
+        <!-- Description + Unified AI Suggest -->
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <label for="bookmark-description" data-design-text-token="label-md" class="text-label-md text-light-on-surface">Description</label>
+            <button data-component-id="button-tertiary" data-component-type="button" data-component-variant="tertiary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-3.5 py-1.5 rounded bg-light-tertiary-container text-light-on-tertiary shadow-sm hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+              <span class="material-symbols-outlined text-[15px]" aria-hidden="true">auto_awesome</span>
+              <span data-design-text-token="label-md" class="text-label-md">Suggest</span>
+            </button>
+          </div>
+          <textarea id="bookmark-description" dir="auto" rows="3" placeholder="Add notes or generate a concise summary..." class="w-full rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2.5 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">Official Ghostty documentation explaining how macOS login shells initialize PATH and environment variables.</textarea>
+        </div>
+
+        <!-- Tags + Unified AI Suggest -->
+        <div class="flex flex-col gap-1.5">
+          <label for="bookmark-tags" data-design-text-token="label-md" class="text-label-md text-light-on-surface">Tags (comma-separated)</label>
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+            <input id="bookmark-tags" type="text" dir="auto" value="macos, shell, terminal" placeholder="e.g., development, web, reference" class="flex-1 min-w-0 min-h-10 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+            <button data-component-id="button-tertiary" data-component-type="button" data-component-variant="tertiary" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-3.5 py-1.5 rounded bg-light-tertiary-container text-light-on-tertiary shadow-sm hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+              <span class="material-symbols-outlined text-[15px]" aria-hidden="true">auto_awesome</span>
+              <span data-design-text-token="label-md" class="text-label-md">Suggest</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Folder & Favicon URL Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter-md">
+          <label class="flex flex-col gap-1.5">
+            <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Folder</span>
+            <input type="text" dir="auto" value="Engineering/Terminal &amp; CLI" placeholder="e.g., Work/Project A" aria-describedby="folder-hint" class="w-full min-h-10 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+            <span id="folder-hint" data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant">Use / for nested subfolders</span>
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span data-design-text-token="label-md" class="text-label-md text-light-on-surface">Favicon URL</span>
+            <input type="url" dir="ltr" placeholder="https://example.com/favicon.ico" class="w-full min-h-10 rounded border border-light-outline bg-light-surface-container-lowest px-3.5 py-2 font-mono text-mono-sm text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+          </label>
+        </div>
+
+        <!-- Accessible 5-Star Rating -->
+        <fieldset class="flex flex-col gap-2">
+          <legend data-design-text-token="label-md" class="text-label-md text-light-on-surface">Rating</legend>
+          <div class="flex items-center gap-1" role="radiogroup" aria-label="Bookmark rating">
+            <button type="button" data-star="1" aria-label="1 star" aria-checked="false" role="radio" class="star-btn min-w-9 min-h-9 rounded inline-flex items-center justify-center text-light-primary hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+              <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+            </button>
+            <button type="button" data-star="2" aria-label="2 stars" aria-checked="false" role="radio" class="star-btn min-w-9 min-h-9 rounded inline-flex items-center justify-center text-light-primary hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+              <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+            </button>
+            <button type="button" data-star="3" aria-label="3 stars" aria-checked="false" role="radio" class="star-btn min-w-9 min-h-9 rounded inline-flex items-center justify-center text-light-primary hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+              <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+            </button>
+            <button type="button" data-star="4" aria-label="4 stars" aria-checked="true" role="radio" class="star-btn min-w-9 min-h-9 rounded inline-flex items-center justify-center text-light-primary hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+              <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+            </button>
+            <button type="button" data-star="5" aria-label="5 stars" aria-checked="false" role="radio" class="star-btn min-w-9 min-h-9 rounded inline-flex items-center justify-center text-light-outline hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+              <span class="material-symbols-outlined text-[22px]" aria-hidden="true">star</span>
+            </button>
+            <span id="rating-label" data-design-text-token="body-sm" class="ms-2 text-body-sm text-light-on-surface-variant tabular-nums">4 / 5</span>
+          </div>
+        </fieldset>
+      </form>
+
+      <!-- Footer Actions -->
+      <footer class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-light-surface-container-low border-t border-light-outline-variant rounded-b-lg">
+        <button data-component-id="button-destructive" data-component-type="button" data-component-variant="destructive" type="button" class="inline-flex items-center justify-center gap-1.5 min-h-9 px-4 py-2 rounded bg-danger text-light-on-primary shadow-sm hover:bg-light-error focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">delete</span>
+          <span data-design-text-token="label-lg" class="text-label-lg">Delete</span>
+        </button>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center min-h-9 px-4 py-2 rounded bg-light-surface-container text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+            <span data-design-text-token="label-lg" class="text-label-lg">Cancel</span>
+          </button>
+          <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="inline-flex items-center justify-center min-h-9 px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+            <span data-design-text-token="label-lg" class="text-label-lg">Save Bookmark</span>
+          </button>
+        </div>
+      </footer>
+    </dialog>
+  </div>
+
+  <script>
+    (function () {
+      var stars = document.querySelectorAll('.star-btn');
+      var label = document.getElementById('rating-label');
+      stars.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var val = Number(btn.getAttribute('data-star'));
+          stars.forEach(function (s) {
+            var sVal = Number(s.getAttribute('data-star'));
+         
