@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Button, Modal } from "./DesignSystem.jsx";
 import HelpModal from "./HelpModal.jsx";
 import MessageModal from "./MessageModal.jsx";
@@ -134,12 +134,19 @@ describe("Modal keyboard and focus behaviour (#27, #23)", () => {
 // three that used to hand-roll it and the ones that had no way out at all.
 describe("every dialog closes on Escape (#23)", () => {
   it("help", () => {
+    vi.useFakeTimers();
     const onClose = vi.fn();
     render(<HelpModal onClose={onClose} />);
 
     fireEvent.keyDown(document.activeElement, { key: "Escape" });
+    // The migrated help modal (#244) closes through the design-system Modal's
+    // 150ms exit animation instead of inline.
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
 
     expect(onClose).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 
   it("message", () => {

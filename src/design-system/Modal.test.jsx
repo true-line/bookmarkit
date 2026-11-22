@@ -140,4 +140,15 @@ describe("Modal (unified design system)", () => {
     expect(screen.getByRole("dialog")).toHaveClass("ui-drawer-panel");
     expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
   });
+
+  it("carries a non-default size as a panel modifier class", () => {
+    render(
+      <Modal size="2xl" title="Help & Keyboard Shortcuts" onClose={() => {}}>
+        <div>Shortcuts</div>
+      </Modal>
+    );
+    const panel = screen.getByRole("dialog");
+    expect(panel).toHaveClass("ui-modal-panel");
+    expect(panel).toHaveClass("ui-modal-panel--2xl");
+  });
 });
