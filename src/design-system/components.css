@@ -587,6 +587,15 @@
   color: var(--ui-on-surface);
 }
 
+/* The help-shortcuts mockup is desktop-only, but the modal renders at any
+   width, and phone-width columns cannot hold a label beside an unbreakable
+   keycap like Cmd/Ctrl+Backspace — so narrow viewports stack the rows. */
+@media (max-width: 480px) {
+  .ui-shortcut-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Sticker sheet: modal-drawer — an inline-start sheet. Inset, radius corners
    and the slide are all logical: the border-radius sets the start edge square
    and the end edge rounded, and the slide direction flips via the custom
