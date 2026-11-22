@@ -1,6 +1,6 @@
 import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import DigestModal from "./DigestModal.jsx";
 
 // #248: the digest modal runs on the unified design system — the
@@ -21,6 +21,11 @@ const DIGEST = {
   untagged: [bookmark("4", "Untagged link")],
   themes: [{ title: "Agents", summary: "Model tooling.", ids: ["1"] }],
 };
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe("DigestModal on the unified design system", () => {
   const renderDigest = (digest = DIGEST, overrides = {}) => {
@@ -98,6 +103,20 @@ describe("DigestModal on the unified design system", () => {
   it("closes from the primary Done action", () => {
     const props = renderDigest();
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  // The digest has no guard condition, so dismissal must NOT pass the
+  // onScrimClick route: Escape, the close icon, and the scrim all ride the
+  // unified modal's deferred 150ms exit and call onClose once after it.
+  it("closes on Escape after the 150ms exit animation", () => {
+    vi.useFakeTimers();
+    const props = renderDigest();
+    fireEvent.keyDown(document.activeElement, { key: "Escape" });
+    expect(props.onClose).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 
