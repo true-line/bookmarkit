@@ -71,8 +71,12 @@
   --ui-ease-exit: cubic-bezier(0.3, 0, 1, 1);
 
   /* Accents shared by both schemes. `ai-suggest` is the violet that marks
-     every model-powered action; `brand-crimson` is the ribbon-mark red. */
+     every model-powered action; `brand-crimson` is the ribbon-mark red, and
+     its hover is the token the app's accent-hover bridges onto (#240) — the
+     values here are what the canonical palette ships before any user accent
+     overrides them at the root. */
   --ui-brand-crimson: #b82925;
+  --ui-brand-crimson-hover: #a92329;
   --ui-ai-suggest: #6d28d9;
   --ui-success: #1e7e34;
   --ui-danger: #c92a2a;
