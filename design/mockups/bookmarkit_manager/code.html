@@ -296,4 +296,105 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
             <span class="material-symbols-outlined text-light-outline text-[20px] absolute start-3.5 pointer-events-none" aria-hidden="true">search</span>
             <input id="bookmark-search" type="search" dir="auto" placeholder="Filter instantly or ask AI (e.g. &#34;docs tagged cli with 4+ stars&#34;)..." class="w-full min-h-10 rounded-md border border-light-outline bg-light-surface-container-lowest ps-10 pe-32 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
             <div class="absolute end-2 flex items-center gap-1.5">
-              <button type="button" id="ai-mode-toggle" aria-pressed="true" class="inline-flex items-center gap-1 min-h-[28px] px-2.5 py-1 rounded-sm bg-light-tertiary-container text-light-on-tertiary hover:bg-light-tertiary focus-visible:
+              <button type="button" id="ai-mode-toggle" aria-pressed="true" class="inline-flex items-center gap-1 min-h-[28px] px-2.5 py-1 rounded-sm bg-light-tertiary-container text-light-on-tertiary hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+                <span class="material-symbols-outlined text-[14px]" aria-hidden="true">auto_awesome</span>
+                <span data-design-text-token="label-sm" class="text-label-sm">AI Ready</span>
+              </button>
+            </div>
+          </label>
+        </div>
+
+        <!-- Secondary Filter & View Controls Row -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <label class="sr-only" for="rating-filter">Filter by rating</label>
+            <select id="rating-filter" class="min-h-[36px] rounded border border-light-outline-variant bg-light-surface-container-lowest ps-3 pe-8 py-1.5 text-label-md text-light-on-surface focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+              <option>Any rating</option>
+              <option>4+ stars</option>
+              <option>5 stars</option>
+              <option>Unrated</option>
+            </select>
+
+            <label class="sr-only" for="sort-order">Sort order</label>
+            <select id="sort-order" class="min-h-[36px] rounded border border-light-outline-variant bg-light-surface-container-lowest ps-3 pe-8 py-1.5 text-label-md text-light-on-surface focus:border-light-primary focus:ring-1 focus:ring-light-primary">
+              <option>Default order</option>
+              <option>Recently added</option>
+              <option>Last opened</option>
+              <option>Title (A–Z)</option>
+            </select>
+
+            <button data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" type="button" class="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded bg-light-surface-container-lowest text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+              <span class="material-symbols-outlined text-[16px] text-light-on-surface-variant" aria-hidden="true">arrow_upward</span>
+              <span data-design-text-token="label-md" class="text-label-md">Asc</span>
+            </button>
+
+            <span role="status" aria-live="polite" data-design-text-token="label-md" class="text-label-md text-light-on-surface-variant tabular-nums ps-1">
+              2,089 bookmarks
+            </span>
+          </div>
+
+          <!-- Segmented View-Mode Control -->
+          <div role="group" aria-label="Layout view mode" class="inline-flex items-center gap-1 p-1 rounded bg-light-surface-container border border-light-outline-variant">
+            <button type="button" data-view="single" class="view-btn min-h-[28px] px-2.5 py-1 rounded-sm text-label-sm text-light-on-surface-variant hover:text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Single</button>
+            <button type="button" data-view="flow" aria-pressed="true" class="view-btn min-h-[28px] px-2.5 py-1 rounded-sm bg-light-primary-container text-light-on-primary text-label-sm shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Flow</button>
+            <button type="button" data-view="grid" class="view-btn min-h-[28px] px-2.5 py-1 rounded-sm text-label-sm text-light-on-surface-variant hover:text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Grid</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Selection Context Bar (Shown when 1+ bookmarks selected) -->
+      <div class="bg-light-surface-container border-b border-light-outline-variant px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px] text-light-primary" aria-hidden="true">check_box</span>
+          <span data-design-text-token="label-md" class="text-label-md text-light-on-surface tabular-nums">1 selected</span>
+          <span data-design-text-token="body-sm" class="text-body-sm text-light-on-surface-variant hidden sm:inline">· Press E to edit, Shift+Enter to open, Esc to clear</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" class="min-h-[36px] px-3 py-1.5 rounded bg-light-surface-container-lowest text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Edit</button>
+          <button type="button" class="min-h-[36px] px-3 py-1.5 rounded bg-light-surface-container-lowest text-light-on-surface border border-light-outline-variant hover:bg-light-surface-container-high text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">Move</button>
+          <button type="button" class="min-h-[36px] px-3 py-1.5 rounded bg-danger text-light-on-primary hover:bg-light-error text-label-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger">Delete</button>
+        </div>
+      </div>
+
+      <!-- Bookmark Collection Grid -->
+      <section aria-label="Bookmarks" class="p-6 max-w-7xl w-full mx-auto">
+        <div id="bookmark-grid" class="grid grid-cols-1 md:grid-cols-2 gap-gutter-md items-stretch">
+          <!-- Card 1 -->
+          <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" tabindex="0" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm hover:border-light-outline hover:shadow transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-primary">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">code_blocks</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Context7 — Up-to-date documentation for LLMs</h2>
+                <button type="button" aria-label="Edit Context7 bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant opacity-80 group-hover:opacity-100 hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://context7.com/</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">llm</span>
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">docs</span>
+                <span class="ms-auto inline-flex items-center gap-0.5 text-light-primary" aria-label="Rated 5 out of 5 stars">
+                  <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">star</span>
+                  <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">5</span>
+                </span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2 (Selected State) -->
+          <article data-component-id="card-interactive-2" data-component-type="card" data-component-variant="interactive" tabindex="0" aria-pressed="true" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border-2 border-light-primary rounded p-4 shadow-sm cursor-pointer transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
+            <div class="w-9 h-9 rounded-full bg-light-surface-container flex items-center justify-center shrink-0 text-light-on-surface-variant">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">terminal</span>
+            </div>
+            <div class="min-w-0 flex-1 text-start flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 dir="auto" data-design-text-token="label-lg" class="text-label-lg text-light-on-surface">Frequently Asked Questions — kitty</h2>
+                <button type="button" aria-label="Edit kitty FAQ bookmark" class="shrink-0 min-w-[36px] min-h-[36px] -mt-1 -me-1 inline-flex items-center justify-center rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+                </button>
+              </div>
+              <p dir="ltr" data-design-text-token="mono-sm" class="font-mono text-mono-sm text-light-on-surface-variant truncate">https://sw.kovidgoyal.net/kitty/faq/</p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span data-design-text-token="label-sm" class="px-2 py-0.5 rounded-sm bg-light-surface-container text-light-on-surface-variant text-label-sm">terminal<
