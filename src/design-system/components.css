@@ -367,6 +367,19 @@
   align-items: center;
 }
 
+/* The screens' AI-proposed reading: the tertiary-container fill with the
+   on-tertiary text tone. Light's tone-20 on-tertiary sits illegibly on the
+   same fill in dark, so dark takes the paired on-container role — the same
+   dark-scoped swap the filled buttons make. */
+.ui-tag--accent {
+  background: var(--ui-tertiary-container);
+  color: var(--ui-on-tertiary);
+}
+
+[data-ui-theme="dark"] .ui-tag--accent {
+  color: var(--ui-on-tertiary-container);
+}
+
 .ui-card-actions {
   display: flex;
   justify-content: flex-end;
