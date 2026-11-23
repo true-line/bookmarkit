@@ -586,7 +586,7 @@ body {
   font: var(--ui-type-body-sm);
 }
 
-/* ─── Empty shelf (#254) ──────────────────────────────────────────────
+/* ─── Empty shelf (#254) ──────────────────────────────────────────────────
    The manager mockup's empty-shelf centerpiece: a centered column — the
    card-stack mark, the copy block, the actions — on headline/body type with
    the canonical button intents. The compact reading serves the filtered
@@ -633,7 +633,7 @@ body {
   padding-block-start: var(--ui-space-gutter-xs);
 }
 
-/* ─── Link sweep bar (#253) ───────────────────────────────────────────
+/* ─── Link sweep bar (#253) ───────────────────────────────────────────────
    The link check's status strip wears the manager band recipe the selection
    bar wears (surface-container under an outline-variant hairline), the
    sentence on body type, and the counts as ui-tag chips so the numbers read
@@ -676,7 +676,7 @@ body {
   transition: width var(--ui-duration-state) var(--ui-ease-state);
 }
 
-/* ─── Narrow viewports ─────────────────────────────────────────────────────
+/* ─── Narrow viewports ────────────────────────────────────────────────────
    The action row is one nowrap, horizontally scrollable strip: once the view
    selector joined, the buttons outgrew the reading measure, so the header
    runs full width and the strip scrolls only when it still does not fit
