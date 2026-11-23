@@ -31,7 +31,7 @@ export default function EmptyStack({ enabled = true, width = 260, height = 150 }
   if (!enabled) return <EmptyStackGlyph />;
 
   return (
-    <div className="ds-empty-stack" style={{ width, height }} aria-hidden="true">
+    <div className="ui-empty-stack" style={{ width, height }} aria-hidden="true">
       <SceneFallback fallback={<EmptyStackGlyph />}>
         <Suspense fallback={<EmptyStackGlyph />}>
           <EmptyStackScene width={width} height={height} />

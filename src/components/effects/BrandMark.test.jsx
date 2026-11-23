@@ -3,8 +3,8 @@ import { render, waitFor } from "@testing-library/react";
 import React from "react";
 import BrandMark from "./BrandMark.jsx";
 
-const glyph = () => document.querySelector(".ds-brand-glyph");
-const canvas = () => document.querySelector(".ds-effects-canvas");
+const glyph = () => document.querySelector(".ui-brand-glyph");
+const canvas = () => document.querySelector(".ui-effects-canvas");
 
 // The lazy scene module with its three.js dependency mocked out: the tests
 // here exercise the wrapper's fallbacks, not the rendering.
@@ -25,7 +25,7 @@ describe("BrandMark", () => {
 
     await waitFor(() => expect(glyph()).toBeTruthy());
     expect(canvas()).toBeNull();
-    expect(container.querySelector(".ds-brand-mark")).toBeNull();
+    expect(container.querySelector(".ui-brand-mark")).toBeNull();
     // decorative: never announced, never a pointer target
     expect(glyph().getAttribute("aria-hidden")).toBe("true");
   });
@@ -47,7 +47,7 @@ describe("BrandMark", () => {
     const { container } = render(<BrandMark enabled />);
 
     await waitFor(() => expect(canvas()).not.toBeNull());
-    expect(container.querySelector(".ds-brand-mark").getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector(".ui-brand-mark").getAttribute("aria-hidden")).toBe("true");
     expect(glyph()).toBeNull();
   });
 

@@ -4,9 +4,8 @@ import { UiScope } from "./story-decorator.jsx";
 
 // Modal stories mirroring the spec's sticker-sheet variants: modal-standard,
 // modal-alert, modal-drawer. The *Host stories render a trigger and open
-// interactively; the *Open stories render the dialog directly (the repo's
-// DesignSystem Dialog story convention) so the variants are visible for
-// review and screenshots without a click.
+// interactively; the *Open stories render the dialog directly so the
+// variants are visible for review and screenshots without a click.
 
 const meta = {
   decorators: [UiScope],

@@ -66,11 +66,14 @@ import ChangeReviewModal from "./ChangeReviewModal.jsx";
 import SidebarNav from "./SidebarNav.jsx";
 import SmartViewBar from "./SmartViewBar.jsx";
 import BrandMark from "./effects/BrandMark.jsx";
-import { AgentPlan, Kbd, Toast } from "./DesignSystem.jsx";
+import AgentPlan from "./AgentPlan.jsx";
+import Kbd from "./Kbd.jsx";
+import Toast from "./Toast.jsx";
 // #250: the header/toolbar chrome speaks the unified design system — buttons,
 // icon buttons and the search input-field-icon (leading search icon, trailing
-// provider-ready badge). AgentPlan/Kbd/Toast stay legacy until their surface
-// migrates. Row/state compositions live in index.css.
+// provider-ready badge). AgentPlan/Kbd/Toast are standalone app components,
+// re-homed verbatim when the legacy library retired (#255). Row/state
+// compositions live in index.css.
 import { Button, IconButton, InputField } from "../design-system/index.js";
 import {
   AddIcon,

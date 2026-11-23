@@ -15,7 +15,7 @@ import { useBookmarkStore } from "../hooks/useBookmarkStore.js";
 import { useTheme } from "../hooks/useTheme.js";
 import { isSafeHttpUrl } from "../utils/url.js";
 import { Button, InputField, Tag } from "../design-system/index.js";
-import { StarRating } from "../components/DesignSystem.jsx";
+import { StarRating } from "../components/StarRating.jsx";
 
 function QuickAddFields({ form, setForm, folderOptions }) {
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));

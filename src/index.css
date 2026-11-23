@@ -1021,223 +1021,13 @@ textarea {
   box-shadow: 0 0 0 2px var(--accent);
 }
 
-:where(button, a, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.ds-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  color: #fff;
-  background: var(--intent-primary);
-  border: var(--border-width) solid transparent;
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  line-height: var(--leading-normal);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background-color var(--duration-normal) var(--ease-standard),
-    color var(--duration-normal) var(--ease-standard),
-    border-color var(--duration-normal) var(--ease-standard);
-}
-
-.ds-button--sm {
-  padding: 0.25rem 0.75rem;
-}
-.ds-button--md {
-  padding: 0.5rem 1rem;
-}
-.ds-button--lg {
-  padding: 0.5rem 1.5rem;
-  font-size: var(--text-base);
-}
-.ds-button--primary:hover:not(:disabled) {
-  background: var(--intent-primary-hover);
-}
-.ds-button--secondary {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border-color: var(--border);
-}
-.ds-button--secondary:hover:not(:disabled) {
-  background: var(--border);
-}
-.ds-button--danger {
-  background: var(--intent-danger);
-}
-.ds-button--danger:hover:not(:disabled) {
-  background: var(--intent-danger-hover);
-}
-.ds-button--ai {
-  background: var(--intent-ai);
-}
-.ds-button--ai:hover:not(:disabled) {
-  background: var(--intent-ai-hover);
-}
-.ds-button--ghost {
-  color: var(--text-secondary);
-  background: transparent;
-}
-/* Ghost's muted text on transparent is the same palette as plain secondary
-   text, so at rest it reads as a label, not a control — the hover fill never
-   helps touch users. The underline is the resting "this is clickable" cue;
-   disabled keeps it off so a disabled ghost doesn't pose as an active link. */
-.ds-button--ghost:not(:disabled) {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-.ds-button--ghost:hover:not(:disabled) {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-}
-.ds-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.ds-icon-button {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  color: var(--text-secondary);
-  background: transparent;
-  border: var(--border-width) solid transparent;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-normal) var(--ease-standard),
-    color var(--duration-normal) var(--ease-standard);
-}
-.ds-icon-button--sm {
-  width: 2rem;
-  height: 2rem;
-}
-.ds-icon-button--md {
-  width: 2.5rem;
-  height: 2.5rem;
-}
-.ds-icon-button--lg {
-  width: 3rem;
-  height: 3rem;
-}
-.ds-icon-button:hover:not(:disabled) {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-}
-.ds-icon-button--bordered {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border-color: var(--border);
-  border-radius: var(--radius-md);
-}
-.ds-icon-button--bordered:hover:not(:disabled) {
-  background: var(--border);
-}
-.ds-icon-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.ds-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-.ds-field > label {
-  color: var(--text-primary);
-  font: var(--type-label);
-}
-.ds-control-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.ds-input,
-.ds-select,
-.ds-textarea {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-}
-.ds-input--trailing {
-  padding-right: 3.25rem;
-}
-.ds-input--valid {
-  border-color: var(--green-500);
-}
-.ds-input--invalid {
-  border-color: var(--yellow-400);
-}
-.ds-input-trailing {
-  position: absolute;
-  right: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-}
-.ds-field-hint {
-  margin: 0;
-  color: var(--text-secondary);
-  font: var(--type-meta);
-}
-.ds-field-error {
-  width: fit-content;
-  padding: 0.125rem 0.5rem;
-  color: var(--status-warning-text);
-  background: var(--status-warning-bg);
-  border: 1px solid var(--status-warning-border);
-  border-radius: var(--radius-md);
-  font: var(--type-body-sm);
-}
-.ds-textarea-row {
-  display: flex;
-  gap: var(--space-2);
-}
-.ds-textarea {
-  line-height: var(--leading-normal);
-  resize: vertical;
-}
-.ds-textarea--mono {
-  background: var(--bg-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-}
-.ds-select {
-  appearance: none;
-  padding-right: 2rem;
-  cursor: pointer;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
-    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
-  background-position:
-    calc(100% - 15px) 50%,
-    calc(100% - 10px) 50%;
-  background-size:
-    5px 5px,
-    5px 5px;
-  background-repeat: no-repeat;
-}
-.ds-select:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.ds-star-rating {
+.ui-star-rating {
   display: inline-flex;
   gap: 0.125rem;
   color: var(--text-secondary);
 }
-.ds-star-rating > span,
-.ds-star-rating > button {
+.ui-star-rating > span,
+.ui-star-rating > button {
   display: inline-flex;
   padding: 0;
   color: inherit;
@@ -1246,88 +1036,14 @@ textarea {
   border-radius: var(--radius-sm);
   line-height: 0;
 }
-.ds-star-rating > button {
+.ui-star-rating > button {
   cursor: pointer;
 }
-.ds-star-rating .is-filled {
+.ui-star-rating .is-filled {
   color: var(--rating-star);
 }
 
-.ds-search-bar {
-  position: relative;
-  width: 100%;
-}
-.ds-search-bar input {
-  width: 100%;
-  padding: 0.5rem 2.75rem 0.5rem 1rem;
-  border-radius: var(--radius-lg);
-  font-size: var(--text-base);
-}
-.ds-search-bar--lg input {
-  padding: 0.875rem 3.25rem 0.875rem 1.25rem;
-  font-size: var(--text-lg);
-  box-shadow: var(--shadow-sm);
-}
-/* Disabled must read as disabled: the themed input's custom colors would
-   otherwise keep it looking editable in every browser that skips native
-   disabled styling, and bare opacity vanishes on a white-on-white input —
-   so the disabled state darkens the muted palette outright (bg-secondary
-   alone is nearly indistinguishable from the editable surface). Mixing
-   toward black keeps the darkening proportional in custom themes too. */
-.ds-search-bar--disabled input {
-  background: var(--input-disabled-bg);
-  border-color: var(--input-disabled-border);
-  color: var(--text-secondary);
-  cursor: not-allowed;
-}
-.ds-search-spinner {
-  position: absolute;
-  top: 50%;
-  right: 0.75rem;
-  translate: 0 -50%;
-}
-.ds-spinner {
-  display: inline-block;
-  flex: 0 0 auto;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid currentColor;
-  border-bottom-color: transparent;
-  border-radius: var(--radius-full);
-  animation: bmk-spin 0.7s linear infinite;
-}
-
-.ds-tag {
-  display: inline-block;
-  padding: 0.125rem 0.5rem;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-full);
-  font: var(--type-meta);
-  white-space: nowrap;
-}
-.ds-tag--accent {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
-}
-.ds-status-dot {
-  display: inline-block;
-  background: var(--status-unreachable);
-  border-radius: var(--radius-full);
-}
-.ds-status-dot--success {
-  background: var(--green-500);
-}
-.ds-status-dot--error {
-  background: var(--red-500);
-}
-.ds-status-dot--neutral {
-  background: var(--text-secondary);
-}
-.ds-status-dot--accent {
-  background: var(--accent);
-}
-.ds-kbd {
+.ui-kbd {
   display: inline-block;
   padding: 0.0625rem 0.375rem;
   color: var(--text-secondary);
@@ -1337,157 +1053,7 @@ textarea {
   font: var(--type-meta);
 }
 
-.ds-bookmark-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  min-height: 96px;
-  padding: var(--space-4);
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  cursor: pointer;
-  transition:
-    border-color var(--duration-normal) var(--ease-standard),
-    box-shadow var(--duration-normal) var(--ease-standard),
-    transform var(--duration-normal) var(--ease-standard);
-}
-.ds-bookmark-card:hover {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-2px);
-}
-.ds-bookmark-card.is-selected {
-  color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-card-hover);
-}
-.ds-bookmark-card.is-pending-delete {
-  color: var(--text-primary);
-  background: var(--red-50);
-  border-color: var(--red-300);
-}
-.ds-favicon-tile {
-  width: var(--favicon-size);
-  height: var(--favicon-size);
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-}
-.is-selected .ds-favicon-tile {
-  background: rgba(255, 255, 255, 0.2);
-}
-.ds-favicon-tile img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.ds-bookmark-body {
-  flex: 1;
-  min-width: 0;
-}
-.ds-bookmark-body h3 {
-  margin: 0;
-  overflow: hidden;
-  color: inherit;
-  font: var(--type-card-title);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ds-bookmark-body p {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ds-bookmark-url {
-  margin: 0;
-  overflow: hidden;
-  color: var(--url-text);
-  font: var(--type-mono);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.is-selected .ds-bookmark-url {
-  color: rgba(255, 255, 255, 0.9);
-}
-.ds-bookmark-description {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  margin: 0.25rem 0 0;
-  color: var(--text-secondary);
-  font: var(--type-body-sm);
-}
-.is-selected .ds-bookmark-description {
-  color: rgba(255, 255, 255, 0.8);
-}
-.ds-bookmark-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-top: var(--space-2);
-}
-
-.ds-modal-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-  background: var(--backdrop-scrim);
-}
-.ds-modal-panel {
-  width: 100%;
-  max-height: 90vh;
-  padding: var(--space-6);
-  overflow-y: auto;
-  color: var(--text-secondary);
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-}
-.ds-modal-panel--sm {
-  max-width: var(--modal-sm);
-}
-.ds-modal-panel--md {
-  max-width: var(--modal-md);
-}
-.ds-modal-panel--lg {
-  max-width: var(--modal-lg);
-}
-.ds-modal-panel--2xl {
-  max-width: var(--modal-2xl);
-}
-.ds-modal-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-.ds-modal-heading h2 {
-  margin: 0;
-  color: var(--text-primary);
-  font: var(--type-title);
-}
-.ds-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  margin-top: var(--space-6);
-}
-
-.ds-banner {
+.ui-banner {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
@@ -1495,41 +1061,42 @@ textarea {
   border: 1px solid;
   border-radius: var(--radius-lg);
 }
-.ds-banner--success {
+.ui-banner--success {
   color: var(--status-success-text);
   background: var(--status-success-bg);
   border-color: var(--status-success-border);
 }
-.ds-banner--error {
+.ui-banner--error {
   color: var(--status-error-text);
   background: var(--status-error-bg);
   border-color: var(--status-error-border);
 }
-.ds-banner--warning {
+.ui-banner--warning {
   color: var(--status-warning-text);
   background: var(--status-warning-bg);
   border-color: var(--status-warning-border);
 }
-.ds-banner--info {
+.ui-banner--info {
   color: var(--status-info-text);
   background: var(--status-info-bg);
   border-color: var(--status-info-border);
 }
-.ds-banner-content {
+.ui-banner-content {
   flex: 1;
   font: var(--type-body-sm);
 }
-.ds-banner-title {
+.ui-banner-title {
   margin: 0;
   font-weight: var(--weight-semibold);
 }
-.ds-banner button {
+.ui-banner button {
   color: inherit;
   background: none;
   border: 0;
   cursor: pointer;
 }
-.ds-toast {
+
+.ui-toast {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
@@ -1540,12 +1107,12 @@ textarea {
   box-shadow: var(--shadow-lg);
   font: var(--type-body-sm);
 }
-.ds-toast button {
+.ui-toast button {
   background: none;
   border: 0;
   cursor: pointer;
 }
-.ds-toast-action {
+.ui-toast-action {
   /* The accent is too dark to read on the ink-dark toast (2.7:1), so the
      action is white with weight instead. */
   color: var(--white);
@@ -1553,11 +1120,11 @@ textarea {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.ds-toast-dismiss {
+.ui-toast-dismiss {
   color: var(--gray-400);
 }
 
-.ds-agent-plan {
+.ui-agent-plan {
   padding: var(--space-3);
   color: var(--status-success-text);
   background: var(--green-50);
@@ -1565,107 +1132,65 @@ textarea {
   border-radius: var(--radius-lg);
   font: var(--type-body-sm);
 }
-.ds-agent-plan--error {
+.ui-agent-plan--error {
   color: var(--status-error-text);
   background: var(--red-50);
   border-color: var(--red-200);
 }
-.ds-agent-plan p {
+.ui-agent-plan p {
   margin: 0;
 }
-.ds-agent-plan-title {
+.ui-agent-plan-title {
   font-weight: var(--weight-bold);
 }
-.ds-agent-plan ol {
+.ui-agent-plan ol {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   margin: var(--space-1) 0 0;
   padding-left: 1.25rem;
 }
-.ds-agent-plan li > span {
+.ui-agent-plan li > span {
   margin-left: var(--space-2);
   color: var(--green-600);
   font: var(--type-mono);
 }
-.ds-agent-plan--error li > span {
+.ui-agent-plan--error li > span {
   color: var(--red-600);
 }
 
-.ds-empty-state {
+.ui-error-fallback {
   padding: 2.5rem var(--space-4);
   text-align: center;
-}
-.ds-empty-icon {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--space-4);
-  color: var(--text-secondary);
-}
-.ds-empty-title {
-  margin: 0 0 var(--space-2);
-  color: var(--text-secondary);
-  font: var(--type-label);
-}
-.ds-empty-description {
-  margin: 0 0 var(--space-4);
-  color: var(--text-secondary);
-  font: var(--type-body-sm);
-}
-.ds-empty-actions {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-3);
 }
 
 /* Decorative 3D effects (header brand mark, empty-state card stack). Never a
    pointer target, never announced — the scenes read pointer position from the
    window instead of capturing events on the canvas. */
-.ds-brand-mark {
+.ui-brand-mark {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   pointer-events: none;
 }
-.ds-effects-canvas {
+.ui-effects-canvas {
   display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
-.ds-empty-stack {
+.ui-empty-stack {
   margin: 0 auto var(--space-2);
   pointer-events: none;
 }
-.ds-empty-stack svg {
+.ui-empty-stack svg {
   margin: 0 auto;
 }
 
-.ds-tabs {
-  display: flex;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border);
-}
-.ds-tabs button {
-  padding: var(--space-2) var(--space-4);
-  color: var(--text-secondary);
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  font: var(--type-label);
-  white-space: nowrap;
-  cursor: pointer;
-}
-.ds-tabs button[aria-selected="true"] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-@keyframes bmk-spin {
-  to {
-    transform: rotate(360deg);
-  }
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

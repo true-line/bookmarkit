@@ -14,7 +14,7 @@ export default function BrandMark({ enabled = true, size = 44 }) {
   if (!enabled) return <BrandMarkGlyph size={size} />;
 
   return (
-    <div className="ds-brand-mark" style={{ width: size, height: size }} aria-hidden="true">
+    <div className="ui-brand-mark" style={{ width: size, height: size }} aria-hidden="true">
       <SceneFallback fallback={<BrandMarkGlyph size={size} />}>
         <Suspense fallback={<BrandMarkGlyph size={size} />}>
           <BrandMarkScene size={size} />

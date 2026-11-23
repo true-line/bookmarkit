@@ -47,7 +47,7 @@ describe("SceneFallback", () => {
 
     const { container } = render(<BrandMark enabled />);
 
-    await waitFor(() => expect(container.querySelector(".ds-brand-glyph")).toBeTruthy());
+    await waitFor(() => expect(container.querySelector(".ui-brand-glyph")).toBeTruthy());
     errorSpy.mockRestore();
     vi.doUnmock("./BrandMarkScene.jsx");
     vi.resetModules();
