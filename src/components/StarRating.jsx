@@ -2,6 +2,7 @@
 // DesignSystem.jsx library (#255) — the popup's quick-add form is its only
 // consumer, and the #24 string-coercion contract travels with it.
 import React from "react";
+import { useMessages } from "../i18n/index.js";
 
 // #24: Ratings are 0–5 integers, but stored data is not guaranteed to be one.
 const clampRating = (value) => Math.min(5, Math.max(0, Math.round(Number(value)) || 0));
@@ -13,6 +14,7 @@ export function StarRating({
   size = 24,
   buttonSemantics = false,
 }) {
+  const t = useMessages();
   const starRefs = React.useRef([]);
   // #24: A rating can reach here as a string — a JSON import writes through what
   // the file said. Every comparison below has to agree with the fill, or the
@@ -41,7 +43,7 @@ export function StarRating({
     <div
       className="ui-star-rating"
       role={readOnly ? "img" : buttonSemantics ? "group" : "radiogroup"}
-      aria-label={`Rating: ${rating} of 5`}
+      aria-label={t("starRating.groupLabel", { rating })}
       onKeyDown={isRadioGroup ? handleKeyDown : undefined}
     >
       {[1, 2, 3, 4, 5].map((star) => {
@@ -75,7 +77,9 @@ export function StarRating({
             // Exactly one radio is checked, even though the fill is cumulative.
             aria-checked={buttonSemantics ? undefined : star === rating}
             aria-pressed={buttonSemantics ? filled : undefined}
-            aria-label={`${star} star${star === 1 ? "" : "s"}${rating === star ? " (selected — activate to clear)" : ""}`}
+            aria-label={t(rating === star ? "starRating.starSelected" : "starRating.star", {
+              star,
+            })}
             className={filled ? "is-filled" : ""}
             tabIndex={isRadioGroup && star !== focusedStar ? -1 : undefined}
             onClick={() => onChange?.(rating === star ? 0 : star)}

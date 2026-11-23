@@ -1,6 +1,8 @@
 // The message banner, re-homed verbatim from the retired legacy
 // DesignSystem.jsx library (#255) — the unified design system has no
 // banner yet; when it grows one, this component folds into it.
+import { useMessages } from "../i18n/index.js";
+
 export default function Banner({
   tone = "info",
   title,
@@ -9,6 +11,7 @@ export default function Banner({
   className = "",
   ...props
 }) {
+  const t = useMessages();
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
@@ -20,7 +23,7 @@ export default function Banner({
         <div>{children}</div>
       </div>
       {onDismiss && (
-        <button type="button" onClick={onDismiss} aria-label="Dismiss">
+        <button type="button" onClick={onDismiss} aria-label={t("common.dismiss")}>
           ✕
         </button>
       )}
