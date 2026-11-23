@@ -17,10 +17,11 @@
 //   view above is that row here.
 //
 // The rail exists from `lg` up (index.css, `.ui-sidebar`) and BookmarkApp mounts
-// it only there.
+// it only there. Its copy is the catalogue's `sidebar` surface (#284).
 
 import React, { useMemo, useState } from "react";
 import { Button, IconButton, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 import { viewCounts } from "../utils/smartViewCounts.js";
 import BrandMark from "./effects/BrandMark.jsx";
 import FolderTree from "./FolderTree.jsx";
@@ -37,11 +38,11 @@ import {
 
 /** The views, in the mockup's order. `danger` is the one whose news is bad. */
 const SMART_VIEWS = [
-  { id: "all", label: "All Bookmarks", Icon: BookmarksIcon },
-  { id: "digest", label: "Weekly Digest", Icon: CalendarIcon },
-  { id: "neverOpened", label: "Never Opened", Icon: EyeOffIcon },
-  { id: "untagged", label: "Untagged", Icon: TagOffIcon },
-  { id: "brokenLinks", label: "Broken Links", Icon: LinkOffIcon, danger: true },
+  { id: "all", labelKey: "sidebar.allBookmarks", Icon: BookmarksIcon },
+  { id: "digest", labelKey: "sidebar.digest", Icon: CalendarIcon },
+  { id: "neverOpened", labelKey: "sidebar.neverOpened", Icon: EyeOffIcon },
+  { id: "untagged", labelKey: "sidebar.untagged", Icon: TagOffIcon },
+  { id: "brokenLinks", labelKey: "sidebar.brokenLinks", Icon: LinkOffIcon, danger: true },
 ];
 
 const SidebarNav = React.memo(function SidebarNav({
@@ -67,34 +68,35 @@ const SidebarNav = React.memo(function SidebarNav({
   onDeleteFolder,
   className = "",
 }) {
+  const t = useMessages();
   const [managing, setManaging] = useState(false);
   const counts = useMemo(() => viewCounts(bookmarks, brokenCount), [bookmarks, brokenCount]);
 
   return (
-    <aside className={`ui-sidebar ${className}`} aria-label="BookmarkIt navigation">
+    <aside className={`ui-sidebar ${className}`} aria-label={t("sidebar.navLabel")}>
       <div className="ui-sidebar-brand">
         <div className="flex min-w-0 items-center gap-2.5">
           <BrandMark enabled={effectsEnabled} size={32} />
           <div className="ui-sidebar-title">
             <Typography variant="headline-sm" as="p" className="truncate">
-              BookmarkIt
+              {t("sidebar.brandTitle")}
             </Typography>
             <Typography variant="label-sm" as="p" className="ui-sidebar-tagline">
-              Local-first
+              {t("sidebar.brandTagline")}
             </Typography>
           </div>
         </div>
-        <IconButton label="Help and keyboard shortcuts" onClick={onHelp}>
+        <IconButton label={t("sidebar.help")} onClick={onHelp}>
           <HelpIcon />
         </IconButton>
       </div>
 
       <Button onClick={onAddBookmark} leadingIcon={<AddIcon />} className="ui-sidebar-primary">
-        Add Bookmark
+        {t("sidebar.addBookmark")}
       </Button>
 
-      <nav className="ui-sidebar-nav" aria-label="Smart views">
-        <p className="ui-sidebar-caption">Views</p>
+      <nav className="ui-sidebar-nav" aria-label={t("sidebar.viewsLabel")}>
+        <p className="ui-sidebar-caption">{t("sidebar.views")}</p>
         {SMART_VIEWS.map((view) => {
           const current = currentView === view.id;
           return (
@@ -109,8 +111,8 @@ const SidebarNav = React.memo(function SidebarNav({
               <span className="ui-sidebar-row-icon">
                 <view.Icon size={18} />
               </span>
-              <span className="ui-sidebar-row-label">{view.label}</span>
-              <span className="ui-sidebar-row-count">{counts[view.id]}</span>
+              <span className="ui-sidebar-row-label">{t(view.labelKey)}</span>
+              <span className="ui-sidebar-row-count">{t.count(counts[view.id])}</span>
             </button>
           );
         })}
@@ -123,7 +125,7 @@ const SidebarNav = React.memo(function SidebarNav({
         canSave={canSaveView}
         onApply={onApplyView}
         onSave={onSaveView}
-        onForget={onForgetView}
+        onForgetView={onForgetView}
       />
 
       <FolderTree
@@ -140,15 +142,15 @@ const SidebarNav = React.memo(function SidebarNav({
         manageable={managing}
         header={
           <div className="ui-sidebar-caption">
-            <span>Folders</span>
+            <span>{t("sidebar.folders")}</span>
             <button
               type="button"
               className="ui-sidebar-manage"
               aria-pressed={managing}
-              aria-label="Manage folders"
+              aria-label={t("sidebar.manageFolders")}
               onClick={() => setManaging((current) => !current)}
             >
-              Edit
+              {t("sidebar.edit")}
             </button>
           </div>
         }
