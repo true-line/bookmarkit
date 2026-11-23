@@ -7,6 +7,7 @@ import {
   deriveTagCounts,
   getTagState,
   hasActiveFilters,
+  smartViewFilters,
 } from "./manualFilters.js";
 
 const list = [
@@ -303,5 +304,46 @@ describe("untagged (#283)", () => {
 
     // The untagged bookmark is unrated, so nothing survives both.
     expect(result).toEqual([]);
+  });
+});
+
+describe("smartViewFilters (#283)", () => {
+  const base = { ...EMPTY_FILTERS, text: "react", minRating: 4, folder: "Work", sortBy: "title" };
+
+  it("sets the chosen view's flag and clears the other two", () => {
+    const next = smartViewFilters({ ...base, neverOpened: true, untagged: true }, "brokenLinks");
+
+    expect(next.brokenOnly).toBe(true);
+    expect(next.neverOpened).toBe(false);
+    expect(next.untagged).toBe(false);
+  });
+
+  it("leaves the folder, whatever view was chosen", () => {
+    // A smart view is the whole collection seen one way, as the count on its
+    // row says, so no row can be current over a handful of bookmarks.
+    expect(smartViewFilters(base, "neverOpened").folder).toBe("");
+    expect(smartViewFilters(base, "all").folder).toBe("");
+  });
+
+  it("clears every flag for the whole collection and keeps the refinements", () => {
+    const next = smartViewFilters({ ...base, neverOpened: true, brokenOnly: true }, "all");
+
+    expect(next).toMatchObject({
+      neverOpened: false,
+      brokenOnly: false,
+      untagged: false,
+      folder: "",
+      text: "react",
+      minRating: 4,
+      sortBy: "title",
+    });
+  });
+
+  it("does not mutate the filters it was given", () => {
+    const filters = { ...base, neverOpened: true };
+    smartViewFilters(filters, "untagged");
+
+    expect(filters.neverOpened).toBe(true);
+    expect(filters.folder).toBe("Work");
   });
 });

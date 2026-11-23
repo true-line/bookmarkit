@@ -142,11 +142,14 @@ Two boundaries are worth keeping straight:
 - **A smart view is a manual filter, not a route.** `applySmartView` writes one
   flag (`neverOpened`, `untagged`, `brokenOnly`) or opens the digest; it never
   touches the agent plan, so the filtering order and the independent clearing
-  under "Application and state flow" hold unchanged. The rail is handed
-  `currentView` and only displays it (`aria-current="page"`); it decides
-  nothing. `untagged` is a manual filter like the other two observed-state
-  flags and round-trips through saved views; `utils/smartViewCounts.js` sizes
-  each view.
+  under "Application and state flow" hold unchanged. A smart view is the whole
+  collection seen one way, as the count on its row says, so `smartViewFilters`
+  also leaves the folder. The rail is handed `currentView`
+  (`currentSmartView`) and only displays it (`aria-current="page"`); it decides
+  nothing, and no view is current while a folder narrows the list, even with a
+  flag set from the filter strip's independent toggles. `untagged` is a manual
+  filter like the other two observed-state flags and round-trips through saved
+  views; `utils/smartViewCounts.js` sizes each view.
 - **Which chrome exists follows the viewport.** `useSidebarViewport` and
   `.ui-sidebar` share Tailwind's `lg` (1024px) and `--app-sidebar-width`. From
   `lg` the shell, the fixed header and the toast dock inset by the rail, and

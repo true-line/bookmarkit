@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  currentSmartView,
   MAX_VIEWS,
   addView,
   isViewWorthSaving,
@@ -280,5 +281,40 @@ describe("saving a semantic search (#46)", () => {
       undefined
     );
     expect(active).toBe(view.id);
+  });
+});
+
+describe("currentSmartView (#283)", () => {
+  it("is the whole collection when no view flag is set", () => {
+    expect(currentSmartView(EMPTY_FILTERS)).toBe("all");
+  });
+
+  it("is the one view whose flag is set", () => {
+    expect(currentSmartView({ ...EMPTY_FILTERS, neverOpened: true })).toBe("neverOpened");
+    expect(currentSmartView({ ...EMPTY_FILTERS, brokenOnly: true })).toBe("brokenLinks");
+    expect(currentSmartView({ ...EMPTY_FILTERS, untagged: true })).toBe("untagged");
+  });
+
+  it("stays that view under refinements on top of it", () => {
+    expect(
+      currentSmartView({ ...EMPTY_FILTERS, untagged: true, text: "react", minRating: 4 })
+    ).toBe("untagged");
+  });
+
+  it("is no view at all while a folder narrows the list", () => {
+    // The folder is where the reader stands — with a view flag set or without.
+    expect(currentSmartView({ ...EMPTY_FILTERS, folder: "Work" })).toBeNull();
+    expect(currentSmartView({ ...EMPTY_FILTERS, folder: "Work", neverOpened: true })).toBeNull();
+  });
+
+  it("is no single view when two flags are set at once", () => {
+    expect(currentSmartView({ ...EMPTY_FILTERS, neverOpened: true, brokenOnly: true })).toBeNull();
+  });
+
+  it("is the digest while the digest is open", () => {
+    expect(currentSmartView(EMPTY_FILTERS, { digestOpen: true })).toBe("digest");
+    expect(currentSmartView({ ...EMPTY_FILTERS, folder: "Work" }, { digestOpen: true })).toBe(
+      "digest"
+    );
   });
 });

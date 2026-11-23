@@ -24,7 +24,8 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Navigation sidebar (on wide windows, `lg` and up)
   - Smart views with a count on each — **All Bookmarks**, **Weekly Digest**,
     **Never Opened**, **Untagged**, **Broken Links** — beside the saved views and
-    the folder tree
+    the folder tree. Choosing a view shows the whole collection that way and
+    leaves any folder; the filter strip's toggles can still combine the two
 - Semantic search
   - Finds “that article about vector databases” even when none of those words are
     in the bookmark, and keeps the exact matches at the top
