@@ -11,8 +11,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { VariableSizeList } from "react-window";
 import BookmarkCard from "./BookmarkCard.jsx";
 import FilterBar from "./FilterBar.jsx";
-import EmptyStack from "./effects/EmptyStack.jsx";
-import { Button, EmptyState as DesignEmptyState } from "./DesignSystem.jsx";
+import EmptyShelfStates from "./EmptyShelf.jsx";
 import { chunkIntoRows, columnsForWidth, rowKeyFor, COLUMN_GAP } from "../utils/listColumns.js";
 
 const ITEM_HEIGHT = 104; // px — initial card-row estimate before measurement
@@ -20,97 +19,6 @@ const FILTER_ROW_GAP = 16; // px — mirrors the filter panel's mb-4 spacing
 // #251: the mockup's card grid spaces both axes at gap-gutter-md, so the row
 // gap matches the 16px the column engine already counts between cards.
 const ROW_GAP = 16; // px — vertical gap under a card row
-
-// ARCH-10: Three distinct empty states
-function EmptyState({
-  isLoading,
-  bookmarksTotal,
-  searchActive,
-  lastAction,
-  searchQuery,
-  onClear,
-  onAddNew,
-  onImport,
-  effectsEnabled = true,
-}) {
-  if (isLoading) return null;
-
-  if (bookmarksTotal === 0) {
-    return (
-      <DesignEmptyState
-        icon={<EmptyStack enabled={effectsEnabled} />}
-        title="Your shelf is empty."
-        description="Add your first bookmark, or import a browser export."
-        actions={
-          <>
-            <Button onClick={onAddNew}>Add New</Button>
-            <Button intent="secondary" onClick={onImport}>
-              Import
-            </Button>
-          </>
-        }
-      />
-    );
-  }
-
-  if (lastAction) {
-    return (
-      <DesignEmptyState
-        icon={
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-        }
-        title="No bookmarks match your request."
-        actions={
-          <Button intent="ghost" onClick={onClear}>
-            Clear search
-          </Button>
-        }
-      />
-    );
-  }
-
-  if (searchActive) {
-    return (
-      <DesignEmptyState
-        icon={
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-        }
-        title={`No bookmarks match${searchQuery ? ` "${searchQuery}"` : " your search"}.`}
-        actions={
-          <Button intent="ghost" onClick={onClear}>
-            Clear search
-          </Button>
-        }
-      />
-    );
-  }
-
-  return null;
-}
 
 // renderRow is defined outside the component so its reference is always stable.
 // react-window uses the children prop as the component *type* via createElement —
@@ -371,7 +279,7 @@ const BookmarkList = React.memo(function BookmarkList({
           onClear={onClearFilters}
           summary={filterSummary}
         />
-        <EmptyState
+        <EmptyShelfStates
           isLoading={isLoading}
           bookmarksTotal={bookmarksTotal}
           searchActive={searchActive}
