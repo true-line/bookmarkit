@@ -50,6 +50,8 @@ import { useUndoHistory } from "../hooks/useUndoHistory.js";
 import { useFolderSheetViewport } from "../hooks/useFolderSheetViewport.js";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 
+import { useMessages } from "../i18n/index.js";
+
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import HelpModal from "./HelpModal";
 import MessageModal from "./MessageModal";
@@ -90,15 +92,20 @@ import {
 // Plan steps that write a new order to the store, rather than sorting the view.
 const REORDER_ACTIONS = ["reorder", "reorderAscending", "reorderDescending", "persistSortedOrder"];
 
-const getImportResultMessage = (importedCount, skippedCount, emptyMessage) => {
+// The import result as complete message templates; `t` comes from the component
+// (the translator is plain function, so helpers outside the tree can use it).
+const getImportResultMessage = (t, importedCount, skippedCount, emptyMessage) => {
   if (importedCount > 0) {
-    const skipped = skippedCount > 0 ? ` Skipped ${skippedCount} duplicate(s).` : "";
-    return { message: `Imported ${importedCount} bookmark(s).${skipped}`, type: "success" };
+    const skipped = skippedCount > 0 ? ` ${t("app.importSkipped", { count: skippedCount })}` : "";
+    return {
+      message: `${t("app.importedCount", { count: importedCount })}${skipped}`,
+      type: "success",
+    };
   }
 
   if (skippedCount > 0) {
     return {
-      message: `No new bookmarks imported. Skipped ${skippedCount} duplicate(s).`,
+      message: `${t("app.importNone")} ${t("app.importSkipped", { count: skippedCount })}`,
       type: "info",
     };
   }
@@ -109,6 +116,9 @@ const getImportResultMessage = (importedCount, skippedCount, emptyMessage) => {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const BookmarkApp = () => {
+  // ─── Messages ───────────────────────────────────────────────────────────────
+  const t = useMessages();
+
   // ─── Theme ──────────────────────────────────────────────────────────────────
   const { currentTheme, themes, selectTheme, uploadTheme } = useTheme();
 
@@ -242,16 +252,13 @@ const BookmarkApp = () => {
   const openBookmark = useCallback(
     (bookmark) => {
       if (!isSafeHttpUrl(bookmark.url)) {
-        showCustomMessage(
-          "This bookmark has an unsupported or unsafe URL and was not opened.",
-          "error"
-        );
+        showCustomMessage(t("app.unsafeUrl"), "error");
         return;
       }
       window.open(bookmark.url, "_blank", "noopener,noreferrer");
       storeRef.current?.update(bookmark.id, openedPatch()).catch(() => {});
     },
-    [storeRef]
+    [storeRef, t]
   );
 
   // #190: where the selection hook's Shift gestures land — Shift+Enter and
@@ -387,12 +394,12 @@ const BookmarkApp = () => {
   const handleSaveView = useCallback(
     (name) => {
       if (!saveView(name, lastAction, manualFilters)) {
-        showCustomMessage("There's nothing to save — search or filter something first.", "info");
+        showCustomMessage(t("app.nothingToSave"), "info");
         return false;
       }
       return true;
     },
-    [saveView, lastAction, manualFilters]
+    [saveView, lastAction, manualFilters, t]
   );
 
   // ─── Message helper ──────────────────────────────────────────────────────────
@@ -428,13 +435,13 @@ const BookmarkApp = () => {
     async (patches) => {
       try {
         await applyBulkEdit(patches);
-        showCustomMessage(`Updated ${patches.length} bookmark(s).`, "success");
+        showCustomMessage(t("app.updatedCount", { count: patches.length }), "success");
       } catch (e) {
         console.error("Bulk edit failed:", e);
-        showCustomMessage("Failed to update the selected bookmarks. Please try again.", "error");
+        showCustomMessage(t("app.bulkEditFailed"), "error");
       }
     },
-    [applyBulkEdit]
+    [applyBulkEdit, t]
   );
 
   // #55: A folder is a path its bookmarks carry and nothing else, so every gesture
@@ -450,20 +457,19 @@ const BookmarkApp = () => {
         return true;
       } catch (e) {
         console.error("Folder change failed:", e);
-        showCustomMessage("Failed to move the bookmark(s). Please try again.", "error");
+        showCustomMessage(t("app.folderChangeFailed"), "error");
         return false;
       }
     },
-    [applyBulkEdit]
+    [applyBulkEdit, t]
   );
 
   const handleMoveToFolder = useCallback(
     (ids, folder) =>
-      applyFolderChange(
-        moveToFolderPatches(bookmarks, ids, folder),
-        (count) => `Moved ${count} bookmark(s).`
+      applyFolderChange(moveToFolderPatches(bookmarks, ids, folder), (count) =>
+        t("app.movedCount", { count })
       ),
-    [applyFolderChange, bookmarks]
+    [applyFolderChange, bookmarks, t]
   );
 
   // A filter naming a folder that just moved would match nothing, so it follows.
@@ -474,24 +480,22 @@ const BookmarkApp = () => {
   // Renaming and renesting are the same write: both replace a path prefix.
   const handleRenameFolder = useCallback(
     async (from, to) => {
-      const moved = await applyFolderChange(
-        renameFolderPatches(bookmarks, from, to),
-        (count) => `${count} bookmark(s) now in ${to || "no folder"}.`
+      const moved = await applyFolderChange(renameFolderPatches(bookmarks, from, to), (count) =>
+        t("app.renamedFolderCount", { count, folder: to || t("common.noFolder") })
       );
       if (moved) followFolder(from, to);
     },
-    [applyFolderChange, bookmarks, followFolder]
+    [applyFolderChange, bookmarks, followFolder, t]
   );
 
   const handleDeleteFolder = useCallback(
     async (path) => {
-      const moved = await applyFolderChange(
-        dissolveFolderPatches(bookmarks, path),
-        (count) => `Removed ${path} and moved ${count} bookmark(s) out of it.`
+      const moved = await applyFolderChange(dissolveFolderPatches(bookmarks, path), (count) =>
+        t("app.removedFolderCount", { path, count })
       );
       if (moved) followFolder(path, parentFolder(path));
     },
-    [applyFolderChange, bookmarks, followFolder]
+    [applyFolderChange, bookmarks, followFolder, t]
   );
 
   // The pane keeps the selection alive so it can be dragged, which makes filtering
@@ -533,17 +537,17 @@ const BookmarkApp = () => {
       setIsDeleteConfirmModalOpen(false);
       setIsModalOpen(false);
       clearSelectedBookmarks();
-      showCustomMessage(`Deleted ${ids.length} bookmark(s).`, "success");
+      showCustomMessage(t("app.deletedCount", { count: ids.length }), "success");
     } catch (e) {
       console.error("Delete failed:", e);
       // UX-09: Error message persists (no auto-dismiss) — user must acknowledge data loss risk
-      showCustomMessage("Failed to delete bookmark(s). Please try again.", "error");
+      showCustomMessage(t("app.deleteFailed"), "error");
     } finally {
       setIsDeleting(false);
       setBookmarksToDelete([]);
       setDuplicateReasons([]);
     }
-  }, [bookmarksToDelete, deleteBookmarks, storeRef, clearSelectedBookmarks]);
+  }, [bookmarksToDelete, deleteBookmarks, storeRef, clearSelectedBookmarks, t]);
 
   const handleCancelDelete = useCallback(() => {
     setBookmarksToDelete([]);
@@ -600,12 +604,12 @@ const BookmarkApp = () => {
     async (list, fields) => {
       const rows = await organizer.run(list, fields ? { fields } : {});
       if (rows.length === 0) {
-        showCustomMessage("Nothing to change — these bookmarks are already organized.", "info");
+        showCustomMessage(t("app.alreadyOrganized"), "info");
         return;
       }
-      setReview({ title: "Review the proposed changes", rows });
+      setReview({ title: t("changeReview.defaultTitle"), rows });
     },
-    [organizer]
+    [organizer, t]
   );
 
   // #102: a dead link is the one thing the sweep found and deliberately would not
@@ -613,8 +617,8 @@ const BookmarkApp = () => {
   // than writes: the same review and the same one-undo write as a tidy-up.
   const handleRecoverDeadLinks = useCallback(async () => {
     const rows = await archive.run(bookmarksInReach);
-    if (rows.length > 0) setReview({ title: "Review the archived copies", rows });
-  }, [archive, bookmarksInReach]);
+    if (rows.length > 0) setReview({ title: t("changeReview.archivedTitle"), rows });
+  }, [archive, bookmarksInReach, t]);
 
   const handleApplyReviewed = useCallback(
     async (acceptedIds) => {
@@ -624,25 +628,25 @@ const BookmarkApp = () => {
       try {
         await applyBulkEdit(patches);
         setReview(null);
-        showCustomMessage(`Updated ${patches.length} bookmark(s).`, "success");
+        showCustomMessage(t("app.updatedCount", { count: patches.length }), "success");
       } catch (e) {
         console.error("Applying reviewed changes failed:", e);
-        showCustomMessage("Failed to apply the changes. Please try again.", "error");
+        showCustomMessage(t("app.applyFailed"), "error");
       } finally {
         setIsApplyingChanges(false);
       }
     },
-    [applyBulkEdit, review]
+    [applyBulkEdit, review, t]
   );
 
   const showDigest = useCallback(async () => {
     const built = await digestEngine.build(bookmarks);
     if (!built) {
-      showCustomMessage("Nothing to report yet — save a few bookmarks first.", "info");
+      showCustomMessage(t("app.nothingToReport"), "info");
       return;
     }
     setDigest(built);
-  }, [bookmarks, digestEngine]);
+  }, [bookmarks, digestEngine, t]);
 
   const showNeverOpened = useCallback(() => {
     setManualFilters((prev) => ({ ...prev, neverOpened: true }));
@@ -704,11 +708,11 @@ const BookmarkApp = () => {
     const ids = [...certain, ...likely];
 
     if (ids.length === 0) {
-      showCustomMessage("No duplicate bookmarks found in the current view.", "info");
+      showCustomMessage(t("app.noDuplicates"), "info");
       return;
     }
     stageDeletion(ids, reasons);
-  }, [displayedBookmarks, proposeSemanticDuplicates, stageDeletion]);
+  }, [displayedBookmarks, proposeSemanticDuplicates, stageDeletion, t]);
 
   const resetSearch = useCallback(() => {
     setLastAction(null);
@@ -735,13 +739,13 @@ const BookmarkApp = () => {
 
   const confirmDeleteSelection = useCallback(() => {
     if (selectedIds.length === 0) {
-      showCustomMessage("Please select bookmark(s) to delete.", "info");
+      showCustomMessage(t("app.selectToDelete"), "info");
       return;
     }
     setBookmarksToDelete(selectedIds);
     setIsDeleteConfirmModalOpen(true);
     clearSelectedBookmarks();
-  }, [selectedIds, clearSelectedBookmarks]);
+  }, [selectedIds, clearSelectedBookmarks, t]);
 
   // #27: An open dialog owns the keyboard. Escape inside one closes it and stops
   // there, and the rest of the shortcuts stay bound but inactive rather than
@@ -809,8 +813,7 @@ const BookmarkApp = () => {
       c: () => {
         const selected = bookmarks.find((b) => b.id === selectedBookmarkId);
         // SEC-05: URL validation stub (corsproxy removed)
-        if (selected?.url)
-          showCustomMessage("URL check not available in extension context.", "info");
+        if (selected?.url) showCustomMessage(t("app.urlCheckUnavailable"), "info");
       },
     },
     { enabled: !isDialogOpen }
@@ -830,7 +833,7 @@ const BookmarkApp = () => {
       try {
         await persistSortedOrder({ sortBy, order });
         showCustomMessage(
-          `Reordered ${order === "asc" ? "ascending" : "descending"} by ${sortBy} and saved.`,
+          t(order === "asc" ? "app.reorderedAsc" : "app.reorderedDesc", { field: sortBy }),
           "success"
         );
         if (plan.length > 0) {
@@ -843,10 +846,10 @@ const BookmarkApp = () => {
         }
       } catch (e) {
         console.error("Persist reorder failed", e);
-        showCustomMessage("Failed to persist new order.", "error");
+        showCustomMessage(t("app.persistFailed"), "error");
       }
     },
-    [lastAction, persistSortedOrder, storeRef]
+    [lastAction, persistSortedOrder, storeRef, t]
   );
 
   const handlePersistReorderFromAgent = useCallback(
@@ -905,7 +908,7 @@ const BookmarkApp = () => {
           );
           const ids = [...certain, ...likely];
           if (ids.length > 0) stageDeletion(ids, reasons);
-          else showCustomMessage("No duplicate bookmarks found in the current view.", "info");
+          else showCustomMessage(t("app.noDuplicates"), "info");
         }
         if (step.action === "searchBookmarks" && step.parameters?.searchTerm)
           widenSearch(step.parameters.searchTerm);
@@ -924,6 +927,7 @@ const BookmarkApp = () => {
       showDigest,
       stageDeletion,
       widenSearch,
+      t,
     ]
   );
 
@@ -975,15 +979,16 @@ const BookmarkApp = () => {
       }
 
       const result = getImportResultMessage(
+        t,
         bookmarksToImport.length,
         skippedCount,
-        "No bookmarks found in the import data."
+        t("app.noBookmarksInData")
       );
       showCustomMessage(result.message, result.type);
       handleImportExportClose();
       setLastAction(null);
     },
-    [appendBookmarks, bookmarks, handleImportExportClose, saveAllBookmarks]
+    [appendBookmarks, bookmarks, handleImportExportClose, saveAllBookmarks, t]
   );
 
   const handleImportHtml = useCallback(
@@ -1007,23 +1012,24 @@ const BookmarkApp = () => {
 
         if (safeBookmarks.length > 0) {
           const result = getImportResultMessage(
+            t,
             bookmarksToImport.length,
             skippedCount,
-            "No bookmarks found in the imported HTML."
+            t("app.noBookmarksInHtml")
           );
           showCustomMessage(result.message, result.type);
         } else {
-          showCustomMessage("No bookmarks found in the imported HTML.", "info");
+          showCustomMessage(t("app.noBookmarksInHtml"), "info");
         }
         setLastAction(null);
       } catch (e) {
         console.error("Error parsing HTML bookmarks:", e);
-        showCustomMessage("Failed to parse HTML bookmarks.", "error");
+        showCustomMessage(t("app.htmlParseFailed"), "error");
       } finally {
         handleImportExportClose();
       }
     },
-    [appendBookmarks, bookmarks, handleImportExportClose, saveAllBookmarks]
+    [appendBookmarks, bookmarks, handleImportExportClose, saveAllBookmarks, t]
   );
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -1038,7 +1044,7 @@ const BookmarkApp = () => {
             className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"
             style={{ borderColor: "var(--accent)" }}
           />
-          <p style={{ color: "var(--text-secondary)" }}>Loading bookmarks...</p>
+          <p style={{ color: "var(--text-secondary)" }}>{t("app.loading")}</p>
         </div>
       </div>
     );
@@ -1055,12 +1061,12 @@ const BookmarkApp = () => {
       >
         <div className="text-center max-w-md">
           <h1 className="text-lg font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-            Your bookmarks could not be opened
+            {t("app.loadErrorTitle")}
           </h1>
           <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-            Nothing has been changed. {loadError}
+            {t("app.loadErrorBody", { error: loadError })}
           </p>
-          <Button onClick={() => window.location.reload()}>Try again</Button>
+          <Button onClick={() => window.location.reload()}>{t("app.tryAgain")}</Button>
         </div>
       </div>
     );
@@ -1074,7 +1080,7 @@ const BookmarkApp = () => {
       {/* UX-06: Import progress bar */}
       {importProgress && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-accent text-white text-sm text-center py-2">
-          Importing… {importProgress.done} / {importProgress.total}
+          {t("app.importProgress", { done: importProgress.done, total: importProgress.total })}
           <div className="h-1 bg-white bg-opacity-30 mt-1">
             <div
               className="h-1 bg-white transition-all"
@@ -1130,7 +1136,7 @@ const BookmarkApp = () => {
               its last buttons at the window edge. Each row centers its own
               content, so the search row keeps its old centered look. */}
           <div className="px-4 py-4 flex flex-col gap-2">
-            <h1 className="sr-only">BookmarkIt</h1>
+            <h1 className="sr-only">{t("app.brandTitle")}</h1>
             <div className="flex justify-center items-center gap-3">
               {/* #283: from `lg` the brand lives in the navigation sidebar. */}
               <span className="lg:hidden">
@@ -1143,14 +1149,14 @@ const BookmarkApp = () => {
                   icon={<SearchIcon />}
                   placeholder={
                     isAgentConfigured
-                      ? "Type natural language queries (e.g., 'find github')"
-                      : "Set up a provider in Options to search"
+                      ? t("app.searchPlaceholderAgent")
+                      : t("app.searchPlaceholderSetup")
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchInputKeyDown}
                   disabled={!isAgentConfigured || isProcessing}
-                  aria-label="Natural language search"
+                  aria-label={t("app.searchAria")}
                   trailing={
                     isProcessing ? (
                       <span className="ui-spinner" aria-hidden="true" />
@@ -1160,7 +1166,7 @@ const BookmarkApp = () => {
                       // itself does the AI ask).
                       <span className="ui-ai-badge" aria-hidden="true">
                         <SparkIcon />
-                        AI Ready
+                        {t("app.aiReady")}
                       </span>
                     ) : undefined
                   }
@@ -1169,7 +1175,7 @@ const BookmarkApp = () => {
               {/* #283: from `lg` the help entry point lives in the navigation
                   sidebar, beside the brand. */}
               <IconButton
-                label="Help"
+                label={t("app.help")}
                 onClick={() => setIsHelpModalOpen(true)}
                 className="lg:hidden"
               >
@@ -1187,7 +1193,7 @@ const BookmarkApp = () => {
                 leadingIcon={<AddIcon />}
                 className="lg:hidden"
               >
-                Add New
+                {t("common.addNew")}
               </Button>
               {!isSidebarViewport && (
                 <Button
@@ -1196,11 +1202,11 @@ const BookmarkApp = () => {
                   onClick={() => setIsFolderPaneOpen((open) => !open)}
                   aria-pressed={isFolderPaneOpen}
                 >
-                  {isFolderPaneOpen ? "Hide Folders" : "Folders"}
+                  {isFolderPaneOpen ? t("app.hideFolders") : t("app.folders")}
                 </Button>
               )}
               <Button intent="outlined" onClick={handleImportExportOpen} leadingIcon={<SwapIcon />}>
-                Import/Export
+                {t("app.importExport")}
               </Button>
               <Button
                 intent="outlined"
@@ -1208,7 +1214,7 @@ const BookmarkApp = () => {
                 loading={isAskingAboutDuplicates}
                 leadingIcon={<CopiesIcon />}
               >
-                {isAskingAboutDuplicates ? "Comparing…" : "Remove Duplicates"}
+                {isAskingAboutDuplicates ? t("app.comparing") : t("app.removeDuplicates")}
               </Button>
               <Button
                 intent="outlined"
@@ -1217,32 +1223,32 @@ const BookmarkApp = () => {
                 leadingIcon={<CalendarIcon />}
                 className="lg:hidden"
               >
-                Digest
+                {t("app.digest")}
               </Button>
               <Button
                 intent="outlined"
                 onClick={sweep.running ? sweep.stop : sweep.start}
                 leadingIcon={<HealthIcon />}
               >
-                {sweep.running ? "Stop Check" : "Check Links"}
+                {sweep.running ? t("app.stopCheck") : t("app.checkLinks")}
               </Button>
               {deadLinksInReach > 0 && (
                 <Button
                   intent="outlined"
                   onClick={archive.running ? archive.stop : handleRecoverDeadLinks}
-                  title="Ask the Internet Archive for a saved copy of each dead link"
+                  title={t("app.archiveTooltip")}
                   // Without this the pointer-down clears the selection the button
                   // is about, and the lookup silently widens to the whole view.
                   {...keepsSelectionProps}
                 >
                   {archive.running
-                    ? `Stop (${archive.done}/${archive.total})`
-                    : `Find Archived Copies (${deadLinksInReach})`}
+                    ? t("app.archiveStop", { done: archive.done, total: archive.total })
+                    : t("app.findArchived", { count: deadLinksInReach })}
                 </Button>
               )}
               {lastAction && (
                 <Button intent="outlined" onClick={resetSearch}>
-                  Clear Search
+                  {t("app.clearSearch")}
                 </Button>
               )}
               {/* #198: pick the list's layout; the choice persists like the
@@ -1254,7 +1260,7 @@ const BookmarkApp = () => {
                   setViewMode(mode);
                 }}
               />
-              <IconButton label="Options" onClick={() => setIsOptionsOpen(true)}>
+              <IconButton label={t("app.options")} onClick={() => setIsOptionsOpen(true)}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -1272,9 +1278,13 @@ const BookmarkApp = () => {
                 </svg>
               </IconButton>
             </div>
+            {/* One sentence with the two key caps inside it: the template is
+                the catalogue's and the caps are the slots' values (t.rich). */}
             <div className="bookmarkit-hint text-center text-xs text-[var(--ui-on-surface-variant)]">
-              Click to select, <Kbd>Shift</Kbd>
-              +click to open, double-click or <Kbd>E</Kbd> to edit.
+              {t.rich("app.clickHint", {
+                shift: <Kbd>Shift</Kbd>,
+                e: <Kbd>E</Kbd>,
+              })}
             </div>
           </div>
         </div>
@@ -1345,10 +1355,10 @@ const BookmarkApp = () => {
                 aria-live="polite"
               >
                 <span className="text-sm text-primary-text">
-                  Reading your bookmarks… {organizer.done} of {organizer.total}
+                  {t("app.organizerProgress", { done: organizer.done, total: organizer.total })}
                 </span>
                 <Button type="button" intent="secondary" onClick={organizer.stop}>
-                  Stop
+                  {t("common.stop")}
                 </Button>
               </div>
             )}
@@ -1396,11 +1406,18 @@ const BookmarkApp = () => {
                 filterSummary={(() => {
                   const shown =
                     displayedBookmarks.length === bookmarks.length
-                      ? `${bookmarks.length} total bookmarks`
-                      : `${displayedBookmarks.length} of ${bookmarks.length} bookmarks`;
+                      ? t("app.summaryTotal", { count: bookmarks.length })
+                      : t("app.summaryShown", {
+                          shown: displayedBookmarks.length,
+                          total: bookmarks.length,
+                        });
                   if (multiSelectedBookmarkIds.length > 0)
-                    return `${multiSelectedBookmarkIds.length} selected | ${shown}`;
-                  if (selectedBookmarkId) return `1 selected | ${shown}`;
+                    return t("app.summarySelected", {
+                      count: multiSelectedBookmarkIds.length,
+                      summary: shown,
+                    });
+                  if (selectedBookmarkId)
+                    return t("app.summarySelected", { count: 1, summary: shown });
                   return shown;
                 })()}
               />
@@ -1410,7 +1427,7 @@ const BookmarkApp = () => {
       </main>
 
       {/* ─── Modals ─── */}
-      <ErrorBoundary fallbackMessage="A modal encountered an error.">
+      <ErrorBoundary fallbackMessage={t("app.modalFallbackMessage")}>
         {isHelpModalOpen && <HelpModal onClose={() => setIsHelpModalOpen(false)} />}
         {isOptionsOpen && (
           <OptionsModal
@@ -1472,7 +1489,7 @@ const BookmarkApp = () => {
         )}
         {isDeleteConfirmModalOpen && (
           <DeleteConfirmModal
-            message={`Are you sure you want to delete ${bookmarksToDelete.length} bookmark(s)?`}
+            message={t("app.deleteConfirmQuestion", { count: bookmarksToDelete.length })}
             reasons={duplicateReasons}
             onConfirm={handleConfirmDelete}
             onCancel={handleCancelDelete}
