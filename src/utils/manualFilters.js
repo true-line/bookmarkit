@@ -42,20 +42,21 @@ export const EMPTY_FILTERS = Object.freeze({
 });
 
 /**
- * The fields a manual sort can order by, with the labels the controls show.
- * Kept with the filter semantics rather than in the bar, because a saved view
- * (#49) has to know which values are real when reading one back from storage,
- * and two lists would drift.
+ * The fields a manual sort can order by, each with the catalogue key of the
+ * label the controls show (#284; the bar resolves it with t()). Kept with the
+ * filter semantics rather than in the bar, because a saved view (#49) has to
+ * know which values are real when reading one back from storage, and two
+ * lists would drift.
  */
 export const SORT_FIELDS = Object.freeze([
-  { value: "", label: "Default order" },
-  { value: "title", label: "Title" },
-  { value: "url", label: "URL" },
-  { value: "rating", label: "Rating" },
-  { value: "folderId", label: "Folder" },
-  { value: "createdAt", label: "Date added" },
-  { value: "lastOpenedAt", label: "Last opened" },
-  { value: "updatedAt", label: "Date modified" },
+  { value: "", labelKey: "filter.sortDefault" },
+  { value: "title", labelKey: "filter.sortTitle" },
+  { value: "url", labelKey: "filter.sortUrl" },
+  { value: "rating", labelKey: "filter.sortRating" },
+  { value: "folderId", labelKey: "filter.sortFolder" },
+  { value: "createdAt", labelKey: "filter.sortDateAdded" },
+  { value: "lastOpenedAt", labelKey: "filter.sortLastOpened" },
+  { value: "updatedAt", labelKey: "filter.sortDateModified" },
 ]);
 
 export const isSortableField = (value) => SORT_FIELDS.some((field) => field.value === value);

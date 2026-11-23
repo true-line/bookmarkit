@@ -12,20 +12,24 @@
 import React, { useMemo, useState } from "react";
 import { SORT_FIELDS, TAG_STATE, getTagState, hasActiveFilters } from "../utils/manualFilters.js";
 import { Button, InputField } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 import { ArrowIcon, SearchIcon } from "./icons.jsx";
 
 const VISIBLE_TAG_LIMIT = 12;
 
+// Enumerated tri-state hint: one literal key per state, never a built key string.
+const HINT_KEYS = {
+  [TAG_STATE.INCLUDE]: "filter.tagHint.include",
+  [TAG_STATE.EXCLUDE]: "filter.tagHint.exclude",
+  [TAG_STATE.OFF]: "filter.tagHint.off",
+};
+
 function TagChip({ tag, count, state, onClick }) {
+  const t = useMessages();
   const states = {
     [TAG_STATE.INCLUDE]: "ui-filter-chip--include",
     [TAG_STATE.EXCLUDE]: "ui-filter-chip--exclude",
     [TAG_STATE.OFF]: "ui-filter-chip--off",
-  };
-  const hint = {
-    [TAG_STATE.INCLUDE]: "including",
-    [TAG_STATE.EXCLUDE]: "excluding",
-    [TAG_STATE.OFF]: "not filtered",
   };
   return (
     <button
@@ -34,11 +38,15 @@ function TagChip({ tag, count, state, onClick }) {
       className={`ui-filter-chip ${states[state]}`}
       // Chips are tri-state, so aria-pressed (binary) would misreport "exclude".
       // Spell the state out for screen readers instead.
-      aria-label={`Tag ${tag}, ${count} bookmark${count === 1 ? "" : "s"}, ${hint[state]}. Activate to cycle include, exclude, off.`}
+      aria-label={t("filter.tagChip", {
+        tag,
+        count,
+        hint: t(HINT_KEYS[state]),
+      })}
     >
       {state === TAG_STATE.EXCLUDE ? "−" : ""}
       {tag}
-      <span className="ui-filter-chip-count">{count}</span>
+      <span className="ui-filter-chip-count">{t.count(count)}</span>
     </button>
   );
 }
@@ -59,6 +67,7 @@ const FilterBar = React.memo(function FilterBar({
   summary,
   style,
 }) {
+  const t = useMessages();
   const [showAllTags, setShowAllTags] = useState(false);
 
   const visibleTags = useMemo(
@@ -74,7 +83,7 @@ const FilterBar = React.memo(function FilterBar({
       className="ui-filter-bar mb-4 p-2"
       style={style}
       role="search"
-      aria-label="Filter bookmarks"
+      aria-label={t("filter.barLabel")}
     >
       <div className="flex items-center gap-2 flex-wrap">
         {/* The text filter is grouped apart from the discrete controls: below
@@ -87,15 +96,15 @@ const FilterBar = React.memo(function FilterBar({
             icon={<SearchIcon />}
             value={filters.text}
             onChange={(e) => onChange({ ...filters, text: e.target.value })}
-            placeholder="Filter instantly (no AI)…"
-            aria-label="Filter bookmarks by text"
+            placeholder={t("filter.textPlaceholder")}
+            aria-label={t("filter.textAria")}
             trailing={
               filters.text ? (
                 <button
                   type="button"
                   onClick={() => onChange({ ...filters, text: "" })}
                   className="ui-filter-clear"
-                  aria-label="Clear text filter"
+                  aria-label={t("filter.clearText")}
                 >
                   ✕
                 </button>
@@ -109,10 +118,10 @@ const FilterBar = React.memo(function FilterBar({
             id="filter-rating"
             value={filters.minRating}
             onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
-            aria-label="Minimum rating"
-            className="w-[9.375rem]"
+            aria-label={t("filter.minRating")}
+            className="ui-filter-select--rating"
           >
-            <option value={0}>Any rating</option>
+            <option value={0}>{t("filter.anyRating")}</option>
             {[1, 2, 3, 4, 5].map((n) => (
               <option key={n} value={n}>
                 {`${"★".repeat(n)}+`}
@@ -128,7 +137,7 @@ const FilterBar = React.memo(function FilterBar({
             onClick={() => onChange({ ...filters, brokenOnly: !filters.brokenOnly })}
             aria-pressed={Boolean(filters.brokenOnly)}
           >
-            Broken only
+            {t("filter.brokenOnly")}
           </Button>
 
           {/* #50: the other filter that reads something the app observed rather than
@@ -139,7 +148,7 @@ const FilterBar = React.memo(function FilterBar({
             onClick={() => onChange({ ...filters, neverOpened: !filters.neverOpened })}
             aria-pressed={Boolean(filters.neverOpened)}
           >
-            Never opened
+            {t("filter.neverOpened")}
           </Button>
 
           {/* #283: the third filter that reads something the app observed —
@@ -151,19 +160,19 @@ const FilterBar = React.memo(function FilterBar({
             onClick={() => onChange({ ...filters, untagged: !filters.untagged })}
             aria-pressed={Boolean(filters.untagged)}
           >
-            Untagged
+            {t("filter.untagged")}
           </Button>
 
           <FilterSelect
             id="filter-sort"
             value={filters.sortBy}
             onChange={(e) => onChange({ ...filters, sortBy: e.target.value })}
-            aria-label="Sort by"
-            className="w-[10.625rem]"
+            aria-label={t("filter.sortBy")}
+            className="ui-filter-select--sort"
           >
             {SORT_FIELDS.map((field) => (
               <option key={field.value} value={field.value}>
-                {field.label}
+                {t(field.labelKey)}
               </option>
             ))}
           </FilterSelect>
@@ -176,14 +185,16 @@ const FilterBar = React.memo(function FilterBar({
             }
             disabled={!filters.sortBy}
             leadingIcon={<ArrowIcon up={filters.order === "asc"} />}
-            aria-label={`Sort direction: ${filters.order === "asc" ? "ascending" : "descending"}. Activate to reverse.`}
+            aria-label={t(
+              filters.order === "asc" ? "filter.sortDirectionAsc" : "filter.sortDirectionDesc"
+            )}
           >
-            {filters.order === "asc" ? "Asc" : "Desc"}
+            {filters.order === "asc" ? t("filter.asc") : t("filter.desc")}
           </Button>
 
           {active && (
             <Button type="button" intent="secondary" onClick={onClear}>
-              Clear filters
+              {t("filter.clear")}
             </Button>
           )}
         </div>
@@ -206,7 +217,7 @@ const FilterBar = React.memo(function FilterBar({
               onClick={() => setShowAllTags(true)}
               className="ui-filter-chip ui-filter-chip--off"
             >
-              +{hiddenCount} more
+              {t("filter.moreTags", { count: hiddenCount })}
             </button>
           )}
           {showAllTags && tagFacets.length > VISIBLE_TAG_LIMIT && (
@@ -215,7 +226,7 @@ const FilterBar = React.memo(function FilterBar({
               onClick={() => setShowAllTags(false)}
               className="ui-filter-chip ui-filter-chip--off"
             >
-              Show fewer
+              {t("filter.showFewer")}
             </button>
           )}
         </div>
