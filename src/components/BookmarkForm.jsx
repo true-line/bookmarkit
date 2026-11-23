@@ -6,7 +6,7 @@ import { Button, InputField, Modal } from "../design-system/index.js";
 // StarRating stays on the legacy library for now: it carries the #24 rating
 // contract (string clamping, radiogroup keyboard nav) and the sticker sheet
 // defines no rating control to migrate onto. Its retirement rides #255.
-import { StarRating } from "./DesignSystem.jsx";
+import { StarRating } from "./StarRating.jsx";
 
 /**
  * #48: What the page said about itself, as prompt lines. Fetched page content is
