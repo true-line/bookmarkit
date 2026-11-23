@@ -9,25 +9,28 @@
 
 import React from "react";
 import { VIEW_MODES } from "../utils/listView.js";
+import { useMessages } from "../i18n/index.js";
 
-const LABELS = {
-  single: "Single column",
-  flow: "Flow columns",
-  grid: "Grid",
+// One literal key per mode, resolved at render time — never a built key string.
+const LABEL_KEYS = {
+  single: "viewSelector.single",
+  flow: "viewSelector.flow",
+  grid: "viewSelector.grid",
 };
 
 const ViewSelector = React.memo(function ViewSelector({ value, onChange }) {
+  const t = useMessages();
   return (
-    <div className="ui-segmented" role="group" aria-label="Bookmark list view">
+    <div className="ui-segmented" role="group" aria-label={t("viewSelector.groupLabel")}>
       {VIEW_MODES.map((mode) => (
         <button
           key={mode}
           type="button"
           onClick={() => onChange?.(mode)}
           aria-pressed={mode === value}
-          aria-label={`${LABELS[mode]} view`}
+          aria-label={t("viewSelector.modeAria", { label: t(LABEL_KEYS[mode]) })}
         >
-          {LABELS[mode]}
+          {t(LABEL_KEYS[mode])}
         </button>
       ))}
     </div>

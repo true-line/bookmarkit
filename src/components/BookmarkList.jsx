@@ -12,6 +12,7 @@ import { VariableSizeList } from "react-window";
 import BookmarkCard from "./BookmarkCard.jsx";
 import FilterBar from "./FilterBar.jsx";
 import EmptyShelfStates from "./EmptyShelf.jsx";
+import { useMessages } from "../i18n/index.js";
 import { chunkIntoRows, columnsForWidth, rowKeyFor, COLUMN_GAP } from "../utils/listColumns.js";
 
 const ITEM_HEIGHT = 104; // px — initial card-row estimate before measurement
@@ -133,6 +134,7 @@ const VirtualizedListInner = React.forwardRef(function VirtualizedListInner(
   { children, style },
   ref
 ) {
+  const t = useMessages();
   const rows = React.Children.toArray(children);
   const filterRow = rows.find((row) => row.props.index === 0);
   const bookmarkRows = rows.filter((row) => row.props.index !== 0);
@@ -140,7 +142,7 @@ const VirtualizedListInner = React.forwardRef(function VirtualizedListInner(
   return (
     <div ref={ref} style={style}>
       {filterRow}
-      <div role="list" aria-label="Bookmarks">
+      <div role="list" aria-label={t("bookmarkList.listLabel")}>
         {bookmarkRows}
       </div>
     </div>
