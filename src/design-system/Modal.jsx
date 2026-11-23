@@ -1,5 +1,6 @@
 import React from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap.js";
+import { useMessages } from "../i18n/index.js";
 
 // Unified UI design system dialog (#238). Sticker-sheet variants:
 // modal-standard, modal-alert, modal-drawer. The screen mockups exercise
@@ -53,7 +54,7 @@ export function Modal({
   children,
   footer = null,
   onClose,
-  closeLabel = "Close",
+  closeLabel,
   closeDisabled = false,
   hideClose = false,
   onScrimClick,
@@ -62,6 +63,9 @@ export function Modal({
 }) {
   const panelRef = React.useRef(null);
   useFocusTrap(panelRef);
+  // The close control's name is the caller's to override; by default it is the
+  // catalogue's, so the design system carries no copy of its own (#284).
+  const t = useMessages();
   const [closing, setClosing] = React.useState(false);
   const titleId = React.useId();
   const descriptionId = React.useId();
@@ -101,7 +105,7 @@ export function Modal({
           description={description}
           descriptionId={descriptionId}
           closable={Boolean(onClose) && !hideClose}
-          closeLabel={closeLabel}
+          closeLabel={closeLabel ?? t("common.close")}
           closeDisabled={closeDisabled}
           onClose={requestClose}
         />
