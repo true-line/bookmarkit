@@ -142,6 +142,18 @@ const FilterBar = React.memo(function FilterBar({
             Never opened
           </Button>
 
+          {/* #283: the third filter that reads something the app observed —
+            saved without a tag. The navigation sidebar's Untagged view sets
+            this same flag. */}
+          <Button
+            type="button"
+            intent={filters.untagged ? "primary" : "outlined"}
+            onClick={() => onChange({ ...filters, untagged: !filters.untagged })}
+            aria-pressed={Boolean(filters.untagged)}
+          >
+            Untagged
+          </Button>
+
           <FilterSelect
             id="filter-sort"
             value={filters.sortBy}
