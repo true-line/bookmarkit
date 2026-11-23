@@ -14,6 +14,14 @@ import { findBrokenLinks } from "./linkHealth.js";
 import { findInFolder } from "./folderTree.js";
 import { findNeverOpened } from "./openHistory.js";
 
+/**
+ * Saved without a single tag. #283: the third thing the app observed rather
+ * than was told — like a dead link or an unopened bookmark — and the same rule
+ * the digest's "untagged" section uses, so the two cannot disagree.
+ */
+export const isUntagged = (bookmark) =>
+  !(Array.isArray(bookmark?.tags) ? bookmark.tags : []).length;
+
 export const EMPTY_FILTERS = Object.freeze({
   text: "",
   includeTags: [],
@@ -27,6 +35,8 @@ export const EMPTY_FILTERS = Object.freeze({
   folder: "",
   // #50: only what nothing has opened.
   neverOpened: false,
+  // #283: only what was saved without a tag.
+  untagged: false,
   sortBy: "",
   order: "asc",
 });
@@ -80,6 +90,7 @@ export function hasActiveFilters(filters) {
     filters.minRating > 0 ||
     filters.brokenOnly ||
     filters.neverOpened ||
+    filters.untagged ||
     filters.folder ||
     filters.sortBy
   );
@@ -130,6 +141,7 @@ const NARROWERS = [
       : list,
   (filters, list) => (filters.brokenOnly ? findBrokenLinks(list) : list),
   (filters, list) => (filters.neverOpened ? findNeverOpened(list) : list),
+  (filters, list) => (filters.untagged ? list.filter(isUntagged) : list),
   (filters, list) => (filters.folder ? findInFolder(filters.folder, list) : list),
 ];
 

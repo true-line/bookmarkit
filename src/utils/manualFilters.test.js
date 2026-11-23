@@ -275,3 +275,33 @@ describe("filtering by folder (#55)", () => {
     expect(result.map((b) => b.id)).toEqual(["2"]);
   });
 });
+
+describe("untagged (#283)", () => {
+  // "Random blog" is the one fixture saved without a tag.
+  const noTagsAtAll = { ...list[2] };
+  delete noTagsAtAll.tags;
+
+  it("is off by default, and counts as an active filter when on", () => {
+    expect(EMPTY_FILTERS.untagged).toBe(false);
+    expect(hasActiveFilters({ ...EMPTY_FILTERS, untagged: true })).toBe(true);
+  });
+
+  it("keeps only the bookmarks saved without a tag", () => {
+    const result = applyManualFilters({ ...EMPTY_FILTERS, untagged: true }, list);
+
+    expect(result.map((b) => b.id)).toEqual(["3"]);
+  });
+
+  it("reads a bookmark with no tag list at all as untagged", () => {
+    const result = applyManualFilters({ ...EMPTY_FILTERS, untagged: true }, [list[0], noTagsAtAll]);
+
+    expect(result.map((b) => b.id)).toEqual(["3"]);
+  });
+
+  it("narrows like the other filters when composed with them", () => {
+    const result = applyManualFilters({ ...EMPTY_FILTERS, untagged: true, minRating: 3 }, list);
+
+    // The untagged bookmark is unrated, so nothing survives both.
+    expect(result).toEqual([]);
+  });
+});

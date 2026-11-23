@@ -134,10 +134,21 @@ describe("reading views back (#49)", () => {
       minRating: 5,
       brokenOnly: false,
       neverOpened: false,
+      untagged: false,
       folder: "Work/Project A",
       sortBy: "",
       order: "asc",
     });
+  });
+
+  it("keeps the untagged filter a view was saved with (#283)", () => {
+    const view = sanitizeView({
+      name: "Loose ends",
+      plan: [],
+      filters: { ...EMPTY_FILTERS, untagged: true },
+    });
+
+    expect(view.filters.untagged).toBe(true);
   });
 
   it("keeps a sort field the filter bar really offers", () => {
