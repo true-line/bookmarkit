@@ -1,5 +1,18 @@
 # bookmarkit
 
+## 0.12.0
+
+### Minor Changes
+
+- 5e6e5e9: The selection and bulk-edit bar speaks the unified design system. The bar wears the manager mockup's selection-context reading — a surface-container band under a hairline border with the count on tabular label type beside the check-box marker — the tag fields render the design system's input-field, the folder and rating pickers the tokenized native select, and the actions take the canonical button intents (Apply on primary, Delete on destructive, Clear selection on secondary). The bar's behavior is untouched: the inline confirmation (including the two-press guard above ten bookmarks) stays in the bar so the selection remains visible, and every control still keeps the selection alive while it is being edited.
+- b4bddd9: The bookmark cards and list speak the unified design system. Cards render the card-interactive recipe — the resting hairline card with the hover raise, and the selected state on the 2px primary border with `aria-pressed` — with the favicon in the mockup's 36px roundel, the title on headline-sm, the URL on the mono `ui-url` line, tags as `ui-tag` chips and the rating as the mockup's filled-star-plus-count reading. The list's column engine is unchanged, rows space to the mockup's 16px gutter, and the virtualizer's scroller no longer forces left-to-right layout onto the filter strip and cards in right-to-left documents.
+- 6b70b28: Migrate the manager header and toolbar chrome to the unified design system
+
+  The manager's chrome region now speaks the design system's vocabulary (#250, first link of the sequential manager chain): the natural-language search is an `input-field-icon` — 40px, leading search icon, a provider-ready badge on the trailing slot and the shared spinner while the agent runs; header actions render the canonical intents (Add New on primary, the rest on the mockup's button-with-icon outlined reading with the screens' icons, Help/Options as tonal bordered icon buttons); the filter strip's text input is an input-field-icon with a trailing clear affordance, the rating/sort selects are the tokenized native element, the broken-only/never-opened toggles and tri-state tag chips wear the pressed-state recipe, and sort direction is a button-with-icon; the view selector is the mockup's segmented control with `aria-pressed`; saved-view chips and folder-tree rows carry the pressed-state and sidebar-row recipes. Filtering and sorting logic is untouched, and the header action strip keeps its full-width, scrollable #210 behavior.
+
+- e2b1037: The empty shelf speaks the unified design system. The empty collection renders the manager mockup's centerpiece — the layered card-stack mark, the headline-scale title, body copy on the on-surface-variant tone, and the canonical button intents (Add New on primary with the add icon, Import on secondary with the upload icon) — and the filtered-to-empty readings (an agent action that matched nothing, or a search with no results) keep their compact column at headline scale with Clear search on secondary. Which state shows, and when, is unchanged.
+- 1446fd9: The link-sweep bar speaks the unified design system. The status strip wears the manager band recipe — a surface-container fill under a hairline border — with the check sentence on body type, the counts as tonal `ui-tag` chips, the progress bar on the primary role over a surface-container-high track, and the canonical button intents (Stop and Show them on secondary; the ghost intent retires). Sweep behavior is untouched: the checks still run through the service worker with the public-HTTP boundary intact, and the finished sweep still hands off to the broken-only filter.
+
 ## 0.11.0
 
 ### Minor Changes
