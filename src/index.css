@@ -182,7 +182,7 @@ body {
   flex-shrink: 0;
 }
 
-/* ──────────────────────────────────────────────────────────────────────────────
+/* ─── Manager chrome compositions (#250) ──────────────────────────────────
    The header/toolbar region speaks the unified design system. These are the
    chrome-region compositions that have no sticker-sheet primitive — pressed
    chips, the segmented view control, the folder tree rows — built from the
@@ -444,7 +444,7 @@ body {
   color: var(--ui-on-surface);
 }
 
-/* ──────────────────────────────────────────────────────────────────────────────
+/* ─── Bookmark card (#251) ────────────────────────────────────────────────
    The card surface renders the design system's card-interactive recipe
    (components.css owns the resting card, hover raise and the selected 2px
    primary border); these are the card's own body — the mockup's 36px favicon
@@ -547,7 +547,7 @@ body {
   color: var(--ui-primary);
 }
 
-/* ──────────────────────────────────────────────────────────────────────────────
+/* ─── Selection bar (#252) ────────────────────────────────────────────────
    The bulk-edit bar wears the manager mockup's selection-context reading: a
    surface-container band under a hairline outline-variant border, the count
    on label-md tabular numerals with the check_box marker in primary, and
@@ -586,7 +586,7 @@ body {
   font: var(--ui-type-body-sm);
 }
 
-/* ──────────────────────────────────────────────────────────────────────────────
+/* ─── Empty shelf (#254) ──────────────────────────────────────────────
    The manager mockup's empty-shelf centerpiece: a centered column — the
    card-stack mark, the copy block, the actions — on headline/body type with
    the canonical button intents. The compact reading serves the filtered
@@ -633,7 +633,7 @@ body {
   padding-block-start: var(--ui-space-gutter-xs);
 }
 
-/* ──────────────────────────────────────────────────────────────────────────────
+/* ─── Link sweep bar (#253) ───────────────────────────────────────────
    The link check's status strip wears the manager band recipe the selection
    bar wears (surface-container under an outline-variant hairline), the
    sentence on body type, and the counts as ui-tag chips so the numbers read
@@ -676,7 +676,7 @@ body {
   transition: width var(--ui-duration-state) var(--ui-ease-state);
 }
 
-/* ──────────────────────────────────────────────────────────────────────────────
+/* ─── Narrow viewports ─────────────────────────────────────────────────────
    The action row is one nowrap, horizontally scrollable strip: once the view
    selector joined, the buttons outgrew the reading measure, so the header
    runs full width and the strip scrolls only when it still does not fit
