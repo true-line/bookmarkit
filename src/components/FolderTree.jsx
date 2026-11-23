@@ -19,6 +19,7 @@ import React, { useMemo, useState } from "react";
 import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
 import { UNFILED, buildFolderTree, folderName, parentFolder } from "../utils/folderTree.js";
 import { Button, IconButton, InputField } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 // #250: the folder pane migrates with the chrome region — mockup sidebar rows
 // (36px minimum, tonal hover, the active folder on surface-container-highest),
@@ -50,18 +51,24 @@ const Row = ({ depth = 0, active, children, ...props }) => (
   </div>
 );
 
-const Count = ({ node, active }) => (
-  <span className={`ui-tree-count ${active ? "ui-tree-count--active" : ""}`}>
-    {node.total}
-    {node.total !== node.count && <span title={`${node.count} directly in this folder`}>*</span>}
-  </span>
-);
+const Count = ({ node, active }) => {
+  const t = useMessages();
+  return (
+    <span className={`ui-tree-count ${active ? "ui-tree-count--active" : ""}`}>
+      {t.count(node.total)}
+      {node.total !== node.count && (
+        <span title={t("folderTree.countTitle", { count: node.count })}>*</span>
+      )}
+    </span>
+  );
+};
 
 /**
  * One folder and everything under it. Renaming is inline: the row becomes the
  * field, so the tree keeps its place instead of a dialog taking over.
  */
 function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, manageable }) {
+  const t = useMessages();
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(node.name);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -95,7 +102,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
               if (event.key === "Enter") rename();
               if (event.key === "Escape") setRenaming(false);
             }}
-            aria-label={`Rename ${node.path}`}
+            aria-label={t("folderTree.rename", { path: node.path })}
             wrapperClassName="flex-1"
             autoFocus
           />
@@ -120,7 +127,9 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
           <button
             type="button"
             onClick={() => onToggle(node.path)}
-            aria-label={`${isCollapsed ? "Expand" : "Collapse"} ${node.name}`}
+            aria-label={t(isCollapsed ? "folderTree.expand" : "folderTree.collapse", {
+              name: node.name,
+            })}
             aria-expanded={!isCollapsed}
             className="ui-tree-toggle"
           >
@@ -148,7 +157,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
         {manageable && (
           <>
             <IconButton
-              label={`Rename ${node.path}`}
+              label={t("folderTree.rename", { path: node.path })}
               onClick={() => {
                 setDraft(node.name);
                 setRenaming(true);
@@ -157,7 +166,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
               ✎
             </IconButton>
             <IconButton
-              label={`Remove folder ${node.path}`}
+              label={t("folderTree.removeFolder", { path: node.path })}
               onClick={() => setConfirmingDelete(true)}
             >
               ✕
@@ -170,8 +179,10 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
       {confirmingDelete && (
         <div className="ml-6 my-1 text-xs text-[var(--ui-on-surface-variant)]">
           <p className="mb-1">
-            Move {node.total} bookmark{node.total === 1 ? "" : "s"} to{" "}
-            {parentFolder(node.path) || "no folder"} and remove this folder?
+            {t("folderTree.deleteConfirm", {
+              count: node.total,
+              folder: parentFolder(node.path) || t("common.noFolder"),
+            })}
           </p>
           <div className="flex gap-2">
             <Button
@@ -182,10 +193,10 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
                 actions.onDelete(node.path);
               }}
             >
-              Remove
+              {t("folderTree.remove")}
             </Button>
             <Button type="button" intent="secondary" onClick={() => setConfirmingDelete(false)}>
-              Keep
+              {t("folderTree.keep")}
             </Button>
           </div>
         </div>
@@ -230,6 +241,7 @@ const FolderTree = React.memo(function FolderTree({
   /** Whether each row shows its rename and remove actions. */
   manageable = true,
 }) {
+  const t = useMessages();
   const [collapsed, setCollapsed] = useState(() => new Set());
   const { folders, unfiled, total } = useMemo(() => buildFolderTree(bookmarks), [bookmarks]);
 
@@ -276,7 +288,11 @@ const FolderTree = React.memo(function FolderTree({
 
   return (
     // Clicking a folder must not dismiss the selection a drop is about to move.
-    <nav className={`overflow-y-auto ${className}`} aria-label="Folders" {...keepsSelectionProps}>
+    <nav
+      className={`overflow-y-auto ${className}`}
+      aria-label={t("folderTree.treeLabel")}
+      {...keepsSelectionProps}
+    >
       {header}
       <ul>
         {showRoot && (
@@ -289,12 +305,12 @@ const FolderTree = React.memo(function FolderTree({
                 aria-pressed={activeFolder === ""}
                 className="flex-1 min-w-0 text-left truncate"
               >
-                All bookmarks
+                {t("folderTree.allBookmarks")}
               </button>
               <span
                 className={`ui-tree-count ${activeFolder === "" ? "ui-tree-count--active" : ""}`}
               >
-                {total}
+                {t.count(total)}
               </span>
             </Row>
           </li>
@@ -323,14 +339,14 @@ const FolderTree = React.memo(function FolderTree({
                 aria-pressed={activeFolder === UNFILED}
                 className="flex-1 min-w-0 text-left truncate"
               >
-                No folder
+                {t("folderTree.noFolder")}
               </button>
               <span
                 className={`ui-tree-count ${
                   activeFolder === UNFILED ? "ui-tree-count--active" : ""
                 }`}
               >
-                {unfiled}
+                {t.count(unfiled)}
               </span>
             </Row>
           </li>

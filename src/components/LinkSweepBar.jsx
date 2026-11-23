@@ -13,6 +13,7 @@
 
 import React from "react";
 import { Button, Tag } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 const LinkSweepBar = React.memo(function LinkSweepBar({
   running,
@@ -23,6 +24,7 @@ const LinkSweepBar = React.memo(function LinkSweepBar({
   onStop,
   onShowBroken,
 }) {
+  const t = useMessages();
   if (!running && brokenCount === 0) return null;
 
   return (
@@ -33,10 +35,8 @@ const LinkSweepBar = React.memo(function LinkSweepBar({
     >
       {running ? (
         <>
-          <span className="ui-sweep-status">Checking links… </span>
-          <Tag className="ui-numeric">
-            {checked} of {total}
-          </Tag>
+          <span className="ui-sweep-status">{t("linkSweep.checking")} </span>
+          <Tag className="ui-numeric">{t("linkSweep.progress", { checked, total })}</Tag>
           <div className="ui-sweep-track">
             <div
               className="ui-sweep-fill"
@@ -44,19 +44,23 @@ const LinkSweepBar = React.memo(function LinkSweepBar({
             />
           </div>
           <Button type="button" intent="secondary" onClick={onStop}>
-            Stop
+            {t("common.stop")}
           </Button>
         </>
       ) : (
         <span className="ui-sweep-status">
-          <Tag className="ui-numeric">{brokenCount}</Tag> {brokenCount === 1 ? "link" : "links"}{" "}
-          could not be reached.
+          {/* The count wears a ui-tag chip, so it rides in the sentence as the
+              `chip` slot; `count` is what picks the plural form. */}
+          {t.rich("linkSweep.brokenLinks", {
+            count: brokenCount,
+            chip: <Tag className="ui-numeric">{t.count(brokenCount)}</Tag>,
+          })}
         </span>
       )}
 
       {brokenCount > 0 && !brokenOnly && (
         <Button type="button" intent="secondary" onClick={onShowBroken}>
-          Show them
+          {t("linkSweep.showBroken")}
         </Button>
       )}
     </div>

@@ -8,6 +8,7 @@
 import React from "react";
 import { Card, Tag, Typography } from "../design-system/index.js";
 import { fromNestedControl } from "../design-system/nested-control.js";
+import { useMessages } from "../i18n/index.js";
 import { StarIcon } from "./icons.jsx";
 import { FAVICON_PLACEHOLDER, faviconSrc } from "../utils/favicon.js";
 
@@ -25,6 +26,7 @@ const BookmarkCard = React.memo(function BookmarkCard({
   onKeyDown,
   onDragStart,
 }) {
+  const t = useMessages();
   const isActive = isSelected || isMultiSelected;
   const isInvalid = bookmark.urlStatus === "invalid" || bookmark.unreachable;
   // #24: stored data is not guaranteed complete — the legacy view defaulted
@@ -67,8 +69,8 @@ const BookmarkCard = React.memo(function BookmarkCard({
         <span
           className="ui-bookmark-status"
           role="img"
-          title="URL could not be reached"
-          aria-label="URL could not be reached"
+          title={t("bookmarkCard.unreachable")}
+          aria-label={t("bookmarkCard.unreachable")}
         />
       )}
       <span className="ui-bookmark-favicon">
@@ -99,10 +101,10 @@ const BookmarkCard = React.memo(function BookmarkCard({
               <span
                 className="ui-bookmark-rating"
                 role="img"
-                aria-label={`Rated ${rating} out of 5 stars`}
+                aria-label={t("bookmarkCard.rating", { rating })}
               >
                 <StarIcon />
-                <span className="ui-type-label-sm ui-numeric">{rating}</span>
+                <span className="ui-type-label-sm ui-numeric">{t.count(rating)}</span>
               </span>
             )}
           </div>

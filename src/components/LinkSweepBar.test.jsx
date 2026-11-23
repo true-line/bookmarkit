@@ -56,6 +56,16 @@ describe("LinkSweepBar (#47)", () => {
     expect(screen.getByRole("status")).toHaveTextContent("1 link could not be reached.");
   });
 
+  it("keeps the count in its chip inside the one sentence", () => {
+    // #284: the sentence is one catalogue template; the count is its `chip`
+    // slot, so it reads for the locale as the words do.
+    setup({ brokenCount: 2089 });
+    const status = screen.getByRole("status");
+
+    expect(status.querySelector(".ui-tag")).toHaveTextContent("2,089");
+    expect(status).toHaveTextContent("2,089 links could not be reached.");
+  });
+
   it("drops the shortcut once the filter it sets is already on", () => {
     setup({ brokenCount: 2, brokenOnly: true });
 
