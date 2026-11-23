@@ -646,6 +646,13 @@ body {
   border: 1px solid var(--ui-outline-variant);
   border-radius: var(--ui-radius-lg);
 }
+/* The count chips step away from the band: .ui-tag's default tonal fill is
+   surface-container — the same token the bar itself is painted with — so
+   unmodified the chips read as bare padded text in both themes (codex P2 on
+   #281). container-highest is the neighboring tonal step in light and dark. */
+.ui-sweep-bar .ui-tag {
+  background: var(--ui-surface-container-highest);
+}
 .ui-sweep-status {
   color: var(--ui-on-surface);
   font: var(--ui-type-body-md);
