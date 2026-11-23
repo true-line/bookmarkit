@@ -17,8 +17,8 @@ import { useFocusTrap } from "../hooks/useFocusTrap.js";
 // The keyboard contract is the app's existing one, reused on purpose: the
 // focus trap, Escape-on-the-panel (stopped, so app shortcuts never fire
 // behind the dialog and a nested dialog does not close its parent) and focus
-// restoration all come from the same useFocusTrap hook the DesignSystem Modal
-// uses. A dialog is a dialog regardless of which token set dresses it.
+// restoration all come from the shared useFocusTrap hook. A dialog is a
+// dialog regardless of which token set dresses it.
 //
 // The exit animation is real per the spec — 150ms with its exit cubic-bezier —
 // so requestClose delays onClose by one exit duration, unless
@@ -181,9 +181,8 @@ function alertBodyId({ variant, description, bodyId }) {
   return variant === "alert" && !description ? bodyId : undefined;
 }
 
-// The scrim-click guard doubles as the Escape guard, matching the
-// DesignSystem Modal: a caller refusing to close mid-delete refuses both
-// routes with one prop.
+// The scrim-click guard doubles as the Escape guard: a caller refusing to
+// close mid-delete refuses both routes with one prop.
 function useDialogExitClose({ closing, setClosing, onClose, onScrimClick }) {
   return React.useCallback(() => {
     if (closing || !onClose) return;

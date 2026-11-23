@@ -4,8 +4,8 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Modal } from "./Modal.jsx";
 import { Button } from "./Button.jsx";
 
-// The unified dialog must keep the exact keyboard contract the DesignSystem
-// Modal established (#27, #23): focus moves in and is restored, Escape is
+// The dialog must keep the exact keyboard contract #27 and #23 established:
+// focus moves in and is restored, Escape is
 // trapped on the panel and never reaches the app behind it, and the scrim
 // guard covers both exits. The spec adds a real 150ms exit animation, so
 // closing is now deferred unless prefers-reduced-motion is on.

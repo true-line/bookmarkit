@@ -2,7 +2,7 @@
 // Class component required by React's error boundary API.
 
 import React from "react";
-import { Button } from "./DesignSystem.jsx";
+import { Button } from "../design-system/index.js";
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -30,7 +30,7 @@ export default class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div
-          className="ds-empty-state"
+          className="ui-error-fallback"
           style={{
             minHeight: "200px",
             color: "var(--text-primary, #111827)",

@@ -1,12 +1,13 @@
 import React from "react";
 import { Button, Modal } from "../design-system/index.js";
-import { Banner } from "./DesignSystem.jsx";
+import Banner from "./Banner.jsx";
 
 // #243: the unified design system's modal-standard — divided header, tinted
 // footer band, the tonal bordered Close. Focus trap, Escape, and focus
 // restoration come from the unified Modal's useFocusTrap (A11Y-04, PERF-05:
-// live region announcement and React.memo). The Banner stays on the legacy
-// library until the design system grows one; the shell is what migrated.
+// live region announcement and React.memo). The Banner is the standalone app
+// component re-homed when the legacy library retired (#255); the shell is
+// what migrated.
 const MessageModal = ({ message, type = "info", onClose }) => {
   return (
     <Modal

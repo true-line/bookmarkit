@@ -160,5 +160,5 @@ export default function BrandMarkScene({ size = 44 }) {
   }, [size]);
 
   if (failed) return <BrandMarkGlyph size={size} />;
-  return <canvas ref={canvasRef} className="ds-effects-canvas" width={size} height={size} />;
+  return <canvas ref={canvasRef} className="ui-effects-canvas" width={size} height={size} />;
 }
