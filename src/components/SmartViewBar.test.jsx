@@ -117,3 +117,22 @@ describe("SmartViewBar (#49)", () => {
     expect(screen.getByRole("button", { name: "Save current view" })).toBeInTheDocument();
   });
 });
+
+describe("SmartViewBar in the navigation sidebar (#283)", () => {
+  it("stacks under a visible caption, with the same chips and handlers", () => {
+    const { onApply } = setup({ layout: "stack" });
+    const group = screen.getByRole("group", { name: "Saved views" });
+
+    expect(group.textContent).toMatch(/^Saved views/);
+    fireEvent.click(screen.getByRole("button", { name: "Unread ML papers" }));
+    expect(onApply).toHaveBeenCalledWith(views[0]);
+  });
+
+  it("keeps the row above the list free of that caption", () => {
+    setup();
+
+    expect(screen.getByRole("group", { name: "Saved views" }).textContent).not.toMatch(
+      /^Saved views/
+    );
+  });
+});

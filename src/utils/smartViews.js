@@ -44,6 +44,7 @@ function sanitizeFilters(raw) {
     minRating: asRating(raw.minRating),
     brokenOnly: raw.brokenOnly === true,
     neverOpened: raw.neverOpened === true,
+    untagged: raw.untagged === true,
     folder: raw.folder === UNFILED ? UNFILED : normalizeFolderPath(raw.folder),
     sortBy: isSortableField(raw.sortBy) ? raw.sortBy : "",
     order: raw.order === "desc" ? "desc" : "asc",
@@ -183,4 +184,30 @@ export function matchingViewId(views, plan, filters) {
     (view) => sameShape(view.plan, currentPlan) && sameShape(view.filters, currentFilters)
   );
   return match?.id ?? null;
+}
+
+/**
+ * #283: which navigation smart view the screen shows, for the sidebar's
+ * `aria-current` row.
+ *
+ * Exactly one view flag means that view; none means the whole collection
+ * ("all"). A folder changes the answer: the folder is where the reader stands,
+ * so no view claims the page while one narrows the list, even with a flag set
+ * (the filter strip's toggles still combine the two). Two flags at once is no
+ * single view either. The digest claims its row while it is open.
+ *
+ * @param {object} filters The manual filters.
+ * @param {{digestOpen?: boolean}} [options]
+ * @returns {"all"|"digest"|"neverOpened"|"untagged"|"brokenLinks"|null}
+ */
+export function currentSmartView(filters, { digestOpen = false } = {}) {
+  if (digestOpen) return "digest";
+  if (filters?.folder) return null;
+  const views = [
+    filters?.neverOpened && "neverOpened",
+    filters?.brokenOnly && "brokenLinks",
+    filters?.untagged && "untagged",
+  ].filter(Boolean);
+  if (views.length === 1) return views[0];
+  return views.length === 0 ? "all" : null;
 }

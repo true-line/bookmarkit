@@ -102,6 +102,26 @@ describe("FilterBar (#53)", () => {
     );
   });
 
+  // #283: the same flag the navigation sidebar's Untagged view sets.
+  it("toggles the untagged filter and reports its state", () => {
+    const { onChange } = setup();
+    const toggle = screen.getByRole("button", { name: "Untagged" });
+
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+
+    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, untagged: true });
+  });
+
+  it("shows the untagged filter as pressed while it is on", () => {
+    setup({ filters: { ...EMPTY_FILTERS, untagged: true } });
+
+    expect(screen.getByRole("button", { name: "Untagged" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+  });
+
   it("disables the direction toggle until a sort field is chosen", () => {
     setup();
     expect(screen.getByRole("button", { name: /Sort direction/ })).toBeDisabled();

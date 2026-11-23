@@ -14,6 +14,14 @@ import { findBrokenLinks } from "./linkHealth.js";
 import { findInFolder } from "./folderTree.js";
 import { findNeverOpened } from "./openHistory.js";
 
+/**
+ * Saved without a single tag. #283: the third thing the app observed rather
+ * than was told — like a dead link or an unopened bookmark — and the same rule
+ * the digest's "untagged" section uses, so the two cannot disagree.
+ */
+export const isUntagged = (bookmark) =>
+  !(Array.isArray(bookmark?.tags) ? bookmark.tags : []).length;
+
 export const EMPTY_FILTERS = Object.freeze({
   text: "",
   includeTags: [],
@@ -27,6 +35,8 @@ export const EMPTY_FILTERS = Object.freeze({
   folder: "",
   // #50: only what nothing has opened.
   neverOpened: false,
+  // #283: only what was saved without a tag.
+  untagged: false,
   sortBy: "",
   order: "asc",
 });
@@ -71,6 +81,23 @@ export function cycleTag(filters, tag) {
   return { ...filters, includeTags: include, excludeTags: exclude };
 }
 
+/**
+ * #283: the filters after a navigation smart view is chosen. A smart view is
+ * the whole collection seen one way — the count on its row already says so —
+ * so it sets its own flag, clears the other two and leaves no folder. Text,
+ * tags, rating and sort are refinements on top of a view and stay. "all"
+ * clears every flag. The digest is not a filter and is not handled here.
+ */
+export function smartViewFilters(filters, view) {
+  return {
+    ...filters,
+    neverOpened: view === "neverOpened",
+    brokenOnly: view === "brokenLinks",
+    untagged: view === "untagged",
+    folder: "",
+  };
+}
+
 export function hasActiveFilters(filters) {
   if (!filters) return false;
   return Boolean(
@@ -80,6 +107,7 @@ export function hasActiveFilters(filters) {
     filters.minRating > 0 ||
     filters.brokenOnly ||
     filters.neverOpened ||
+    filters.untagged ||
     filters.folder ||
     filters.sortBy
   );
@@ -130,6 +158,7 @@ const NARROWERS = [
       : list,
   (filters, list) => (filters.brokenOnly ? findBrokenLinks(list) : list),
   (filters, list) => (filters.neverOpened ? findNeverOpened(list) : list),
+  (filters, list) => (filters.untagged ? list.filter(isUntagged) : list),
   (filters, list) => (filters.folder ? findInFolder(filters.folder, list) : list),
 ];
 

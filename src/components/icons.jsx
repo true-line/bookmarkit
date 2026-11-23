@@ -131,3 +131,59 @@ export function SparkIcon({ size = 14 }) {
     </svg>
   );
 }
+
+/** Help and keyboard shortcuts (help — a ringed question mark). */
+export function HelpIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 115.82 1c-.44.86-1.26 1.3-1.91 1.63-.51.26-.75.52-.75.87v.5" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+/* Navigation sidebar (#283): the mockup's Smart views glyphs — bookmarks,
+   calendar_today, visibility_off, label_off, link_off. */
+
+/** All Bookmarks (bookmarks). */
+export function BookmarksIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M19 21l-7-4-7 4V5a2 2 0 012-2h10a2 2 0 012 2z" />
+      <line x1="14" y1="3" x2="8" y2="11" />
+    </svg>
+  );
+}
+
+/** Never Opened (visibility_off). */
+export function EyeOffIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+/** Untagged (label_off — a tag struck through). */
+export function TagOffIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M12.586 2.586A2 2 0 0011.172 2H4a2 2 0 00-2 2v7.172a2 2 0 00.586 1.414l8.704 8.704a2.426 2.426 0 003.42 0l6.58-6.58a2.426 2.426 0 000-3.42z" />
+      <line x1="2" y1="2" x2="22" y2="22" />
+    </svg>
+  );
+}
+
+/** Broken Links (link_off — a link parted in the middle). */
+export function LinkOffIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M9 17H7A5 5 0 017 7" />
+      <path d="M15 7h2a5 5 0 014 8" />
+      <line x1="8" y1="12" x2="12" y2="12" />
+      <line x1="2" y1="2" x2="22" y2="22" />
+    </svg>
+  );
+}

@@ -21,6 +21,11 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Folder tree
   - Browse, filter, and rearrange folders; drag bookmarks into one, drag a folder
     into another, rename or remove one without losing what it held
+- Navigation sidebar (on wide windows, `lg` and up)
+  - Smart views with a count on each — **All Bookmarks**, **Weekly Digest**,
+    **Never Opened**, **Untagged**, **Broken Links** — beside the saved views and
+    the folder tree. Choosing a view shows the whole collection that way and
+    leaves any folder; the filter strip's toggles can still combine the two
 - Semantic search
   - Finds “that article about vector databases” even when none of those words are
     in the bookmark, and keeps the exact matches at the top
@@ -61,7 +66,8 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Appearance
   - A warm "bookmark shelf" look: paper-tinted surfaces, ink text, and the
     brand mark's red as the accent; custom themes keep working
-  - Optional 3D effects — a dimensional brand mark in the header and an
+  - Optional 3D effects — a dimensional brand mark (in the header, or in the
+    navigation sidebar on wide windows) and an
     animated card stack on an empty shelf — on by default in
     Options → Appearance. They render locally, respect reduced-motion
     settings, and fall back to static marks when WebGL is unavailable
@@ -352,11 +358,13 @@ There are no folder records anywhere. A folder is a path a bookmark carries in
 `folderId`, so a folder exists because something is in it and stops existing when
 the last bookmark leaves.
 
-"Folders" in the header shows the tree those paths imply, with a count per folder —
-the total including subfolders, marked with `*` when some of it is nested deeper.
-Clicking a folder filters to it and everything under it; clicking it again clears
-that. It is an ordinary filter, so it combines with tags, ratings and search, and a
-saved view can hold it.
+On wide windows (`lg` and up) the tree those paths imply sits in the navigation
+sidebar, with a count per folder — the total including subfolders, marked with `*`
+when some of it is nested deeper — and **Manage folders** reveals each row's rename
+and remove actions. On narrower windows, "Folders" in the header opens the same
+tree on request. Clicking a folder filters to it and everything under it; clicking
+it again clears that. It is an ordinary filter, so it combines with tags, ratings
+and search, and a saved view can hold it.
 
 Rearranging:
 
@@ -431,9 +439,10 @@ button. A slice the model fumbles costs only its own suggestions.
 ## Saved views
 
 Anything you can narrow the list down to can be named and kept. Once a search or
-a filter is active, **Save current view** appears above the list; saved views
-become chips you can click to return to them, and the chip for the view you are
-currently looking at is highlighted.
+a filter is active, **Save current view** appears in the navigation sidebar
+(above the list on narrower windows); saved views become chips you can click to
+return to them, and the chip for the view you are currently looking at is
+highlighted.
 
 A view remembers both halves of the screen: the agent's plan and the manual
 filters. It is stored under `bm_smart_views` in the extension's local storage
@@ -540,7 +549,8 @@ until you accept it, one row at a time or all at once.
 
 ## The weekly digest
 
-**Digest** in the header answers the question a large collection eventually
+**Weekly Digest** in the sidebar's smart views (the **Digest** button in the
+header on narrower windows) answers the question a large collection eventually
 raises: what did I save this week, and what have I been ignoring? It reports three
 things.
 
