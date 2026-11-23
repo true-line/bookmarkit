@@ -84,7 +84,7 @@ thing callers should not have to: `chrome.storage.local` in the extension,
 `localStorage` in the web build, and never `chrome.storage.sync`.
 
 Keyboard behavior has one owner at a time. The `Modal` wrapper in
-`DesignSystem.jsx` gives every dialog the same contract — focus moves in on
+`src/design-system/Modal.jsx` gives every dialog the same contract — focus moves in on
 open, Tab is trapped, Escape closes through the same guard as a scrim click, and
 focus returns to whatever opened it — so no dialog implements this for itself.
 Escape is handled on the dialog's own panel and stops there, which is what keeps
@@ -110,11 +110,11 @@ and maps the user's accent/accent-hover onto `--ui-brand-crimson`/`-hover`
 ship; only brand follows the user). Surfaces migrate one at a time by
 rendering under that attribute — `HelpModal` is the first (#244), in the app
 under the bridge's scope and in Storybook under the preview's scope root,
-which also supplies the UI-theme and direction toolbars. The existing
-`DesignSystem.jsx` library and its seven runtime theme
-variables are untouched — the two systems coexist until a surface switches,
-and the unified `Modal` deliberately reuses `useFocusTrap` so both dialog
-families keep one keyboard contract. The spec's `@components/*.html` files
+which also supplies the UI-theme and direction toolbars. The legacy
+`DesignSystem.jsx` library is retired (#255); `useTheme` and its seven
+runtime theme variables stay — they are the theme-bridge source feeding
+`data-ui-theme` — and the unified `Modal` reuses `useFocusTrap`, so the one
+keyboard contract carried over intact. The spec's `@components/*.html` files
 arrived afterwards as full screen mockups (22 screens, desktop and mobile)
 annotated with `data-component-id`; the components follow them where they are
 more specific than the token sections — filled buttons rest on the container

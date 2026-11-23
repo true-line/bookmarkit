@@ -7,8 +7,9 @@
 // components.css once (ideally through this entry) and rendering the surface
 // under the same attribute the decorator uses.
 //
-// The existing src/components/DesignSystem.jsx library stays untouched; the
-// two systems coexist until a surface switches.
+// The legacy src/components/DesignSystem.jsx library is retired (#255);
+// useTheme's seven runtime theme variables remain the theme-bridge source
+// (#240) feeding data-ui-theme.
 
 export { Button, IconButton } from "./Button.jsx";
 export { Card } from "./Card.jsx";
