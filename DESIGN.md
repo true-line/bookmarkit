@@ -131,6 +131,29 @@ say nothing, the sticker sheet's
 and spec text disagree (the digest's `rounded-md` card, inputs' 1px focus
 ring), the spec text wins and the divergence is noted in comments.
 
+### The manager shell (#283)
+
+`SidebarNav` is the mockup's persistent navigation sidebar: a fixed rail from
+`lg` up, holding the brand and the help entry point, Add Bookmark, the smart
+views, the saved views (`SmartViewBar`, `layout="stack"`) and the folder tree
+(`FolderTree`, with no root row and its row actions behind **Manage folders**).
+Two boundaries are worth keeping straight:
+
+- **A smart view is a manual filter, not a route.** `applySmartView` writes one
+  flag (`neverOpened`, `untagged`, `brokenOnly`) or opens the digest; it never
+  touches the agent plan, so the filtering order and the independent clearing
+  under "Application and state flow" hold unchanged. The rail is handed
+  `currentView` and only displays it (`aria-current="page"`); it decides
+  nothing. `untagged` is a manual filter like the other two observed-state
+  flags and round-trips through saved views; `utils/smartViewCounts.js` sizes
+  each view.
+- **Which chrome exists follows the viewport.** `useSidebarViewport` and
+  `.ui-sidebar` share Tailwind's `lg` (1024px) and `--app-sidebar-width`. From
+  `lg` the shell, the fixed header and the toast dock inset by the rail, and
+  the header's brand, help, Add, Digest and Folders toggle give way to it. Below
+  `lg` the rail is not mounted and the toggled pane and the saved-view row above
+  the list take over, until the mobile shell (#294) replaces that fallback.
+
 ## Reading the page
 
 `utils/pageMetadata.js` covers one question — what a page says about itself —
