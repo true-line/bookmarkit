@@ -7,7 +7,7 @@ import EmptyStack, { EmptyStackGlyph } from "./EmptyStack.jsx";
 // WebGL, so this is the honest "WebGL unavailable → static fallback" path.
 
 const glyph = (container) => container.querySelector("svg[aria-hidden='true']");
-const canvas = () => document.querySelector(".ds-effects-canvas");
+const canvas = () => document.querySelector(".ui-effects-canvas");
 
 describe("EmptyStack", () => {
   it("shows the static icon when the effects preference is off", () => {

@@ -3,7 +3,7 @@ import React from "react";
 // The static bookmark ribbon — the fallback for the 3D brand mark whenever the
 // effects are off, WebGL is unavailable, or motion is reduced. Decorative by
 // contract: never announced, never focusable, never a pointer target.
-export default function BrandMarkGlyph({ size = 44, className = "ds-brand-glyph" }) {
+export default function BrandMarkGlyph({ size = 44, className = "ui-brand-glyph" }) {
   return (
     <svg
       width={size}

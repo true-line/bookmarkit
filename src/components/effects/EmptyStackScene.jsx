@@ -105,5 +105,5 @@ export default function EmptyStackScene({ width = 260, height = 150 }) {
   }, [width, height]);
 
   if (failed) return <EmptyStackGlyph />;
-  return <canvas ref={canvasRef} className="ds-effects-canvas" width={width} height={height} />;
+  return <canvas ref={canvasRef} className="ui-effects-canvas" width={width} height={height} />;
 }
