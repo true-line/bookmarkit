@@ -153,3 +153,51 @@ describe("FolderTree (#55)", () => {
     expect(onDeleteFolder).not.toHaveBeenCalled();
   });
 });
+
+describe("FolderTree in the navigation sidebar (#283)", () => {
+  const filed = [at("1", "Work"), at("2", "Work/Project A"), at("3", "Personal")];
+
+  it("keeps the pane's behavior when nothing is asked of it", () => {
+    setup();
+
+    expect(screen.getByRole("button", { name: "All bookmarks" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rename Work" })).toBeInTheDocument();
+  });
+
+  it("drops its own root row, which the sidebar's All Bookmarks view stands in for", () => {
+    setup({ showRoot: false });
+
+    expect(screen.queryByRole("button", { name: "All bookmarks" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Personal" })).toBeInTheDocument();
+  });
+
+  it("keeps No folder as the root's drop target even when everything is filed", () => {
+    const { onMoveBookmarks } = setup({
+      showRoot: false,
+      alwaysShowUnfiled: true,
+      bookmarks: filed,
+    });
+
+    const unfiled = screen.getByRole("button", { name: "No folder" });
+    expect(unfiled.parentElement).toHaveTextContent(/No folder\s*0/);
+    fireEvent.drop(unfiled.parentElement, carrying(DRAG_BOOKMARKS, JSON.stringify(["1"])));
+
+    expect(onMoveBookmarks).toHaveBeenCalledWith(["1"], UNFILED);
+  });
+
+  it("keeps rename and remove off the rows until they are asked for", () => {
+    setup({ manageable: false });
+
+    expect(screen.getByRole("button", { name: "Work" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rename Work" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove folder Work" })).not.toBeInTheDocument();
+  });
+
+  it("renders the caller's caption inside the nav, above the list", () => {
+    setup({ header: <p>Folders, and how to manage them</p> });
+
+    const nav = screen.getByRole("navigation", { name: "Folders" });
+    expect(nav.firstElementChild.textContent).toBe("Folders, and how to manage them");
+    expect(nav.firstElementChild.nextElementSibling.tagName).toBe("UL");
+  });
+});

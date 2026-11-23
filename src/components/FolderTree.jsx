@@ -8,6 +8,12 @@
 // ids to the caller, which applies them through the same bulk-edit write as the
 // bar does — so dragging thirty bookmarks is one undo entry, and this file has no
 // idea a store exists.
+//
+// #283: in the navigation sidebar the tree stands without its root row (the All
+// Bookmarks view above it is that row), with "No folder" always present as the
+// drop target for the root, a caption of the caller's, and its per-row rename
+// and remove actions behind a `manageable` switch — the sidebar's "Manage
+// folders". All four default to the pane's behavior, which is unchanged.
 
 import React, { useMemo, useState } from "react";
 import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
@@ -55,7 +61,7 @@ const Count = ({ node, active }) => (
  * One folder and everything under it. Renaming is inline: the row becomes the
  * field, so the tree keeps its place instead of a dialog taking over.
  */
-function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions }) {
+function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, manageable }) {
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(node.name);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -138,18 +144,26 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
 
         <Count node={node} active={active || dropping} />
 
-        <IconButton
-          label={`Rename ${node.path}`}
-          onClick={() => {
-            setDraft(node.name);
-            setRenaming(true);
-          }}
-        >
-          ✎
-        </IconButton>
-        <IconButton label={`Remove folder ${node.path}`} onClick={() => setConfirmingDelete(true)}>
-          ✕
-        </IconButton>
+        {/* The row's actions wait for "Manage folders" where the caller has one. */}
+        {manageable && (
+          <>
+            <IconButton
+              label={`Rename ${node.path}`}
+              onClick={() => {
+                setDraft(node.name);
+                setRenaming(true);
+              }}
+            >
+              ✎
+            </IconButton>
+            <IconButton
+              label={`Remove folder ${node.path}`}
+              onClick={() => setConfirmingDelete(true)}
+            >
+              ✕
+            </IconButton>
+          </>
+        )}
       </Row>
 
       {/* Deleting a folder never deletes bookmarks, so the offer has to say where they go. */}
@@ -188,6 +202,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions })
               collapsed={collapsed}
               onToggle={onToggle}
               actions={actions}
+              manageable={manageable}
             />
           ))}
         </ul>
@@ -205,6 +220,15 @@ const FolderTree = React.memo(function FolderTree({
   onRenameFolder,
   onDeleteFolder,
   className = "",
+  // #283: the sidebar's three differences from the pane, each optional.
+  /** Rendered inside the nav, above the list — a caption and its controls. */
+  header = null,
+  /** Whether the tree's own "All bookmarks" row opens the list. */
+  showRoot = true,
+  /** Keep the "No folder" row even when nothing is unfiled: it is the root's drop target. */
+  alwaysShowUnfiled = false,
+  /** Whether each row shows its rename and remove actions. */
+  manageable = true,
 }) {
   const [collapsed, setCollapsed] = useState(() => new Set());
   const { folders, unfiled, total } = useMemo(() => buildFolderTree(bookmarks), [bookmarks]);
@@ -253,23 +277,28 @@ const FolderTree = React.memo(function FolderTree({
   return (
     // Clicking a folder must not dismiss the selection a drop is about to move.
     <nav className={`overflow-y-auto ${className}`} aria-label="Folders" {...keepsSelectionProps}>
+      {header}
       <ul>
-        <li onDragOver={(event) => event.preventDefault()} onDrop={dropOnRoot}>
-          <Row active={activeFolder === ""}>
-            <span className="w-4 shrink-0" aria-hidden="true" />
-            <button
-              type="button"
-              onClick={() => onSelect("")}
-              aria-pressed={activeFolder === ""}
-              className="flex-1 min-w-0 text-left truncate"
-            >
-              All bookmarks
-            </button>
-            <span className={`ui-tree-count ${activeFolder === "" ? "ui-tree-count--active" : ""}`}>
-              {total}
-            </span>
-          </Row>
-        </li>
+        {showRoot && (
+          <li onDragOver={(event) => event.preventDefault()} onDrop={dropOnRoot}>
+            <Row active={activeFolder === ""}>
+              <span className="w-4 shrink-0" aria-hidden="true" />
+              <button
+                type="button"
+                onClick={() => onSelect("")}
+                aria-pressed={activeFolder === ""}
+                className="flex-1 min-w-0 text-left truncate"
+              >
+                All bookmarks
+              </button>
+              <span
+                className={`ui-tree-count ${activeFolder === "" ? "ui-tree-count--active" : ""}`}
+              >
+                {total}
+              </span>
+            </Row>
+          </li>
+        )}
 
         {folders.map((node) => (
           <FolderNode
@@ -280,10 +309,11 @@ const FolderTree = React.memo(function FolderTree({
             collapsed={collapsed}
             onToggle={onToggle}
             actions={actions}
+            manageable={manageable}
           />
         ))}
 
-        {unfiled > 0 && (
+        {(unfiled > 0 || alwaysShowUnfiled) && (
           <li onDragOver={(event) => event.preventDefault()} onDrop={dropOnRoot}>
             <Row active={activeFolder === UNFILED}>
               <span className="w-4 shrink-0" aria-hidden="true" />
