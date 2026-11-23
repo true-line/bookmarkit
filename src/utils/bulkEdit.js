@@ -151,19 +151,39 @@ export function previousValuesFor(patches = [], bookmarks = []) {
 /**
  * How to describe a change before it is applied. The bar says this out loud
  * because "Apply" to 40 bookmarks should not be a surprise.
+ *
+ * The words come from the message catalogue through `t` (the bar's
+ * `useMessages()` translator, #284): one phrase per change, joined into the
+ * summary the `bulkEdit.describe` messages define.
+ *
+ * @param {object} change What the bar would apply.
+ * @param {number} count How many bookmarks it would touch.
+ * @param {(key: string, params?: object) => string} t The translator.
+ * @returns {string}
  */
-export function describeBulkEdit(change = {}, count = 0) {
+export function describeBulkEdit(change = {}, count = 0, t) {
   const parts = [];
   const add = asTagList(change.addTags);
   const remove = asTagList(change.removeTags);
-  if (add.length > 0) parts.push(`add ${add.join(", ")}`);
-  if (remove.length > 0) parts.push(`remove ${remove.join(", ")}`);
+  if (add.length > 0) parts.push(t("bulkEdit.describe.addTags", { tags: add.join(", ") }));
+  if (remove.length > 0) {
+    parts.push(t("bulkEdit.describe.removeTags", { tags: remove.join(", ") }));
+  }
   if (change.folderId !== undefined) {
-    parts.push(change.folderId ? `move to ${change.folderId}` : "move to no folder");
+    parts.push(
+      change.folderId
+        ? t("bulkEdit.describe.moveTo", { folder: change.folderId })
+        : t("bulkEdit.describe.moveToNoFolder")
+    );
   }
   if (change.rating !== undefined) {
-    parts.push(change.rating === 0 ? "clear rating" : `rate ${change.rating}`);
+    parts.push(
+      change.rating === 0
+        ? t("bulkEdit.describe.clearRating")
+        : t("bulkEdit.describe.rate", { rating: change.rating })
+    );
   }
-  const noun = count === 1 ? "bookmark" : "bookmarks";
-  return parts.length === 0 ? "" : `${parts.join(", ")} — ${count} ${noun}`;
+  return parts.length === 0
+    ? ""
+    : t("bulkEdit.describe.summary", { changes: parts.join(", "), count });
 }
