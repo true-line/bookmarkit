@@ -7,6 +7,7 @@ import {
   cycleTag,
   deriveTagCounts,
   hasActiveFilters,
+  smartViewFilters,
 } from "../utils/manualFilters.js";
 import { filterDuplicateImports, findDuplicateIds } from "../utils/duplicates.js";
 import {
@@ -23,7 +24,7 @@ import { isBroken } from "../utils/linkHealth.js";
 import { fetchUrlStatus } from "../utils/urlStatus.js";
 import { acceptedPatches } from "../utils/changeReview.js";
 import { openedPatch } from "../utils/openHistory.js";
-import { isViewWorthSaving, matchingViewId } from "../utils/smartViews.js";
+import { currentSmartView, isViewWorthSaving, matchingViewId } from "../utils/smartViews.js";
 import { useSemanticDedupe } from "../hooks/useSemanticDedupe.js";
 import { isSafeHttpUrl } from "../utils/url.js";
 import { parseNetscapeHtml } from "../utils/netscapeBookmarks.js";
@@ -651,41 +652,27 @@ const BookmarkApp = () => {
   // #283: a smart view chosen from the navigation sidebar. It is one manual
   // filter flag — the same write as the filter strip's toggle — so the agent
   // plan is untouched and the filtering order holds. The sidebar's views are
-  // exclusive, because a navigation row is either the view on screen or not;
-  // the strip's toggles stay independent. "All bookmarks" is the name taken
-  // literally: no view flag and no folder.
+  // exclusive, and each is the whole collection seen one way (the count on its
+  // row says so), so choosing one also leaves any folder; smartViewFilters
+  // says exactly what changes.
   const applySmartView = useCallback(
     (view) => {
       if (view === "digest") {
         showDigest();
         return;
       }
-      setManualFilters((prev) => ({
-        ...prev,
-        neverOpened: view === "neverOpened",
-        brokenOnly: view === "brokenLinks",
-        untagged: view === "untagged",
-        folder: view === "all" ? "" : prev.folder,
-      }));
+      setManualFilters((prev) => smartViewFilters(prev, view));
     },
     [showDigest]
   );
 
-  // Which sidebar row is the one on screen. Exactly one view flag means that
-  // view; none means the whole collection — unless a folder narrows it, since
-  // then the folder is where the reader stands. Two flags at once (the strip
-  // allows it) is no single view, so no row claims it. The digest claims its
-  // row while it is open.
-  const currentView = useMemo(() => {
-    if (digest) return "digest";
-    const flags = [
-      manualFilters.neverOpened && "neverOpened",
-      manualFilters.brokenOnly && "brokenLinks",
-      manualFilters.untagged && "untagged",
-    ].filter(Boolean);
-    if (flags.length === 1) return flags[0];
-    return flags.length === 0 && !manualFilters.folder ? "all" : null;
-  }, [digest, manualFilters]);
+  // Which sidebar row is the one on screen. Decided beside the other saved
+  // view rules in utils/smartViews.js, where it is tested: no view claims the
+  // page while a folder narrows the list.
+  const currentView = useMemo(
+    () => currentSmartView(manualFilters, { digestOpen: Boolean(digest) }),
+    [digest, manualFilters]
+  );
 
   // "Triage these" is the organizer, pointed at the untagged set rather than at
   // whatever is on screen.

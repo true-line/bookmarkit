@@ -81,6 +81,23 @@ export function cycleTag(filters, tag) {
   return { ...filters, includeTags: include, excludeTags: exclude };
 }
 
+/**
+ * #283: the filters after a navigation smart view is chosen. A smart view is
+ * the whole collection seen one way — the count on its row already says so —
+ * so it sets its own flag, clears the other two and leaves no folder. Text,
+ * tags, rating and sort are refinements on top of a view and stay. "all"
+ * clears every flag. The digest is not a filter and is not handled here.
+ */
+export function smartViewFilters(filters, view) {
+  return {
+    ...filters,
+    neverOpened: view === "neverOpened",
+    brokenOnly: view === "brokenLinks",
+    untagged: view === "untagged",
+    folder: "",
+  };
+}
+
 export function hasActiveFilters(filters) {
   if (!filters) return false;
   return Boolean(
