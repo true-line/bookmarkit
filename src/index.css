@@ -633,6 +633,49 @@ body {
   padding-block-start: var(--ui-space-gutter-xs);
 }
 
+/* ─── Link sweep bar (#253) ───────────────────────────────────────────────
+   The link check's status strip wears the manager band recipe the selection
+   bar wears (surface-container under an outline-variant hairline), the
+   sentence on body type, and the counts as ui-tag chips so the numbers read
+   in the tonal label vocabulary. The sweep's mechanics — the service-worker
+   round-trips, the public-HTTP boundary — are utils/ and background logic,
+   untouched here. */
+.ui-sweep-bar {
+  padding: var(--ui-space-gutter-md);
+  background: var(--ui-surface-container);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-lg);
+}
+/* The count chips step away from the band: .ui-tag's default tonal fill is
+   surface-container — the same token the bar itself is painted with — so
+   unmodified the chips read as bare padded text in both themes (codex P2 on
+   #281). container-highest is the neighboring tonal step in light and dark. */
+.ui-sweep-bar .ui-tag {
+  background: var(--ui-surface-container-highest);
+}
+.ui-sweep-status {
+  color: var(--ui-on-surface);
+  font: var(--ui-type-body-md);
+  /* The body type's font shorthand resets font-variant-numeric, so the
+     tabular reading is re-asserted here rather than relying on .ui-numeric
+     winning the cascade against components.css (#252's lesson). */
+  font-variant-numeric: tabular-nums;
+}
+.ui-sweep-track {
+  flex: 1;
+  min-width: 6rem;
+  height: 4px;
+  overflow: hidden;
+  background: var(--ui-surface-container-highest);
+  border-radius: var(--ui-radius-full);
+}
+.ui-sweep-fill {
+  height: 100%;
+  background: var(--ui-primary);
+  border-radius: var(--ui-radius-full);
+  transition: width var(--ui-duration-state) var(--ui-ease-state);
+}
+
 /* ─── Narrow viewports ────────────────────────────────────────────────────
    The action row is one nowrap, horizontally scrollable strip: once the view
    selector joined, the buttons outgrew the reading measure, so the header
