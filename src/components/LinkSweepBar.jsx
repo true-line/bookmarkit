@@ -4,9 +4,15 @@
 // links waiting to be dealt with. Dealing with them is the rest of the app's job:
 // the row hands over to the "broken only" filter, and from there a selection can
 // be re-tagged, edited or deleted like any other.
+//
+// #253: the bar speaks the unified design system — the manager band recipe the
+// selection bar wears (surface-container under an outline-variant hairline),
+// the status sentence on body type with tabular counts in ui-tag chips, the
+// progress track/fill on the primary role, and the canonical intents: Stop on
+// secondary, Show them on secondary (the ghost intent retires).
 
 import React from "react";
-import { Button } from "./DesignSystem.jsx";
+import { Button, Tag } from "../design-system/index.js";
 
 const LinkSweepBar = React.memo(function LinkSweepBar({
   running,
@@ -21,33 +27,35 @@ const LinkSweepBar = React.memo(function LinkSweepBar({
 
   return (
     <div
-      className="mb-4 p-3 rounded-lg border border-border bg-primary-bg flex items-center gap-3 flex-wrap"
+      className="ui-sweep-bar mb-4 flex items-center gap-3 flex-wrap"
       role="status"
       aria-live="polite"
     >
       {running ? (
         <>
-          <span className="text-sm text-primary-text">
-            Checking links… {checked} of {total}
-          </span>
-          <div className="flex-1 min-w-[6rem] h-1 bg-secondary-bg rounded">
+          <span className="ui-sweep-status">Checking links… </span>
+          <Tag className="ui-numeric">
+            {checked} of {total}
+          </Tag>
+          <div className="ui-sweep-track">
             <div
-              className="h-1 bg-accent rounded transition-all"
+              className="ui-sweep-fill"
               style={{ width: `${total ? Math.round((checked / total) * 100) : 0}%` }}
             />
           </div>
-          <Button type="button" intent="secondary" size="sm" onClick={onStop}>
+          <Button type="button" intent="secondary" onClick={onStop}>
             Stop
           </Button>
         </>
       ) : (
-        <span className="text-sm text-primary-text">
-          {brokenCount} link{brokenCount === 1 ? "" : "s"} could not be reached.
+        <span className="ui-sweep-status">
+          <Tag className="ui-numeric">{brokenCount}</Tag> {brokenCount === 1 ? "link" : "links"}{" "}
+          could not be reached.
         </span>
       )}
 
       {brokenCount > 0 && !brokenOnly && (
-        <Button type="button" intent="ghost" size="sm" onClick={onShowBroken}>
+        <Button type="button" intent="secondary" onClick={onShowBroken}>
           Show them
         </Button>
       )}
