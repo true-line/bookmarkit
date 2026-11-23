@@ -47,6 +47,7 @@ import { useDebounce } from "../hooks/useDebounce.js";
 import { useSmartViews } from "../hooks/useSmartViews.js";
 import { useUndoHistory } from "../hooks/useUndoHistory.js";
 import { useFolderSheetViewport } from "../hooks/useFolderSheetViewport.js";
+import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import HelpModal from "./HelpModal";
@@ -62,6 +63,7 @@ import DigestModal from "./DigestModal.jsx";
 import FolderTree, { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
+import SidebarNav from "./SidebarNav.jsx";
 import SmartViewBar from "./SmartViewBar.jsx";
 import BrandMark from "./effects/BrandMark.jsx";
 import { AgentPlan, Kbd, Toast } from "./DesignSystem.jsx";
@@ -75,6 +77,7 @@ import {
   CalendarIcon,
   CopiesIcon,
   HealthIcon,
+  HelpIcon,
   SearchIcon,
   SparkIcon,
   SwapIcon,
@@ -192,12 +195,19 @@ const BookmarkApp = () => {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   // #55: the folder tree, shown on request. It is a way to browse, not something
-  // the collection needs, so it does not take space until asked for.
+  // the collection needs, so it does not take space until asked for. #283: from
+  // `lg` up it always has that space — the navigation sidebar — so the on-request
+  // pane is the narrower viewports' way in.
   const [isFolderPaneOpen, setIsFolderPaneOpen] = useState(false);
   // #151: below `sm` the pane overlays the content as a full-width sheet, which
   // gets sheet keyboard behavior — see the Escape binding and selectFolder.
   const isFolderSheetViewport = useFolderSheetViewport();
   const isFolderSheet = isFolderPaneOpen && isFolderSheetViewport;
+  // #283: which chrome is mounted follows the viewport, not a preference. From
+  // `lg` the sidebar carries the folder tree and the saved views; below it they
+  // are the toggled pane and the row above the list. Neither holds state worth
+  // carrying across, and both would otherwise be on screen at once.
+  const isSidebarViewport = useSidebarViewport();
   const folderToggleRef = useRef(null);
   const closeFolderSheet = useCallback(() => {
     setIsFolderPaneOpen(false);
@@ -635,6 +645,45 @@ const BookmarkApp = () => {
     setDigest(null);
   }, []);
 
+  // #283: a smart view chosen from the navigation sidebar. It is one manual
+  // filter flag — the same write as the filter strip's toggle — so the agent
+  // plan is untouched and the filtering order holds. The sidebar's views are
+  // exclusive, because a navigation row is either the view on screen or not;
+  // the strip's toggles stay independent. "All bookmarks" is the name taken
+  // literally: no view flag and no folder.
+  const applySmartView = useCallback(
+    (view) => {
+      if (view === "digest") {
+        showDigest();
+        return;
+      }
+      setManualFilters((prev) => ({
+        ...prev,
+        neverOpened: view === "neverOpened",
+        brokenOnly: view === "brokenLinks",
+        untagged: view === "untagged",
+        folder: view === "all" ? "" : prev.folder,
+      }));
+    },
+    [showDigest]
+  );
+
+  // Which sidebar row is the one on screen. Exactly one view flag means that
+  // view; none means the whole collection — unless a folder narrows it, since
+  // then the folder is where the reader stands. Two flags at once (the strip
+  // allows it) is no single view, so no row claims it. The digest claims its
+  // row while it is open.
+  const currentView = useMemo(() => {
+    if (digest) return "digest";
+    const flags = [
+      manualFilters.neverOpened && "neverOpened",
+      manualFilters.brokenOnly && "brokenLinks",
+      manualFilters.untagged && "untagged",
+    ].filter(Boolean);
+    if (flags.length === 1) return flags[0];
+    return flags.length === 0 && !manualFilters.folder ? "all" : null;
+  }, [digest, manualFilters]);
+
   // "Triage these" is the organizer, pointed at the untagged set rather than at
   // whatever is on screen.
   const triageUntagged = useCallback(
@@ -1029,7 +1078,7 @@ const BookmarkApp = () => {
 
   return (
     <div
-      className="h-screen overflow-hidden flex flex-col font-sans"
+      className="bookmarkit-shell h-screen overflow-hidden flex flex-col font-sans"
       style={{ backgroundColor: "var(--bg-secondary)" }}
     >
       {/* UX-06: Import progress bar */}
@@ -1049,14 +1098,40 @@ const BookmarkApp = () => {
 
       {/* UX-05: Undo toast */}
       {undo.offered && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="bookmarkit-toast-dock">
           <Toast label={undo.offered.label} onAction={undo.undoLast} onDismiss={undo.dismiss} />
         </div>
       )}
 
+      {/* #283: the navigation sidebar — from `lg` up, where it has room. */}
+      {isSidebarViewport && (
+        <SidebarNav
+          effectsEnabled={effects}
+          onHelp={() => setIsHelpModalOpen(true)}
+          onAddBookmark={handleAddNewBookmark}
+          bookmarks={bookmarks}
+          currentView={currentView}
+          digestBusy={digestEngine.running}
+          onSmartView={applySmartView}
+          brokenCount={brokenCount}
+          views={views}
+          activeSavedViewId={activeViewId}
+          canSaveView={isViewWorthSaving(lastAction, manualFilters)}
+          onApplyView={applyView}
+          onSaveView={handleSaveView}
+          onForgetView={forgetView}
+          activeFolder={manualFilters.folder}
+          onSelectFolder={selectFolder}
+          onMoveBookmarks={handleMoveToFolder}
+          onMoveFolder={handleRenameFolder}
+          onRenameFolder={handleRenameFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+      )}
+
       <header
         ref={headerRef}
-        className={`bookmarkit-header fixed top-0 left-0 right-0 z-10 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
+        className={`bookmarkit-header fixed top-0 inset-x-0 z-10 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
         role="banner"
       >
         <div className="bg-[var(--ui-surface-container-lowest)] shadow-sm border-b border-[var(--ui-outline-variant)]">
@@ -1067,7 +1142,10 @@ const BookmarkApp = () => {
           <div className="px-4 py-4 flex flex-col gap-2">
             <h1 className="sr-only">BookmarkIt</h1>
             <div className="flex justify-center items-center gap-3">
-              <BrandMark enabled={effects} size={44} />
+              {/* #283: from `lg` the brand lives in the navigation sidebar. */}
+              <span className="lg:hidden">
+                <BrandMark enabled={effects} size={44} />
+              </span>
               <div className="w-full max-w-md">
                 <InputField
                   id="search-input"
@@ -1098,38 +1176,39 @@ const BookmarkApp = () => {
                   }
                 />
               </div>
-              <IconButton label="Help" onClick={() => setIsHelpModalOpen(true)}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  viewBox="0 0 24 24"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M9.09 9a3 3 0 115.82 1c-.44.86-1.26 1.3-1.91 1.63-.51.26-.75.52-.75.87v.5" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
+              {/* #283: from `lg` the help entry point lives in the navigation
+                  sidebar, beside the brand. */}
+              <IconButton
+                label="Help"
+                onClick={() => setIsHelpModalOpen(true)}
+                className="lg:hidden"
+              >
+                <HelpIcon size={24} />
               </IconButton>
             </div>
             {/* One horizontally scrollable strip: at phone widths the buttons
                 used to wrap into five rows and eat the viewport. */}
             <div className="bookmarkit-header-actions flex items-center gap-2">
-              <Button onClick={handleAddNewBookmark} leadingIcon={<AddIcon />}>
+              {/* #283: from `lg` Add Bookmark and the folder tree live in the
+                  navigation sidebar; this toggle and the pane it opens are the
+                  narrower viewports' way in. */}
+              <Button
+                onClick={handleAddNewBookmark}
+                leadingIcon={<AddIcon />}
+                className="lg:hidden"
+              >
                 Add New
               </Button>
-              <Button
-                ref={folderToggleRef}
-                intent="outlined"
-                onClick={() => setIsFolderPaneOpen((open) => !open)}
-                aria-pressed={isFolderPaneOpen}
-              >
-                {isFolderPaneOpen ? "Hide Folders" : "Folders"}
-              </Button>
+              {!isSidebarViewport && (
+                <Button
+                  ref={folderToggleRef}
+                  intent="outlined"
+                  onClick={() => setIsFolderPaneOpen((open) => !open)}
+                  aria-pressed={isFolderPaneOpen}
+                >
+                  {isFolderPaneOpen ? "Hide Folders" : "Folders"}
+                </Button>
+              )}
               <Button intent="outlined" onClick={handleImportExportOpen} leadingIcon={<SwapIcon />}>
                 Import/Export
               </Button>
@@ -1146,6 +1225,7 @@ const BookmarkApp = () => {
                 onClick={showDigest}
                 loading={digestEngine.running}
                 leadingIcon={<CalendarIcon />}
+                className="lg:hidden"
               >
                 Digest
               </Button>
@@ -1220,7 +1300,7 @@ const BookmarkApp = () => {
             across a 4K screen. The folder pane narrows the list and the list
             itself decides whether that still earns another column. */}
         <div className="relative flex-1 min-h-0 w-full mx-auto px-4 flex gap-4 max-w-none min-[2752px]:max-w-[2720px]">
-          {isFolderPaneOpen && (
+          {isFolderPaneOpen && !isSidebarViewport && (
             <FolderTree
               bookmarks={bookmarks}
               activeFolder={manualFilters.folder}
@@ -1246,14 +1326,17 @@ const BookmarkApp = () => {
               </div>
             )}
 
-            <SmartViewBar
-              views={views}
-              activeViewId={activeViewId}
-              canSave={isViewWorthSaving(lastAction, manualFilters)}
-              onApply={applyView}
-              onSave={handleSaveView}
-              onForget={forgetView}
-            />
+            {/* #283: from `lg` the saved views live in the navigation sidebar. */}
+            {!isSidebarViewport && (
+              <SmartViewBar
+                views={views}
+                activeViewId={activeViewId}
+                canSave={isViewWorthSaving(lastAction, manualFilters)}
+                onApply={applyView}
+                onSave={handleSaveView}
+                onForget={forgetView}
+              />
+            )}
 
             <LinkSweepBar
               running={sweep.running}
@@ -1301,7 +1384,9 @@ const BookmarkApp = () => {
                 onBookmarkClick={handleBookmarkClick}
                 onBookmarkDoubleClick={handleBookmarkDoubleClick}
                 onBookmarkKeyDown={handleBookmarkKeyDown}
-                onBookmarkDragStart={isFolderPaneOpen ? handleBookmarkDragStart : undefined}
+                onBookmarkDragStart={
+                  isFolderPaneOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
+                }
                 isLoading={isLoading}
                 bookmarksTotal={bookmarks.length}
                 searchActive={!!debouncedSearchQuery || hasActiveFilters(effectiveFilters)}

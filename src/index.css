@@ -134,6 +134,7 @@
   --search-max: 28rem;
   --favicon-size: 2.5rem;
   --app-header-height: 9rem;
+  --app-sidebar-width: 18rem;
   --duration-normal: 200ms;
   --duration-slow: 300ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -165,6 +166,24 @@ body {
    could never make offsetHeight report anything smaller. */
 .bookmarkit-header {
   height: auto;
+}
+
+/* The undo toast is centred on the workspace, not the viewport: from `lg` the
+   navigation sidebar's width comes off the inline start first, so the toast
+   stays under the list in either reading direction (#283). */
+.bookmarkit-toast-dock {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--space-4);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  justify-content: safe center;
+  pointer-events: none;
+}
+
+.bookmarkit-toast-dock > * {
+  pointer-events: auto;
 }
 
 .bookmarkit-main--header-visible {
@@ -442,6 +461,252 @@ body {
 }
 .ui-tree-count--active {
   color: var(--ui-on-surface);
+}
+
+/* ─── Navigation sidebar (#283) ──────────────────────────────────────────
+   The mockup manager's persistent sidebar (design/mockups/bookmarkit_manager
+   167–288): brand header, the Add Bookmark primary at 40px, the Smart views
+   and Folders navs on the tree row's recipe, label-sm tabular counts.
+
+   The rail itself is fixed from `lg` up, and the shell, the fixed header and
+   the toast dock give up its width on the inline-start side; below `lg` it is
+   not mounted at all (useSidebarViewport) and the header keeps the Folders
+   toggle, the toggled pane and the saved-view row above the list. The
+   breakpoint (1024px) is Tailwind's `lg`, which the `lg:hidden` duplicates in
+   the header must agree with; the mobile shell (#294) replaces the fallback.
+
+   `.ui-sidebar--standalone` is the same rail placed by its caller — Storybook
+   — with neither the fixed position nor the viewport rule. */
+.ui-sidebar {
+  display: none;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-lg);
+  width: var(--app-sidebar-width);
+  padding: var(--ui-space-gutter-lg);
+  background: var(--ui-surface-container-low);
+  border-inline-end: 1px solid var(--ui-outline-variant);
+  color: var(--ui-on-surface);
+}
+
+.ui-sidebar--standalone {
+  position: relative;
+  display: flex;
+  flex: none;
+  height: 100%;
+}
+
+@media (min-width: 1024px) {
+  .bookmarkit-shell {
+    padding-inline-start: var(--app-sidebar-width);
+  }
+
+  /* The fixed header starts where the rail ends — `inset-x-0` in the markup
+     still spans the viewport below this breakpoint. Logical, so the rail and
+     the header trade sides together in a right-to-left document. */
+  .bookmarkit-header {
+    inset-inline-start: var(--app-sidebar-width);
+  }
+
+  .bookmarkit-toast-dock {
+    inset-inline-start: var(--app-sidebar-width);
+  }
+
+  .ui-sidebar:not(.ui-sidebar--standalone) {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 10;
+    display: flex;
+    overflow-y: auto;
+  }
+}
+
+.ui-sidebar-brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-gutter-sm);
+}
+
+.ui-sidebar-title {
+  min-width: 0;
+  text-align: start;
+}
+
+/* "Local-first": the privacy line under the name — the one thing the brand
+   header says, per the spec's voice rule that what stays local is stated. */
+.ui-sidebar-tagline {
+  display: block;
+  color: var(--ui-on-surface-variant);
+}
+
+/* Section captions — "Views", "Saved views", "Folders". */
+.ui-sidebar-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-gutter-xs);
+  margin: 0;
+  padding-inline: 10px;
+  padding-block-end: var(--ui-space-gutter-xs);
+  font: var(--ui-type-label-sm);
+  color: var(--ui-on-surface-variant);
+}
+
+.ui-sidebar-nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-xs);
+  text-align: start;
+}
+
+/* A smart-view row: the tree row's recipe (36px, tonal hover, 8px radius) with
+   the view on screen resting on surface-container-highest, as the mockup draws
+   it. The label wraps rather than truncating — the spec forbids nowrap on
+   multi-word control copy — so a long translation grows the row, not a clip. */
+.ui-sidebar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+  width: 100%;
+  min-height: 36px;
+  padding-inline: 10px;
+  padding-block: var(--ui-space-gutter-xs);
+  border: 0;
+  border-radius: var(--ui-radius);
+  background: none;
+  font: var(--ui-type-label-md);
+  color: var(--ui-on-surface-variant);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-state) var(--ui-ease-state),
+    color var(--ui-duration-state) var(--ui-ease-state);
+}
+
+.ui-sidebar-row:hover {
+  background: var(--ui-surface-container);
+}
+
+.ui-sidebar-row[aria-current="page"],
+.ui-sidebar-row[aria-current="page"]:hover {
+  background: var(--ui-surface-container-highest);
+  color: var(--ui-on-surface);
+}
+
+.ui-sidebar-row:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+.ui-sidebar-row-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.ui-sidebar-row[aria-current="page"] .ui-sidebar-row-icon {
+  color: var(--ui-primary);
+}
+
+.ui-sidebar-row-label {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ui-sidebar-row-count {
+  flex: none;
+  font: var(--ui-type-label-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Broken links is the one view whose news is bad: its icon and count wear the
+   danger role, on screen or not. The label beside them keeps it from being
+   status by color alone. */
+.ui-sidebar-row.ui-sidebar-row--danger :is(.ui-sidebar-row-icon, .ui-sidebar-row-count) {
+  color: var(--ui-danger);
+}
+
+/* The mockup's primary action stands a step above the rows. */
+.ui-sidebar-primary {
+  flex: none;
+  width: 100%;
+  min-height: 40px;
+}
+
+/* "Manage folders" — the quiet label-sm primary link in the Folders caption,
+   filled once it is switched on (the dark on-container swap, as on filled
+   buttons). */
+.ui-sidebar-manage {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding-inline: var(--ui-space-gutter-xs);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  font: var(--ui-type-label-sm);
+  color: var(--ui-primary);
+  cursor: pointer;
+}
+
+.ui-sidebar-manage:hover {
+  background: var(--ui-surface-container);
+}
+
+.ui-sidebar-manage:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+.ui-sidebar-manage[aria-pressed="true"] {
+  background: var(--ui-primary-container);
+  color: var(--ui-on-primary);
+}
+
+[data-ui-theme="dark"] .ui-sidebar-manage[aria-pressed="true"] {
+  color: var(--ui-on-primary-container);
+}
+
+/* The folder list takes whatever height the rail has left and scrolls inside
+   itself; its caption stays put over the scroll. */
+.ui-sidebar-folders {
+  flex: 1 1 auto;
+  min-height: 7rem;
+}
+
+.ui-sidebar-folders > .ui-sidebar-caption {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--ui-surface-container-low);
+}
+
+/* Saved views, stacked (SmartViewBar layout="stack"). */
+.ui-sidebar-saved {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-sm);
+}
+
+.ui-sidebar-saved-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-gutter-xs);
+}
+
+.ui-sidebar-saved-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-sm);
+}
+
+.ui-sidebar-saved-actions {
+  display: flex;
+  gap: var(--ui-space-gutter-xs);
 }
 
 /* ─── Bookmark card (#251) ────────────────────────────────────────────────
