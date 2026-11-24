@@ -200,15 +200,25 @@ sentence outside a component (`describeBulkEdit` takes the bar's translator).
 The unified design system's `Modal` reads its default close label the same
 way, so the primitives carry no copy of their own.
 
+Logic that is not a component's render — a hook's callback, a utility, the LLM
+error classifier — calls `getMessages()` from the same module (#307). It returns
+the translator for the locale and catalogue the nearest `MessageProvider`
+rendered with, and English with no provider. `MessageProvider` publishes its
+translator as it renders, so a child's effect already sees it, and the call is
+made when a message is raised rather than at module load, so a hook's callbacks
+keep their empty dependency arrays and a message raised after a locale change
+reads in the new locale. A message already on screen keeps the language it was
+raised in. `classifyLLMError` follows the same split as everything else that
+touches an error: the _category_ is decided in code and callers branch on it,
+and only the sentence comes from the catalogue (`llmError.*`), read through the
+translator in effect or one the caller passes.
+
 Still written in code, on purpose: key names and other values shown as they
-are, glyphs, URL examples, LLM prompts and console labels. **Not migrated
-yet:** messages raised by logic — the status and error sentences built in
-`src/hooks/*` (archive recovery, the link sweep, LLM settings, the organizer,
-theme upload, undo history, the store) and `src/llm/errors.js`, plus the undo
-labels in `utils/bookmarkUndo.js` and the digest's bucket titles in
-`utils/digest.js`. They reach the page as toasts, banners and form errors
-once the translator is threaded through the hooks, which is the step a
-language selector still needs.
+are, glyphs, URL examples, LLM prompts and console labels. Two near-misses are
+deliberate too: the error `useAgentEngine` throws on an uninterpretable reply
+is a classification signal the classifier matches by wording and is never
+shown, and `loadError` is the store's own error text, which the page shows as
+the `{error}` of a catalogue message rather than as a sentence of its own.
 
 ## Reading the page
 
