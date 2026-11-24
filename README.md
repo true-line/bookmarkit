@@ -45,12 +45,14 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
     its width — one on small screens, up to five on the largest — reflowing as
     the window or the folder pane changes), or **Grid** (the same cards denser,
     up to eight columns)
-  - Multi‑select (Cmd/Ctrl+Click), open in new tab (click the selected bookmark,
+  - Multi‑select (Cmd/Ctrl+Click, or **Select** in the header's filter row on
+    narrow windows), open in new tab (click the selected bookmark,
     double‑click, or Enter)
   - Detect and remove duplicates by the page they point at, with an optional
     second opinion from your LLM on the same article saved under two URLs
   - Bulk edit a multi-selection: add or remove tags, move to a folder, set or
-    clear ratings
+    clear ratings — on narrow windows the selection sits in a bar pinned to
+    the bottom of the screen (**N selected**, **Clear**, **Bulk Edit**)
   - Undo the last ten changes with Cmd/Ctrl+Z — edits, adds, deletes, imports,
     de‑duplication, sorts, and “replace all”
 - URL status
