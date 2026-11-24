@@ -61,6 +61,13 @@ export const SORT_FIELDS = Object.freeze([
 
 export const isSortableField = (value) => SORT_FIELDS.some((field) => field.value === value);
 
+/**
+ * The rating filter's ladder. Kept with the filter vocabulary rather than in
+ * either control that renders it — the filter bar and the shell's compact row
+ * (#299) share it, so the two cannot drift.
+ */
+export const RATING_VALUES = Object.freeze([1, 2, 3, 4, 5]);
+
 // Tag chips cycle through three states rather than offering separate include/exclude
 // controls: unset → include → exclude → unset.
 export const TAG_STATE = { OFF: "off", INCLUDE: "include", EXCLUDE: "exclude" };

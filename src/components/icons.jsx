@@ -35,6 +35,16 @@ export function ArrowIcon({ up = true, size = 16 }) {
   );
 }
 
+/** The shell's date quick sort (swap_vert): the two directions, one press apart. */
+export function SortIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M8 4v13M4.5 13.5L8 17l3.5-3.5" />
+      <path d="M16 20V7M12.5 10.5L16 7l3.5 3.5" />
+    </svg>
+  );
+}
+
 /** "Add Bookmark" (button-primary leading icon). */
 export function AddIcon({ size = 18 }) {
   return (

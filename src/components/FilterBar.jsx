@@ -10,7 +10,13 @@
 // index.css beside the app's other chrome compositions.
 
 import React, { useMemo, useState } from "react";
-import { SORT_FIELDS, TAG_STATE, getTagState, hasActiveFilters } from "../utils/manualFilters.js";
+import {
+  RATING_VALUES,
+  SORT_FIELDS,
+  TAG_STATE,
+  getTagState,
+  hasActiveFilters,
+} from "../utils/manualFilters.js";
 import { Button, InputField } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
 import { ArrowIcon, SearchIcon } from "./icons.jsx";
@@ -58,6 +64,64 @@ const FilterSelect = ({ className, ...props }) => (
   <select className={`ui-input ui-filter-select ${className}`} {...props} />
 );
 
+// The rating filter (#53) and the sort pair — field and direction (#49) — as
+// their own pieces: the shell's compact row repeats the rating control below
+// `lg` (#299), and pulling them out of FilterBar keeps the bar's function
+// budget for the composition rather than for two selects.
+const RatingSelect = ({ filters, onChange }) => {
+  const t = useMessages();
+  return (
+    <FilterSelect
+      id="filter-rating"
+      value={filters.minRating}
+      onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
+      aria-label={t("filter.minRating")}
+      className="ui-filter-select--rating"
+    >
+      <option value={0}>{t("filter.anyRating")}</option>
+      {RATING_VALUES.map((n) => (
+        <option key={n} value={n}>
+          {`${"★".repeat(n)}+`}
+        </option>
+      ))}
+    </FilterSelect>
+  );
+};
+
+const SortControls = ({ filters, onChange }) => {
+  const t = useMessages();
+  return (
+    <>
+      <FilterSelect
+        id="filter-sort"
+        value={filters.sortBy}
+        onChange={(e) => onChange({ ...filters, sortBy: e.target.value })}
+        aria-label={t("filter.sortBy")}
+        className="ui-filter-select--sort"
+      >
+        {SORT_FIELDS.map((field) => (
+          <option key={field.value} value={field.value}>
+            {t(field.labelKey)}
+          </option>
+        ))}
+      </FilterSelect>
+
+      <Button
+        type="button"
+        intent="outlined"
+        onClick={() => onChange({ ...filters, order: filters.order === "asc" ? "desc" : "asc" })}
+        disabled={!filters.sortBy}
+        leadingIcon={<ArrowIcon up={filters.order === "asc"} />}
+        aria-label={t(
+          filters.order === "asc" ? "filter.sortDirectionAsc" : "filter.sortDirectionDesc"
+        )}
+      >
+        {filters.order === "asc" ? t("filter.asc") : t("filter.desc")}
+      </Button>
+    </>
+  );
+};
+
 const FilterBar = React.memo(function FilterBar({
   filters,
   tagFacets,
@@ -66,6 +130,9 @@ const FilterBar = React.memo(function FilterBar({
   onClear,
   summary,
   style,
+  // #299: below `lg` the shell's compact row owns rating and sort, so this
+  // bar hides its own rather than offering the same control twice on screen.
+  showSortControls = true,
 }) {
   const t = useMessages();
   const [showAllTags, setShowAllTags] = useState(false);
@@ -114,20 +181,7 @@ const FilterBar = React.memo(function FilterBar({
         </div>
 
         <div className="ui-filter-controls flex items-center gap-2 flex-wrap">
-          <FilterSelect
-            id="filter-rating"
-            value={filters.minRating}
-            onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
-            aria-label={t("filter.minRating")}
-            className="ui-filter-select--rating"
-          >
-            <option value={0}>{t("filter.anyRating")}</option>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {`${"★".repeat(n)}+`}
-              </option>
-            ))}
-          </FilterSelect>
+          {showSortControls && <RatingSelect filters={filters} onChange={onChange} />}
 
           {/* #47: what the sweep found, as a filter — the status it reads is written
             by the link check, so this stays useful with no LLM and no network. */}
@@ -163,34 +217,7 @@ const FilterBar = React.memo(function FilterBar({
             {t("filter.untagged")}
           </Button>
 
-          <FilterSelect
-            id="filter-sort"
-            value={filters.sortBy}
-            onChange={(e) => onChange({ ...filters, sortBy: e.target.value })}
-            aria-label={t("filter.sortBy")}
-            className="ui-filter-select--sort"
-          >
-            {SORT_FIELDS.map((field) => (
-              <option key={field.value} value={field.value}>
-                {t(field.labelKey)}
-              </option>
-            ))}
-          </FilterSelect>
-
-          <Button
-            type="button"
-            intent="outlined"
-            onClick={() =>
-              onChange({ ...filters, order: filters.order === "asc" ? "desc" : "asc" })
-            }
-            disabled={!filters.sortBy}
-            leadingIcon={<ArrowIcon up={filters.order === "asc"} />}
-            aria-label={t(
-              filters.order === "asc" ? "filter.sortDirectionAsc" : "filter.sortDirectionDesc"
-            )}
-          >
-            {filters.order === "asc" ? t("filter.asc") : t("filter.desc")}
-          </Button>
+          {showSortControls && <SortControls filters={filters} onChange={onChange} />}
 
           {active && (
             <Button type="button" intent="secondary" onClick={onClear}>
