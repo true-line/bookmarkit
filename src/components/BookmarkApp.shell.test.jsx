@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import BookmarkApp from "./BookmarkApp.jsx";
 import { installFakeChromeBookmarks } from "../test/fakeChromeBookmarks.js";
 
@@ -9,13 +9,29 @@ import { installFakeChromeBookmarks } from "../test/fakeChromeBookmarks.js";
 // which chrome exists below the breakpoint, and what opening the drawer does to
 // the rest of the page. The store is the in-memory fake Chrome bookmarks API.
 
-// jsdom has no matchMedia; `matches` stands for the viewport being `lg` up.
-const installMatchMedia = (matches) => {
+// jsdom has no matchMedia. This stands for the viewport, which a test can move
+// across `lg` after the first render the way resizing a window would.
+const installViewport = () => {
+  const state = { matches: false };
+  const listeners = new Set();
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     writable: true,
-    value: vi.fn().mockImplementation((query) => ({ query, matches })),
+    value: vi.fn().mockImplementation((query) => ({
+      query,
+      get matches() {
+        return state.matches;
+      },
+      addEventListener: (type, listener) => listeners.add(listener),
+      removeEventListener: (type, listener) => listeners.delete(listener),
+    })),
   });
+  return {
+    resizeTo(matches) {
+      state.matches = matches;
+      listeners.forEach((listener) => listener({ matches }));
+    },
+  };
 };
 
 beforeEach(() => {
@@ -40,9 +56,14 @@ const renderShell = async () => {
   return screen.findByRole("banner");
 };
 
+const openDrawer = async () => {
+  fireEvent.click(screen.getByRole("button", { name: "Open navigation menu" }));
+  return screen.findByRole("dialog", { name: "BookmarkIt navigation" });
+};
+
 describe("BookmarkApp's shell below `lg` (#294)", () => {
   it("carries the top bar, and none of the chrome the drawer replaced", async () => {
-    installMatchMedia(false);
+    installViewport();
 
     const bar = within(await renderShell());
 
@@ -55,7 +76,8 @@ describe("BookmarkApp's shell below `lg` (#294)", () => {
   });
 
   it("has neither the top bar nor a menu button from `lg`, where the rail is", async () => {
-    installMatchMedia(true);
+    const viewport = installViewport();
+    viewport.resizeTo(true);
 
     const bar = within(await renderShell());
 
@@ -64,12 +86,10 @@ describe("BookmarkApp's shell below `lg` (#294)", () => {
   });
 
   it("opens the navigation drawer and makes the rest of the page inert", async () => {
-    installMatchMedia(false);
+    installViewport();
     await renderShell();
 
-    fireEvent.click(screen.getByRole("button", { name: "Open navigation menu" }));
-
-    const drawer = screen.getByRole("dialog", { name: "BookmarkIt navigation" });
+    const drawer = await openDrawer();
     expect(within(drawer).getByRole("navigation", { name: "Smart views" })).toBeInTheDocument();
     expect(screen.getByRole("banner")).toHaveAttribute("inert");
     expect(screen.getByRole("main")).toHaveAttribute("inert");
@@ -78,6 +98,25 @@ describe("BookmarkApp's shell below `lg` (#294)", () => {
 
     // Escape runs the drawer's exit animation first, like every dialog's.
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("banner")).not.toHaveAttribute("inert");
+  });
+
+  it("gives the page back when the window grows past `lg` with the drawer open", async () => {
+    const viewport = installViewport();
+    await renderShell();
+    await openDrawer();
+
+    act(() => viewport.resizeTo(true));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("complementary")).toBeInTheDocument();
+    expect(screen.getByRole("banner")).not.toHaveAttribute("inert");
+    expect(screen.getByRole("main")).not.toHaveAttribute("inert");
+
+    // The drawer does not come back when the window narrows again.
+    act(() => viewport.resizeTo(false));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("banner")).not.toHaveAttribute("inert");
   });
 });

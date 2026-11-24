@@ -212,6 +212,13 @@ const BookmarkApp = () => {
   // folder tree and the saved views have exactly one home at every width.
   const isSidebarViewport = useSidebarViewport();
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  // Crossing into the rail's viewport takes the drawer away, and its state must
+  // not outlive it: the page would stay inert with no dialog on screen. The
+  // flag is masked for that first render and cleared straight after.
+  const navDrawerOpen = isNavDrawerOpen && !isSidebarViewport;
+  useEffect(() => {
+    if (isSidebarViewport) setIsNavDrawerOpen(false);
+  }, [isSidebarViewport]);
   const [bookmarksToDelete, setBookmarksToDelete] = useState([]);
   // #50: the digest being read, null when none is.
   const [digest, setDigest] = useState(null);
@@ -752,7 +759,7 @@ const BookmarkApp = () => {
     Boolean(digest) ||
     // #294: the navigation drawer. It handles its own Escape, as every dialog
     // does; this keeps the list shortcuts from firing behind it.
-    isNavDrawerOpen;
+    navDrawerOpen;
 
   useKeyboardShortcuts(
     {
@@ -1111,7 +1118,7 @@ const BookmarkApp = () => {
           onDeleteFolder={handleDeleteFolder}
         />
       )}
-      {!isSidebarViewport && isNavDrawerOpen && (
+      {!isSidebarViewport && navDrawerOpen && (
         <NavDrawer
           effectsEnabled={effects}
           onHelp={() => setIsHelpModalOpen(true)}
@@ -1133,7 +1140,10 @@ const BookmarkApp = () => {
           views={views}
           activeSavedViewId={activeViewId}
           canSaveView={isViewWorthSaving(lastAction, manualFilters)}
-          onApplyView={applyView}
+          onApplyView={(view) => {
+            setIsNavDrawerOpen(false);
+            applyView(view);
+          }}
           onSaveView={handleSaveView}
           onForgetView={forgetView}
           activeFolder={manualFilters.folder}
@@ -1149,7 +1159,7 @@ const BookmarkApp = () => {
           focus and the accessibility tree stay in the dialog. */}
       <header
         ref={headerRef}
-        inert={isNavDrawerOpen || undefined}
+        inert={navDrawerOpen || undefined}
         className={`bookmarkit-header fixed top-0 inset-x-0 z-10 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
         role="banner"
       >
@@ -1167,7 +1177,7 @@ const BookmarkApp = () => {
               <MobileTopBar
                 title={shellTitle}
                 savedCount={displayedBookmarks.length}
-                navOpen={isNavDrawerOpen}
+                navOpen={navDrawerOpen}
                 onOpenNav={() => setIsNavDrawerOpen(true)}
                 onAdd={handleAddNewBookmark}
                 effectsEnabled={effects}
@@ -1297,7 +1307,7 @@ const BookmarkApp = () => {
       </header>
 
       <main
-        inert={isNavDrawerOpen || undefined}
+        inert={navDrawerOpen || undefined}
         className={`bookmarkit-main flex-1 overflow-hidden flex flex-col transition-all duration-300 ${isHeaderVisible ? "bookmarkit-main--header-visible" : "bookmarkit-main--header-hidden"}`}
         role="main"
       >
@@ -1364,7 +1374,7 @@ const BookmarkApp = () => {
                 onBookmarkDragStart={
                   // #55: dragging onto a folder needs the tree on screen — the
                   // rail from `lg`, the drawer below it while it is open.
-                  isNavDrawerOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
+                  navDrawerOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
                 }
                 isLoading={isLoading}
                 bookmarksTotal={bookmarks.length}
