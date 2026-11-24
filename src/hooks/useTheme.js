@@ -147,9 +147,8 @@ export function useTheme() {
   // SEC-07: Upload validation lives here
   const uploadTheme = useCallback(async (file, showMessage) => {
     if (!file) return;
-    const t = getMessages();
     if (file.size > 100 * 1024) {
-      showMessage(t("themeUpload.tooLarge"), "error");
+      showMessage(getMessages()("themeUpload.tooLarge"), "error");
       return;
     }
     try {
@@ -162,13 +161,13 @@ export function useTheme() {
         themeData = JSON.parse(text);
       }
       if (!themeData || typeof themeData !== "object" || Array.isArray(themeData)) {
-        showMessage(t("themeUpload.invalidFormat"), "error");
+        showMessage(getMessages()("themeUpload.invalidFormat"), "error");
         return;
       }
       const unknownKeys = Object.keys(themeData).filter((k) => !REQUIRED_THEME_KEYS.includes(k));
       if (unknownKeys.length > 0) {
         showMessage(
-          t("themeUpload.unknownProperties", { properties: unknownKeys.join(", ") }),
+          getMessages()("themeUpload.unknownProperties", { properties: unknownKeys.join(", ") }),
           "error"
         );
         return;
@@ -176,7 +175,7 @@ export function useTheme() {
       const missing = REQUIRED_THEME_KEYS.filter((key) => !themeData[key]);
       if (missing.length > 0) {
         showMessage(
-          t("themeUpload.missingProperties", { properties: missing.join(", ") }),
+          getMessages()("themeUpload.missingProperties", { properties: missing.join(", ") }),
           "error"
         );
         return;
@@ -187,7 +186,7 @@ export function useTheme() {
       };
       const invalidKeys = REQUIRED_THEME_KEYS.filter((k) => !isSafeColor(themeData[k]));
       if (invalidKeys.length > 0) {
-        showMessage(t("themeUpload.invalidColors"), "error");
+        showMessage(getMessages()("themeUpload.invalidColors"), "error");
         return;
       }
       const themeName = file.name.replace(/\.(json|yaml|yml)$/i, "");
@@ -196,9 +195,9 @@ export function useTheme() {
         saveThemeToPersistence("bm_themes", JSON.stringify(next));
         return next;
       });
-      showMessage(t("themeUpload.uploaded", { name: themeName }), "success");
+      showMessage(getMessages()("themeUpload.uploaded", { name: themeName }), "success");
     } catch {
-      showMessage(t("themeUpload.failed"), "error");
+      showMessage(getMessages()("themeUpload.failed"), "error");
     }
   }, []);
 

@@ -142,21 +142,20 @@ export function useLLMSettings(showMessage) {
   const enableEncryption = useCallback(
     async (passphrase) => {
       if (!passphrase) return;
-      const t = getMessages();
       try {
         const blob = await encryptString(JSON.stringify(options), passphrase);
         // #36: staying plaintext is recoverable; losing the key is not.
         if (!(await writeSetting(OPTIONS_ENC_KEY, blob))) {
-          showMessage(t("llmSettings.encryptSaveFailed"), "error");
+          showMessage(getMessages()("llmSettings.encryptSaveFailed"), "error");
           return;
         }
         await dropSetting(OPTIONS_KEY);
         passphraseRef.current = passphrase;
         setEncrypted(true);
         setLocked(false);
-        showMessage(t("llmSettings.encrypted"), "success");
+        showMessage(getMessages()("llmSettings.encrypted"), "success");
       } catch {
-        showMessage(t("llmSettings.encryptFailed"), "error");
+        showMessage(getMessages()("llmSettings.encryptFailed"), "error");
       }
     },
     [options, showMessage]
