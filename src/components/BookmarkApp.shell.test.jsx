@@ -90,6 +90,7 @@ describe("BookmarkApp's shell below `lg` (#294)", () => {
     await renderShell();
 
     const drawer = await openDrawer();
+
     expect(within(drawer).getByRole("navigation", { name: "Smart views" })).toBeInTheDocument();
     expect(screen.getByRole("banner")).toHaveAttribute("inert");
     expect(screen.getByRole("main")).toHaveAttribute("inert");
