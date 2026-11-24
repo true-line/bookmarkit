@@ -157,6 +157,59 @@ Two boundaries are worth keeping straight:
   `lg` the rail is not mounted and the toggled pane and the saved-view row above
   the list take over, until the mobile shell (#294) replaces that fallback.
 
+## UI message catalogue
+
+The copy of the manager's components and the popup lives in the English
+message catalogue under `src/i18n/messages/` (#284) — groundwork for an
+interface-language selector, which does not exist yet. `en.js` merges three
+files split only by the 400-line lint limit (`enList.js`, `enDialogs.js`,
+`enModals.js`); a locale adds a `<locale>.js` beside them and mounts
+`MessageProvider { locale, messages }`.
+
+Components read messages through `useMessages()` from `src/i18n/index.js`: a
+translator `t` that is stable across renders and works with no provider (the
+default locale is always `en`, whatever the browser's). A locale that lacks a
+key falls back to the English message, then to the key string, with a
+one-time development warning. Keys are flat and dotted, namespaced by surface
+(`t("filter.anyRating")`), and always written as literals at the call site —
+directly or through a table of literal keys (`SORT_FIELDS`, a tab spec) — so
+no key is ever built at runtime.
+
+Messages are complete templates with named placeholders, never concatenated
+partial sentences (design spec, Voice & Content Strategy):
+
+- a number passed as a parameter is formatted with `Intl.NumberFormat`, and a
+  plural message is a `{ one, other }` object whose form `Intl.PluralRules`
+  picks from the `{count}` parameter;
+- `t.count`, `t.date` and `t.relative` format a bare count, date or relative
+  time in the same locale;
+- `t.rich(key, params)` renders a template that carries inline emphasis
+  (`<strong>` and `<em>`, the only elements a template may name) or a slot
+  that holds markup of its own — the count chip in the link-sweep sentence,
+  the key caps in the header hint, the two titles of a duplicate pair. The
+  sentence stays one template in the translator's word order. Plain `t()` on
+  the same key drops the emphasis and leaves a markup-only slot visible,
+  which is what an `aria-label` or a `title` should read.
+
+A catalogue is data, so it cannot put anything else on the page: an element
+outside the allow-list stays as literal text, and a parameter's value is
+never parsed as markup.
+
+`createTranslator(locale, messages)` is exported for code that composes a
+sentence outside a component (`describeBulkEdit` takes the bar's translator).
+The unified design system's `Modal` reads its default close label the same
+way, so the primitives carry no copy of their own.
+
+Still written in code, on purpose: key names and other values shown as they
+are, glyphs, URL examples, LLM prompts and console labels. **Not migrated
+yet:** messages raised by logic — the status and error sentences built in
+`src/hooks/*` (archive recovery, the link sweep, LLM settings, the organizer,
+theme upload, undo history, the store) and `src/llm/errors.js`, plus the undo
+labels in `utils/bookmarkUndo.js` and the digest's bucket titles in
+`utils/digest.js`. They reach the page as toasts, banners and form errors
+once the translator is threaded through the hooks, which is the step a
+language selector still needs.
+
 ## Reading the page
 
 `utils/pageMetadata.js` covers one question — what a page says about itself —
