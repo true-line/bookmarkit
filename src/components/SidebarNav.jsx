@@ -125,7 +125,7 @@ const SidebarNav = React.memo(function SidebarNav({
         canSave={canSaveView}
         onApply={onApplyView}
         onSave={onSaveView}
-        onForgetView={onForgetView}
+        onForget={onForgetView}
       />
 
       <FolderTree
