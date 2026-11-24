@@ -10,8 +10,12 @@ const indexCss = readFileSync(new URL("./index.css", hereHref), "utf8");
 
 // Anchored at line start so `.ui-filter-select {` is not found inside
 // `.ui-input.ui-filter-select {`.
-const ruleFor = (selector) =>
-  indexCss.match(new RegExp(`(?:^|\\n)${selector.replace(/\./g, "\\.")} \\{[^}]*\\}`))?.[0];
+const ruleFor = (selector) => {
+  const lead = `${selector} {`;
+  const at = indexCss.startsWith(lead) ? 0 : indexCss.indexOf(`\n${lead}`);
+  if (at === -1) return undefined;
+  return indexCss.slice(at === 0 ? 0 : at + 1, indexCss.indexOf("}", at) + 1);
+};
 
 // #284: the filter and bulk-edit selects keep their mockup width as a floor,
 // so a longer translated label grows the control instead of clipping. They
