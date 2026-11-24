@@ -1,5 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
+import React from "react";
+import { render } from "@testing-library/react";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { MessageProvider } from "../i18n/index.js";
 import { inverseOf } from "./bookmarkUndo.js";
+
+// The translator a provider publishes outlives the test that rendered it, so
+// English is put back for whatever runs next.
+afterEach(() => {
+  render(React.createElement(MessageProvider, null, React.createElement("span")));
+});
 
 // An inverse only names a write helper; nothing is called until it is applied.
 const writes = () => ({
@@ -187,5 +196,28 @@ describe("inverseOf (#56)", () => {
     ["a write of an unknown kind", { kind: "somethingElse" }],
   ])("offers no undo for %s", (_name, operation) => {
     expect(inverseOf(operation)).toBeNull();
+  });
+});
+
+// #307: the label is catalogue copy, read when the inverse is built. The count
+// is the message's parameter, so it is formatted and the wording is never
+// assembled here.
+describe("inverseOf labels come from the catalogue", () => {
+  const removed = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  const pirate = { undo: { delete: "Ye take back {count} deleted" } };
+  const provide = (locale, messages) =>
+    render(React.createElement(MessageProvider, { locale, messages }, React.createElement("span")));
+
+  it("keeps the English labels exactly as they were", () => {
+    expect(inverseOf({ kind: "delete", removed }).label).toBe("Undo delete (3)");
+    expect(inverseOf({ kind: "replaceAll", replaced: removed }).label).toBe(
+      "Undo replace all (3 bookmarks)"
+    );
+  });
+
+  it("reads the label in the locale in effect, without being passed a translator", () => {
+    provide("en-PT", pirate);
+
+    expect(inverseOf({ kind: "delete", removed }).label).toBe("Ye take back 3 deleted");
   });
 });

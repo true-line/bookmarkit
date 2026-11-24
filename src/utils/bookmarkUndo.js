@@ -8,6 +8,12 @@
 // An inverse is expressed in terms of the ordinary write helpers rather than the
 // raw store, so restoring goes through the same paths as the original — sequential
 // fallbacks, import progress and all — instead of a second, less careful copy.
+//
+// #307: an entry's label is catalogue copy, read when the inverse is built, since
+// it is shown the moment the write lands (the undo toast) and again if the undo
+// fails.
+
+import { getMessages } from "../i18n/index.js";
 
 /**
  * The optional fields an edit can change, each with what "absent" looks like once
@@ -43,7 +49,9 @@ const editableFieldsOf = (bookmark) => {
   return fields;
 };
 
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+// The label is the message's and the count is its parameter, so the count is
+// formatted for the locale and the wording is never assembled here.
+const label = (key, params) => getMessages()(key, params);
 
 /**
  * Whether losing this write's effect a second time would cost the user data.
@@ -69,7 +77,7 @@ const REMINTS_IDS = new Set(["delete", "replaceAll"]);
 const INVERSES = {
   edit: ({ previous }) =>
     previous?.id && {
-      label: "Undo edit",
+      label: label("undo.edit"),
       apply: (writes) => writes.saveBookmark({ id: previous.id, ...editableFieldsOf(previous) }),
     },
 
@@ -77,20 +85,20 @@ const INVERSES = {
   // than no undo, so an id is required rather than assumed.
   create: ({ created }) =>
     created?.id && {
-      label: "Undo add",
+      label: label("undo.add"),
       apply: (writes) => writes.deleteBookmarks([created.id]),
     },
 
   delete: ({ removed }) =>
     removed?.length && {
-      label: `Undo delete (${removed.length})`,
+      label: label("undo.delete", { count: removed.length }),
       apply: (writes) => writes.appendBookmarks(removed),
     },
 
   // Recorded even for an empty previous collection: "replace all" on an empty
   // collection is still a write, and its undo is an honest no-op.
   replaceAll: ({ replaced }) => ({
-    label: `Undo replace all (${plural(replaced?.length || 0, "bookmark")})`,
+    label: label("undo.replaceAll", { count: replaced?.length || 0 }),
     apply: (writes) => writes.saveAllBookmarks(replaced || []),
   }),
 
@@ -98,7 +106,7 @@ const INVERSES = {
     const ids = (added || []).map((b) => b?.id).filter(Boolean);
     return (
       ids.length > 0 && {
-        label: `Undo import (${ids.length})`,
+        label: label("undo.import", { count: ids.length }),
         apply: (writes) => writes.deleteBookmarks(ids),
       }
     );
@@ -108,13 +116,13 @@ const INVERSES = {
   // so undoing a retag does not revert a rating changed since.
   bulkEdit: ({ previousPatches }) =>
     previousPatches?.length && {
-      label: `Undo bulk edit (${previousPatches.length})`,
+      label: label("undo.bulkEdit", { count: previousPatches.length }),
       apply: (writes) => writes.applyBulkEdit(previousPatches),
     },
 
   reorder: ({ order }) =>
     order?.length && {
-      label: "Undo sort",
+      label: label("undo.sort"),
       apply: (writes) => writes.reorderBookmarks(order),
     },
 };
