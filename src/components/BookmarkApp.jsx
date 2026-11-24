@@ -64,6 +64,7 @@ import OptionsModal from "./OptionsModal";
 import BookmarkList from "./BookmarkList.jsx";
 import ViewSelector from "./ViewSelector.jsx";
 import BulkEditBar from "./BulkEditBar.jsx";
+import SelectionBar from "./SelectionBar.jsx";
 import DigestModal from "./DigestModal.jsx";
 import { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
@@ -278,6 +279,38 @@ const BookmarkApp = () => {
     onBookmarkDoubleClick: handleBookmarkDoubleClick,
     onBookmarkKeyDown: handleBookmarkKeyDown,
   } = useBookmarkSelection(openBookmark, handleEditBookmark, selectMode);
+
+  // #299: below `lg` the selection's actions live in the bar at the bottom,
+  // and "Bulk Edit" raises the list's inline editor — the sheet (#301) will
+  // replace that handoff. Above `lg` the editor appears on its own, as it
+  // always has. Either way the editor is the selection's, and dies with it.
+  const [bulkEditorOpen, setBulkEditorOpen] = useState(false);
+  useEffect(() => {
+    if (multiSelectedBookmarkIds.length === 0) setBulkEditorOpen(false);
+  }, [multiSelectedBookmarkIds]);
+
+  // The bar floats over the list's bottom edge, so the list pays for it the
+  // way it pays for the fixed header: the measured height becomes the main
+  // area's bottom padding through --app-selectionbar-height.
+  const selectionBarRef = useRef(null);
+  const selectionBarShown = !isSidebarViewport && multiSelectedBookmarkIds.length > 0;
+  useEffect(() => {
+    const bar = selectionBarRef.current;
+    const root = document.documentElement;
+    if (!selectionBarShown || !bar) {
+      root.style.setProperty("--app-selectionbar-height", "0px");
+      return undefined;
+    }
+    const syncHeight = () =>
+      root.style.setProperty("--app-selectionbar-height", `${bar.offsetHeight}px`);
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(bar);
+    return () => {
+      observer.disconnect();
+      root.style.setProperty("--app-selectionbar-height", "0px");
+    };
+  }, [selectionBarShown]);
 
   // Read by an effect that must not resubscribe when the list changes.
   const bookmarksRef = useRef(bookmarks);
@@ -1372,8 +1405,10 @@ const BookmarkApp = () => {
               </div>
             )}
 
-            {/* #54: Only for a real multi-selection — a single click is served by the form. */}
-            {multiSelectedBookmarkIds.length > 0 && (
+            {/* #54: Only for a real multi-selection — a single click is served
+                by the form. #299: below `lg` the selection's home is the bar
+                at the bottom, and "Bulk Edit" raises this editor. */}
+            {multiSelectedBookmarkIds.length > 0 && (isSidebarViewport || bulkEditorOpen) && (
               <BulkEditBar
                 selected={selectedBookmarks}
                 allBookmarks={bookmarks}
@@ -1437,6 +1472,20 @@ const BookmarkApp = () => {
           </div>
         </div>
       </main>
+
+      {/* #299: the selection's bar, pinned where a thumb reaches. It sits at
+          the root with the header, so no ancestor's transform can re-anchor
+          its fixed position, and it takes the drawer's inert like every other
+          surface behind the dialog. */}
+      {selectionBarShown && (
+        <div ref={selectionBarRef} inert={navDrawerOpen || undefined}>
+          <SelectionBar
+            count={multiSelectedBookmarkIds.length}
+            onClear={clearSelectedBookmarks}
+            onBulkEdit={() => setBulkEditorOpen(true)}
+          />
+        </div>
+      )}
 
       {/* ─── Modals ─── */}
       <ErrorBoundary fallbackMessage={t("app.modalFallbackMessage")}>
