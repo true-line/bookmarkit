@@ -1,5 +1,6 @@
 import React from "react";
 import { Button, Modal } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 import Banner from "./Banner.jsx";
 
 // #243: the unified design system's modal-standard — divided header, tinted
@@ -8,14 +9,19 @@ import Banner from "./Banner.jsx";
 // live region announcement and React.memo). The Banner is the standalone app
 // component re-homed when the legacy library retired (#255); the shell is
 // what migrated.
+
+// One literal key per message type, resolved at render time.
+const TITLE_KEYS = { success: "messageModal.success", error: "messageModal.error" };
 const MessageModal = ({ message, type = "info", onClose }) => {
+  const t = useMessages();
   return (
     <Modal
-      title={type === "success" ? "Success!" : type === "error" ? "Error!" : "Information"}
+      title={t(TITLE_KEYS[type] ?? "messageModal.info")}
       onClose={onClose}
+      closeLabel={t("common.close")}
       footer={
         <Button intent="secondary" onClick={onClose}>
-          Close
+          {t("common.close")}
         </Button>
       }
     >

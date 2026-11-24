@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 import { Button, Card, Modal, Tag, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 // The diff a proposed change is reviewed through, on the unified design
 // system (#249). The dialog's mockup family — the duplicate-review and
@@ -22,22 +23,32 @@ import { Button, Card, Modal, Tag, Typography } from "../design-system/index.js"
 // `utils/changeReview.js` rows and knows nothing about where they came from.
 // It owns which rows are accepted and nothing else.
 
-const FIELD_LABELS = {
-  tags: "Tags",
-  folderId: "Folder",
-  description: "Description",
-  url: "Address",
-  urlStatus: "Link check",
-  unreachable: "Old broken flag",
+// Field names and link-check states resolved against the catalogue at render
+// time — one literal key per known value, never a built key string.
+const FIELD_LABEL_KEYS = {
+  tags: "changeReview.fieldTags",
+  folderId: "changeReview.fieldFolder",
+  description: "changeReview.fieldDescription",
+  url: "changeReview.fieldAddress",
+  urlStatus: "changeReview.fieldLinkCheck",
+  unreachable: "changeReview.fieldOldBrokenFlag",
 };
 
-const WAS = { idle: "not checked", valid: "reachable", invalid: "broken", ignored: "not checked" };
+const WAS_KEYS = {
+  idle: "changeReview.wasIdle",
+  valid: "changeReview.wasValid",
+  invalid: "changeReview.wasInvalid",
+  ignored: "changeReview.wasIdle",
+};
 
 const TagList = ({ tags, added = [] }) => {
+  const t = useMessages();
   const isNew = new Set(added.map((tag) => tag.toLowerCase()));
   return (
     <span className="inline-flex flex-wrap gap-1">
-      {tags.length === 0 && <span style={{ color: "var(--ui-on-surface-variant)" }}>none</span>}
+      {tags.length === 0 && (
+        <span style={{ color: "var(--ui-on-surface-variant)" }}>{t("common.none")}</span>
+      )}
       {tags.map((tag) => (
         <Tag key={tag} className={isNew.has(tag.toLowerCase()) ? "ui-tag--accent" : undefined}>
           {tag}
@@ -66,6 +77,7 @@ const Replaced = ({ from, to, mono = false }) => {
 };
 
 const FieldDiff = ({ field, before, after }) => {
+  const t = useMessages();
   if (field === "tags") {
     const gained = (after.tags || []).filter(
       (tag) => !(before.tags || []).some((had) => had.toLowerCase() === tag.toLowerCase())
@@ -73,23 +85,24 @@ const FieldDiff = ({ field, before, after }) => {
     return <TagList tags={after.tags || []} added={gained} />;
   }
   if (field === "folderId") {
-    return <Replaced mono from={before.folderId || "no folder"} to={after.folderId} />;
+    return <Replaced mono from={before.folderId || t("common.noFolder")} to={after.folderId} />;
   }
   if (field === "url") return <Replaced mono from={before.url} to={after.url} />;
-  if (field === "unreachable") return <Replaced from="set" to="cleared" />;
+  if (field === "unreachable")
+    return <Replaced from={t("changeReview.setFlag")} to={t("changeReview.clearedFlag")} />;
   if (field === "urlStatus") {
-    return <Replaced from={WAS[before.urlStatus] ?? before.urlStatus} to={WAS[after.urlStatus]} />;
+    return (
+      <Replaced
+        from={WAS_KEYS[before.urlStatus] ? t(WAS_KEYS[before.urlStatus]) : before.urlStatus}
+        to={WAS_KEYS[after.urlStatus] ? t(WAS_KEYS[after.urlStatus]) : after.urlStatus}
+      />
+    );
   }
   return <span style={{ color: "var(--ui-on-surface)" }}>{after.description}</span>;
 };
 
-const ChangeReviewModal = ({
-  rows = [],
-  title = "Review the proposed changes",
-  onApply,
-  onCancel,
-  isApplying = false,
-}) => {
+const ChangeReviewModal = ({ rows = [], title, onApply, onCancel, isApplying = false }) => {
+  const t = useMessages();
   const [rejected, setRejected] = useState(() => new Set());
 
   const accepted = useMemo(
@@ -109,18 +122,16 @@ const ChangeReviewModal = ({
 
   return (
     <Modal
-      title={title}
+      title={title ?? t("changeReview.defaultTitle")}
       size="2xl"
       onClose={onCancel}
       closeDisabled={isApplying}
-      closeLabel="Close without applying"
+      closeLabel={t("changeReview.closeWithoutApplying")}
       // Instruction first: a digit-led sentence inherits the dialog's RTL
       // paragraph direction and the count visually reorders; an LTR-first
       // sentence keeps the English copy stable without pinning direction on
       // the shared description slot.
-      description={`Untick anything you disagree with. ${rows.length} bookmark${
-        rows.length === 1 ? "" : "s"
-      } would change.`}
+      description={t("changeReview.description", { count: rows.length })}
       onScrimClick={() => !isApplying && onCancel()}
       footer={
         <>
@@ -138,7 +149,7 @@ const ChangeReviewModal = ({
               unicodeBidi: "plaintext",
             }}
           >
-            {accepted.length} of {rows.length} selected
+            {t("changeReview.selectionCount", { accepted: accepted.length, total: rows.length })}
           </Typography>
           <Button
             intent="secondary"
@@ -147,10 +158,10 @@ const ChangeReviewModal = ({
             }
             disabled={isApplying}
           >
-            {allAccepted ? "Deselect all" : "Select all"}
+            {allAccepted ? t("changeReview.deselectAll") : t("changeReview.selectAll")}
           </Button>
           <Button intent="secondary" onClick={onCancel} disabled={isApplying}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             intent="primary"
@@ -159,8 +170,8 @@ const ChangeReviewModal = ({
             loading={isApplying}
           >
             {isApplying
-              ? "Applying…"
-              : `Apply ${accepted.length} change${accepted.length === 1 ? "" : "s"}`}
+              ? t("changeReview.applying")
+              : t("changeReview.apply", { count: accepted.length })}
           </Button>
         </>
       }
@@ -185,7 +196,7 @@ const ChangeReviewModal = ({
                   {row.fields.map((field) => (
                     <Typography key={field} variant="body-sm" as="span" className="block mt-0.5">
                       <span style={{ color: "var(--ui-on-surface-variant)" }}>
-                        {FIELD_LABELS[field]}:{" "}
+                        {FIELD_LABEL_KEYS[field] && t(FIELD_LABEL_KEYS[field])}:{" "}
                       </span>
                       <FieldDiff field={field} before={row.before} after={row.after} />
                     </Typography>

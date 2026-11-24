@@ -1,5 +1,6 @@
 import React from "react";
 import { Button, Modal } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 // #243: the first app surfaces on the unified design system's modal. The
 // screens confirm destructive actions through modal-standard with a
@@ -18,9 +19,10 @@ import { Button, Modal } from "../design-system/index.js";
 // verdict that two bookmarks are the same page. Nothing is deleted without the
 // pair, and the reason for it, being visible first.
 const DeleteConfirmModal = ({ message, reasons = [], onConfirm, onCancel, isLoading = false }) => {
+  const t = useMessages();
   return (
     <Modal
-      title="Confirm Deletion"
+      title={t("deleteConfirm.title")}
       description={message}
       onClose={onCancel}
       hideClose
@@ -28,10 +30,10 @@ const DeleteConfirmModal = ({ message, reasons = [], onConfirm, onCancel, isLoad
       footer={
         <>
           <Button intent="secondary" onClick={onCancel} disabled={isLoading}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button intent="destructive" onClick={onConfirm} loading={isLoading}>
-            {isLoading ? "Deleting…" : "Delete"}
+            {isLoading ? t("deleteConfirm.deleting") : t("common.delete")}
           </Button>
         </>
       }
@@ -39,10 +41,13 @@ const DeleteConfirmModal = ({ message, reasons = [], onConfirm, onCancel, isLoad
       {reasons.length > 0 && (
         <ul className="mt-3 max-h-60 overflow-y-auto text-sm space-y-2">
           {reasons.map(({ id, title, keptTitle, reason }) => (
-            <li key={id} className="p-2 rounded border border-border">
-              <span className="text-primary-text">{title}</span>
-              <span className="text-secondary-text"> — same page as </span>
-              <span className="text-primary-text">{keptTitle}</span>
+            // The row is one sentence; the two titles are its nodes, and the
+            // words between them take the row's secondary color.
+            <li key={id} className="p-2 rounded border border-border text-secondary-text">
+              {t.rich("deleteConfirm.samePageAs", {
+                removed: <span className="text-primary-text">{title}</span>,
+                kept: <span className="text-primary-text">{keptTitle}</span>,
+              })}
               <div className="text-xs text-secondary-text">{reason}</div>
             </li>
           ))}
