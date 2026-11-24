@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { generateNetscapeHtml, parseNetscapeHtml } from "../utils/netscapeBookmarks.js";
 import { readImportedBookmarks } from "../utils/importedBookmarks.js";
 import { Button, Card, Modal, Tag, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 import { ImportPanel } from "./ImportPanel.jsx";
 
 // Migrated to the unified design system (#247): the import/export panel runs
@@ -22,19 +23,14 @@ import { ImportPanel } from "./ImportPanel.jsx";
 // Arrow/Home/End rotations — carried over rather than re-decided. The
 // per-format import body lives in ImportPanel.jsx.
 
-// How many entries an import will actually add, and what it had to leave behind.
-const describeRejected = (rejectedCount) =>
-  rejectedCount > 0
-    ? ` Skipping ${rejectedCount} entr${rejectedCount === 1 ? "y" : "ies"} without a usable http(s) URL.`
-    : "";
-
 // UX-03: Memoize JSON/HTML export strings and data URIs to prevent recomputing on every render.
 // UX-04: Add confirmation step before import with append vs replace option.
 
+// Tab labels are catalogue keys, resolved with t() at render time.
 const TABS = [
-  { value: "export", label: "Export" },
-  { value: "import-json", label: "Import JSON" },
-  { value: "import-html", label: "Import HTML" },
+  { value: "export", label: "importExport.exportTab" },
+  { value: "import-json", label: "importExport.importJsonTab" },
+  { value: "import-html", label: "importExport.importHtmlTab" },
 ];
 
 // The export buttons' download/code glyphs, per the mockup's icons.
@@ -75,6 +71,7 @@ const ImportExportContent = ({
   showMessage,
   initialTab = "export",
 }) => {
+  const t = useMessages();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [importJsonText, setImportJsonText] = useState("");
   const [importHtmlText, setImportHtmlText] = useState("");
@@ -130,18 +127,24 @@ const ImportExportContent = ({
   const stageJsonImport = (text) => {
     const parsed = JSON.parse(text);
     if (!Array.isArray(parsed)) {
-      showMessage("Invalid JSON format. Expected an array of bookmarks.", "error");
+      showMessage(t("importExport.invalidJson"), "error");
       return;
     }
     const { bookmarks: importable, rejectedCount } = readImportedBookmarks(parsed);
     if (importable.length === 0) {
       showMessage(
-        `No bookmarks to import.${describeRejected(rejectedCount) || " The array was empty."}`,
+        `${t("importExport.nothingToImport")} ${
+          rejectedCount > 0
+            ? t("importExport.skippingEntries", { count: rejectedCount })
+            : t("importExport.emptyArray")
+        }`,
         "error"
       );
       return;
     }
-    if (rejectedCount > 0) showMessage(describeRejected(rejectedCount).trim(), "info");
+    if (rejectedCount > 0) {
+      showMessage(t("importExport.skippingEntries", { count: rejectedCount }), "info");
+    }
     setPendingImport({ type: "json", data: importable, count: importable.length });
   };
 
@@ -153,7 +156,7 @@ const ImportExportContent = ({
       try {
         stageJsonImport(importJsonText);
       } catch {
-        showMessage("Error parsing JSON. Please ensure it is valid JSON.", "error");
+        showMessage(t("importExport.parseError"), "error");
       } finally {
         setIsParsing(false);
       }
@@ -181,7 +184,7 @@ const ImportExportContent = ({
         await onImportHtml(pendingImport.data, replaceAll);
       }
     } catch {
-      showMessage("Import failed. Please check the file format and try again.", "error");
+      showMessage(t("importExport.importFailed"), "error");
     } finally {
       setPendingImport(null);
       setReplaceAll(false);
@@ -195,13 +198,13 @@ const ImportExportContent = ({
 
   return (
     <Modal
-      title="Import & Export"
-      description="Back up your collection or migrate from another browser."
-      closeLabel="Close dialog"
+      title={t("importExport.title")}
+      description={t("importExport.description")}
+      closeLabel={t("importExport.closeLabel")}
       onClose={onClose}
       footer={
         <Button intent="secondary" onClick={onClose}>
-          Close
+          {t("common.close")}
         </Button>
       }
     >
@@ -211,15 +214,14 @@ const ImportExportContent = ({
           actions={
             <>
               <Button intent="secondary" onClick={cancelImport}>
-                Cancel
+                {t("common.cancel")}
               </Button>
-              <Button onClick={executeImport}>Import</Button>
+              <Button onClick={executeImport}>{t("common.import")}</Button>
             </>
           }
         >
           <Typography variant="body-md" as="p" style={{ margin: 0 }}>
-            This will add <strong>{pendingImport.count}</strong> bookmark
-            {pendingImport.count !== 1 ? "s" : ""} to your collection.
+            {t.rich("importExport.willAdd", { count: pendingImport.count })}
           </Typography>
           <div
             style={{
@@ -230,12 +232,12 @@ const ImportExportContent = ({
           >
             {[
               {
-                label: "Append to existing bookmarks",
+                label: t("importExport.appendRadio"),
                 checked: !replaceAll,
                 set: () => setReplaceAll(false),
               },
               {
-                label: "Replace all existing bookmarks",
+                label: t("importExport.replaceRadio"),
                 checked: replaceAll,
                 set: () => setReplaceAll(true),
               },
@@ -257,7 +259,7 @@ const ImportExportContent = ({
         </Card>
       ) : (
         <div className="grid gap-4">
-          <div role="tablist" aria-label="Import or export bookmarks" className="ui-tabs">
+          <div role="tablist" aria-label={t("importExport.tablistAria")} className="ui-tabs">
             {TABS.map((tab, index) => {
               const selected = tab.value === activeTab;
               return (
@@ -276,7 +278,7 @@ const ImportExportContent = ({
                   onKeyDown={(event) => handleTabKeyDown(event, index)}
                   className="ui-tab"
                 >
-                  {tab.label}
+                  {t(tab.label)}
                 </button>
               );
             })}
@@ -292,15 +294,17 @@ const ImportExportContent = ({
                     id="io-export-heading"
                     style={{ margin: 0 }}
                   >
-                    Export collection
+                    {t("importExport.exportHeading")}
                   </Typography>
-                  <Tag className="ui-numeric">{bookmarks.length.toLocaleString()} bookmarks</Tag>
+                  <Tag className="ui-numeric">
+                    {t("importExport.exportCount", { count: bookmarks.length })}
+                  </Tag>
                 </div>
                 <Typography variant="body-sm" as="p" style={mutedText}>
-                  Export your bookmarks as JSON or Netscape HTML format.
+                  {t("importExport.exportHint")}
                 </Typography>
                 <div className="ui-field">
-                  <label htmlFor="export-json">JSON Export</label>
+                  <label htmlFor="export-json">{t("importExport.jsonExportLabel")}</label>
                   <textarea
                     id="export-json"
                     readOnly
@@ -319,11 +323,11 @@ const ImportExportContent = ({
                     className="ui-button ui-button--primary"
                   >
                     <IoIcon path={ICON_PATHS.download} />
-                    Download JSON
+                    {t("importExport.downloadJson")}
                   </a>
                 </div>
                 <div className="ui-field">
-                  <label htmlFor="export-html">HTML Export (Netscape Bookmark File)</label>
+                  <label htmlFor="export-html">{t("importExport.htmlExportLabel")}</label>
                   <textarea
                     id="export-html"
                     readOnly
@@ -339,7 +343,7 @@ const ImportExportContent = ({
                     className="ui-button ui-button--secondary"
                   >
                     <IoIcon path={ICON_PATHS.code} />
-                    Download HTML
+                    {t("importExport.downloadHtml")}
                   </a>
                 </div>
               </section>
@@ -375,8 +379,8 @@ const ImportExportContent = ({
               onFileError={() =>
                 showMessage(
                   activeTab === "import-json"
-                    ? "Error parsing JSON file. Please ensure it is valid JSON."
-                    : "The HTML file could not be read. Please try again.",
+                    ? t("importExport.jsonFileError")
+                    : t("importExport.htmlFileError"),
                   "error"
                 )
               }
