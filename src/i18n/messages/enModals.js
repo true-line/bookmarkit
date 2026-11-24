@@ -74,14 +74,16 @@ export const surfaceMessages = {
       "<strong>Import/Export</strong> lets you back up or restore bookmarks from JSON/HTML.",
   },
 
-  // DigestModal
+  // DigestModal, and the two group titles no model chose (utils/digest.js, #307)
   digest: {
+    alsoSaved: "Also saved",
     bookmarkCount: {
       one: "{count} bookmark",
       other: "{count} bookmarks",
     },
     description: "Local summary with optional AI topic grouping.",
     done: "Done",
+    everythingElse: "Everything else",
     groupedByTheme: "Grouped by theme.",
     neverOpenedHint: "Saved a while ago and not opened since — oldest first.",
     neverOpenedTitle: "Never opened",

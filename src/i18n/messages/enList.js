@@ -105,8 +105,10 @@ export const listMessages = {
     listLabel: "Bookmarks",
   },
 
-  // LinkSweepBar — `chip` is the count in its ui-tag chip (t.rich)
+  // LinkSweepBar — `chip` is the count in its ui-tag chip (t.rich) — and the
+  // sweep itself (useLinkSweep, #307)
   linkSweep: {
+    allCheckedRecently: "Every link has been checked recently.",
     brokenLinks: {
       one: "{chip} link could not be reached.",
       other: "{chip} links could not be reached.",
@@ -114,6 +116,7 @@ export const listMessages = {
     checking: "Checking links…",
     progress: "{checked} of {total}",
     showBroken: "Show them",
+    stoppedEarly: "The link check stopped early. Please try again.",
   },
 
   // BulkEditBar
