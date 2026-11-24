@@ -5,6 +5,7 @@
 // site, so a new caller cannot forget to.
 
 import { useCallback, useRef, useState } from "react";
+import { getMessages } from "../i18n/index.js";
 import { getStore, STORE_TYPES } from "../stores/index.js";
 import { inverseOf } from "../utils/bookmarkUndo.js";
 import { previousValuesFor } from "../utils/bulkEdit.js";
@@ -100,8 +101,11 @@ export function useBookmarkStore(recordUndo) {
           // loud — otherwise the next save is made against a view we know is old.
           onError: (error) => {
             if (cancelled) return;
+            const t = getMessages();
             showMessage?.(
-              `Could not refresh bookmarks, so this is the last loaded copy. ${error?.message || ""}`.trim(),
+              error?.message
+                ? t("store.staleCopyDetail", { detail: error.message })
+                : t("store.staleCopy"),
               "error"
             );
           },
@@ -135,7 +139,10 @@ export function useBookmarkStore(recordUndo) {
         // stayed true, leaving the app on a spinner with nothing to explain it.
         setLoadError(error?.message || String(error));
         setIsLoading(false);
-        showMessage?.(`Could not open your bookmarks. ${error?.message || error}`, "error");
+        showMessage?.(
+          getMessages()("store.couldNotOpen", { detail: error?.message || error }),
+          "error"
+        );
       });
       return () => {
         cancelled = true;
@@ -150,7 +157,7 @@ export function useBookmarkStore(recordUndo) {
   const saveBookmark = useCallback(
     async (bookmarkToSave, showMessage) => {
       if (!storeRef.current) {
-        showMessage?.("Error: Bookmark store is not initialized. Please reload.", "error");
+        showMessage?.(getMessages()("store.notInitialized"), "error");
         return;
       }
       if (bookmarkToSave.id) {
@@ -222,7 +229,7 @@ export function useBookmarkStore(recordUndo) {
             setImportProgress({ total: arr.length, done: i + 1 });
           }
         }
-        showMessage?.(`Imported ${arr.length} bookmarks successfully.`, "success");
+        showMessage?.(getMessages()("store.imported", { count: arr.length }), "success");
       } finally {
         setImportProgress(null);
       }

@@ -17,6 +17,7 @@ import { contained } from "../llm/containment.js";
 import { createLLM, LLM_PROVIDERS, resolveProviderOptions } from "../llm/index.js";
 import { classifyLLMError } from "../llm/errors.js";
 import { normalizeSteps } from "../llm/normalize.js";
+import { getMessages } from "../i18n/index.js";
 import { mergeAgentPlan } from "../utils/bookmarkFilters.js";
 
 // Two Enters in quick succession are one intent, not two requests.
@@ -109,10 +110,7 @@ export function useAgentEngine({
       latest.current;
 
     if (locked) {
-      showMessage(
-        "Your API key is encrypted. Open Options and enter your passphrase to unlock it for this session.",
-        "info"
-      );
+      showMessage(getMessages()("llmSettings.keyLocked"), "info");
       return;
     }
 
