@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 // The import side of the import/export panel (#247): one body shared by the
 // JSON and Netscape HTML tabs, which differ only in strings and accept list.
@@ -34,24 +35,27 @@ const readChosenFile = (event) => {
   return readFile(file);
 };
 
+// The two tabs differ only in strings and accept list; the visible strings are
+// catalogue keys resolved with t() at render time, while the placeholders stay
+// literal — they quote the expected data format, not UI copy.
 const IMPORT_FORMATS = {
   "import-json": {
     accept: ".json",
-    fileLabel: "Upload JSON File",
-    dropTitle: "Drop a JSON file here",
-    intro: "Paste your JSON bookmarks here or upload a file.",
-    pasteLabel: "Paste JSON Data",
+    fileLabel: "importExport.uploadJsonFile",
+    dropTitle: "importExport.dropJson",
+    intro: "importExport.introJson",
+    pasteLabel: "importExport.pasteJson",
     placeholder: '[{"title": "Example", "url": "https://example.com", "tags": ["test"]}]',
-    action: "Import JSON Data",
+    action: "importExport.actionJson",
   },
   "import-html": {
     accept: ".html,.htm",
-    fileLabel: "Upload HTML File (Browser Export)",
-    dropTitle: "Drop a Netscape HTML file here",
-    intro: "Upload an HTML bookmark file or paste its content.",
-    pasteLabel: "Paste HTML Data",
+    fileLabel: "importExport.uploadHtmlFile",
+    dropTitle: "importExport.dropHtml",
+    intro: "importExport.introHtml",
+    pasteLabel: "importExport.pasteHtml",
     placeholder: "<!DOCTYPE NETSCAPE-Bookmark-file-1>...",
-    action: "Import HTML Data",
+    action: "importExport.actionHtml",
   },
 };
 
@@ -69,6 +73,7 @@ export function ImportPanel({
   onFileText,
   onFileError,
 }) {
+  const t = useMessages();
   const spec = IMPORT_FORMATS[format];
   const short = format === "import-json" ? "json" : "html";
   const [dragging, setDragging] = useState(false);
@@ -76,7 +81,7 @@ export function ImportPanel({
     <div role="tabpanel" id={`io-panel-${format}`} aria-labelledby={`io-tab-${format}`}>
       <section aria-labelledby={`io-${format}-heading`} className="grid gap-3">
         <Typography variant="body-sm" as="p" style={mutedText}>
-          {spec.intro}
+          {t(spec.intro)}
         </Typography>
         <label
           className={`ui-dropzone${dragging ? " ui-dropzone--dragging" : ""}`}
@@ -101,7 +106,7 @@ export function ImportPanel({
             id={`upload-${short}-file`}
             type="file"
             accept={spec.accept}
-            aria-label={spec.fileLabel}
+            aria-label={t(spec.fileLabel)}
             className="sr-only"
             onChange={async (e) => {
               try {
@@ -123,17 +128,17 @@ export function ImportPanel({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ICON_UPLOAD} />
           </svg>
           <Typography variant="label-md" as="span" style={{ color: "var(--ui-on-surface)" }}>
-            {spec.dropTitle}
+            {t(spec.dropTitle)}
           </Typography>
           <Typography variant="body-sm" as="span">
-            Titles and URLs are sanitized on import; folders and tags are preserved.
+            {t("importExport.dropHint")}
           </Typography>
         </label>
         <Typography variant="body-sm" as="p" className="text-center" style={mutedText}>
-          — OR —
+          {t("importExport.orSeparator")}
         </Typography>
         <div className="ui-field">
-          <label htmlFor={`import-${short}-text`}>{spec.pasteLabel}</label>
+          <label htmlFor={`import-${short}-text`}>{t(spec.pasteLabel)}</label>
           <textarea
             id={`import-${short}-text`}
             value={text}
@@ -145,7 +150,7 @@ export function ImportPanel({
         </div>
         <div>
           <Button onClick={onImport} disabled={isParsing || !text.trim()} loading={isParsing}>
-            {isParsing ? "Parsing…" : spec.action}
+            {isParsing ? t("importExport.parsing") : t(spec.action)}
           </Button>
         </div>
       </section>

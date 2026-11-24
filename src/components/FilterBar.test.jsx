@@ -81,6 +81,23 @@ describe("FilterBar (#53)", () => {
     expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, sortBy: "title" });
   });
 
+  it("names the sort options from the catalogue, in SORT_FIELDS' order", () => {
+    // #284: the field list stays with the filter semantics; its words do not.
+    setup();
+
+    const options = screen.getByLabelText("Sort by").querySelectorAll("option");
+    expect([...options].map((option) => [option.value, option.textContent])).toEqual([
+      ["", "Default order"],
+      ["title", "Title"],
+      ["url", "URL"],
+      ["rating", "Rating"],
+      ["folderId", "Folder"],
+      ["createdAt", "Date added"],
+      ["lastOpenedAt", "Last opened"],
+      ["updatedAt", "Date modified"],
+    ]);
+  });
+
   // #47: the sweep writes urlStatus; this is how the result is looked at without
   // asking an LLM anything.
   it("toggles the broken-only filter and reports its state", () => {
@@ -193,6 +210,15 @@ describe("FilterBar narrow-viewport structure (#151)", () => {
     expect(text.querySelector("#filter-text")).not.toBeNull();
     expect(controls.contains(screen.getByLabelText("Minimum rating"))).toBe(true);
     expect(controls.contains(screen.getByLabelText("Sort by"))).toBe(true);
+  });
+
+  // #284: the widths are floors declared in index.css; these classes are what
+  // carry them, so a longer translated label grows the select.
+  it("gives each select the class that holds its width floor", () => {
+    setup();
+
+    expect(screen.getByLabelText("Minimum rating")).toHaveClass("ui-filter-select--rating");
+    expect(screen.getByLabelText("Sort by")).toHaveClass("ui-filter-select--sort");
   });
 
   it("keeps the clear-filters action inside the scrollable control strip", () => {

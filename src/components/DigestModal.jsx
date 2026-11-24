@@ -23,6 +23,7 @@ import React from "react";
 
 import { themeItems } from "../utils/digest.js";
 import { Button, Card, Modal, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 // The triage action's leading glyph, per the mockup's auto_awesome sparkles.
 // The visible icon is aria-hidden; the button's label carries the name.
@@ -79,38 +80,43 @@ const ItemList = ({ items, onOpen }) => (
 // One digest section as a ui-Card: the mockup's section header (headline-sm
 // title, count as a tabular label-sm annotation instead of a parenthetical)
 // over the section's optional hint and its items.
-const SectionCard = ({ title, count, hint, children }) => (
-  <Card>
-    <div className="flex items-baseline justify-between gap-2">
-      <Typography variant="headline-sm" as="h3">
-        {title}
-      </Typography>
-      <Typography variant="label-sm" as="span" numeric className="shrink-0" style={mutedStyle}>
-        {count} bookmark{count === 1 ? "" : "s"}
-      </Typography>
-    </div>
-    {hint && (
-      <Typography variant="body-sm" style={mutedStyle}>
-        {hint}
-      </Typography>
-    )}
-    {children}
-  </Card>
-);
+const SectionCard = ({ title, count, hint, children }) => {
+  const t = useMessages();
+  return (
+    <Card>
+      <div className="flex items-baseline justify-between gap-2">
+        <Typography variant="headline-sm" as="h3">
+          {title}
+        </Typography>
+        <Typography variant="label-sm" as="span" numeric className="shrink-0" style={mutedStyle}>
+          {t("digest.bookmarkCount", { count })}
+        </Typography>
+      </div>
+      {hint && (
+        <Typography variant="body-sm" style={mutedStyle}>
+          {hint}
+        </Typography>
+      )}
+      {children}
+    </Card>
+  );
+};
 
 const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onClose }) => {
+  const t = useMessages();
   const { added = [], neverOpened = [], untagged = [], themes = [] } = digest || {};
 
   return (
     <Modal
-      title="Weekly Digest"
-      description="Local summary with optional AI topic grouping."
+      title={t("digest.title")}
+      description={t("digest.description")}
+      closeLabel={t("common.close")}
       onClose={onClose}
       footer={
         <>
           {neverOpened.length > 0 && (
             <Button intent="secondary" onClick={onShowNeverOpened}>
-              Show never opened
+              {t("digest.showNeverOpened")}
             </Button>
           )}
           {untagged.length > 0 && (
@@ -119,11 +125,11 @@ const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onClose }) =
               leadingIcon={<SparkIcon />}
               onClick={() => onTriage(untagged)}
             >
-              Triage untagged
+              {t("digest.triage")}
             </Button>
           )}
           <Button intent="primary" onClick={onClose}>
-            Done
+            {t("digest.done")}
           </Button>
         </>
       }
@@ -131,9 +137,9 @@ const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onClose }) =
       <div className="grid gap-4">
         {added.length > 0 && (
           <SectionCard
-            title="Saved this week"
+            title={t("digest.savedTitle")}
             count={added.length}
-            hint={themes.length > 0 ? "Grouped by theme." : undefined}
+            hint={themes.length > 0 ? t("digest.groupedByTheme") : undefined}
           >
             {themes.map((theme) => (
               <div key={theme.title} className="mt-2">
@@ -153,9 +159,9 @@ const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onClose }) =
 
         {neverOpened.length > 0 && (
           <SectionCard
-            title="Never opened"
+            title={t("digest.neverOpenedTitle")}
             count={neverOpened.length}
-            hint="Saved a while ago and not opened since — oldest first."
+            hint={t("digest.neverOpenedHint")}
           >
             <ItemList items={neverOpened} onOpen={onOpen} />
           </SectionCard>
@@ -163,9 +169,9 @@ const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onClose }) =
 
         {untagged.length > 0 && (
           <SectionCard
-            title="Untagged"
+            title={t("digest.untaggedTitle")}
             count={untagged.length}
-            hint="Filed in a hurry. The organizer can suggest tags for these."
+            hint={t("digest.untaggedHint")}
           >
             <ItemList items={untagged} onOpen={onOpen} />
           </SectionCard>

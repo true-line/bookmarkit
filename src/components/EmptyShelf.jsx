@@ -9,6 +9,7 @@
 
 import React from "react";
 import { Button, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 import { AddIcon, SearchIcon, UploadIcon } from "./icons.jsx";
 import EmptyStack from "./effects/EmptyStack.jsx";
 
@@ -46,23 +47,24 @@ const EmptyShelfStates = React.memo(function EmptyShelfStates({
   onImport,
   effectsEnabled = true,
 }) {
+  const t = useMessages();
   if (isLoading) return null;
 
   if (bookmarksTotal === 0) {
     return (
       <EmptyShelf
         icon={<EmptyStack enabled={effectsEnabled} />}
-        title="Your shelf is empty."
-        description="Add your first bookmark, or import a browser export."
+        title={t("emptyShelf.emptyTitle")}
+        description={t("emptyShelf.emptyDescription")}
         actions={
           <>
             <Button type="button" onClick={onAddNew}>
               <AddIcon />
-              Add New
+              {t("common.addNew")}
             </Button>
             <Button type="button" intent="secondary" onClick={onImport}>
               <UploadIcon />
-              Import
+              {t("common.import")}
             </Button>
           </>
         }
@@ -75,10 +77,10 @@ const EmptyShelfStates = React.memo(function EmptyShelfStates({
       <EmptyShelf
         compact
         icon={<SearchIcon size={36} />}
-        title="No bookmarks match your request."
+        title={t("emptyShelf.noMatchRequest")}
         actions={
           <Button type="button" intent="secondary" onClick={onClear}>
-            Clear search
+            {t("emptyShelf.clearSearch")}
           </Button>
         }
       />
@@ -90,10 +92,15 @@ const EmptyShelfStates = React.memo(function EmptyShelfStates({
       <EmptyShelf
         compact
         icon={<SearchIcon size={36} />}
-        title={`No bookmarks match${searchQuery ? ` "${searchQuery}"` : " your search"}.`}
+        // One literal key per variant, never a built key string.
+        title={
+          searchQuery
+            ? t("emptyShelf.noMatchQuery", { query: searchQuery })
+            : t("emptyShelf.noMatchSearch")
+        }
         actions={
           <Button type="button" intent="secondary" onClick={onClear}>
-            Clear search
+            {t("emptyShelf.clearSearch")}
           </Button>
         }
       />

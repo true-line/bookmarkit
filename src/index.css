@@ -240,10 +240,22 @@ body {
   background: var(--ui-surface-container-low);
 }
 
-.ui-filter-select {
-  /* The selects hold their mockup widths in the strip; .ui-input's flex: 1
-     (meant for the ui-field-control row) would otherwise stretch them. */
+/* #284: a filter select keeps its mockup width as a floor, so a longer
+   translated label grows it instead of clipping. Every rule here is paired
+   with .ui-input: .ui-input's flex: 1 and min-width: 0 are for the inputs that
+   stretch and shrink inside a field row, and components.css loads before this
+   file in the app but after it in Storybook — the pair wins on specificity in
+   both, where the bare class won in the app and lost in Storybook. */
+.ui-input.ui-filter-select {
   flex: none;
+}
+.ui-input.ui-filter-select--rating {
+  min-width: 9.375rem;
+  max-width: 100%;
+}
+.ui-input.ui-filter-select--sort {
+  min-width: 10.625rem;
+  max-width: 100%;
 }
 
 .ui-filter-clear {
@@ -842,9 +854,19 @@ body {
 .ui-bulk-count svg {
   color: var(--ui-primary);
 }
-.ui-bulk-select {
-  /* A picker is a fixed-width control, not a flex filler. */
+/* Paired with .ui-input for the same reason as the filter selects: a picker
+   holds its mockup width as a floor and grows with its label, instead of
+   filling the row like the text fields beside it. */
+.ui-input.ui-bulk-select {
   flex: none;
+}
+.ui-input.ui-bulk-select--folder {
+  min-width: 11.25rem;
+  max-width: 100%;
+}
+.ui-input.ui-bulk-select--rating {
+  min-width: 9.375rem;
+  max-width: 100%;
 }
 .ui-bulk-summary {
   color: var(--ui-on-surface-variant);

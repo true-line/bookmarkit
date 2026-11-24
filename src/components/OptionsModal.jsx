@@ -3,6 +3,7 @@ import { LLM_PROVIDERS, createLLM, isProviderReady } from "../llm/index.js";
 import { useDebounce } from "../hooks/useDebounce.js";
 import KeyEncryptionSection from "./KeyEncryptionSection.jsx";
 import { Button, IconButton, InputField, Modal, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 // Migrated to the unified design system (#246): the options-settings screen's
 // modal-standard shell at its max-w-2xl reading (size="2xl"), headline-sm
@@ -68,6 +69,7 @@ function TokenSelect({ label, id, hint, options = [], ...props }) {
 // it composes ui-* primitives directly instead of routing through
 // InputField's single-label contract.
 function ApiKeyField({ label, id, hint, hasApiKey, onClear, ...props }) {
+  const t = useMessages();
   return (
     <div className="ui-field">
       <div className="flex items-center justify-between gap-2">
@@ -80,9 +82,9 @@ function ApiKeyField({ label, id, hint, hasApiKey, onClear, ...props }) {
             intent="destructive"
             onClick={onClear}
             disabled={props.disabled}
-            aria-label="Clear stored API key"
+            aria-label={t("options.clearStoredKey")}
           >
-            Clear
+            {t("options.clear")}
           </Button>
         )}
       </div>
@@ -110,6 +112,7 @@ function ApiKeyField({ label, id, hint, hasApiKey, onClear, ...props }) {
 // empty choice, and a stored model that has since disappeared stays
 // selectable, because it is still the user's choice.
 function ModelField({ id, value, onChange, models, error, loading, onRefresh }) {
+  const t = useMessages();
   const listed = models && models.length > 0;
   const choices =
     listed && value && !models.includes(value) ? [value, ...models] : listed ? models : [];
@@ -117,7 +120,7 @@ function ModelField({ id, value, onChange, models, error, loading, onRefresh }) 
     <div className="ui-field">
       <div className="flex items-center justify-between gap-2">
         <label htmlFor={id} className="ui-type-label-md">
-          Model
+          {t("options.modelLabel")}
         </label>
         <Button
           type="button"
@@ -125,9 +128,9 @@ function ModelField({ id, value, onChange, models, error, loading, onRefresh }) 
           onClick={onRefresh}
           disabled={loading}
           loading={loading}
-          aria-label="Refresh model list"
+          aria-label={t("options.refreshModelList")}
         >
-          {loading ? "Loading…" : "Refresh"}
+          {loading ? t("options.loading") : t("options.refresh")}
         </Button>
       </div>
       {listed ? (
@@ -138,7 +141,7 @@ function ModelField({ id, value, onChange, models, error, loading, onRefresh }) 
           onChange={onChange}
           aria-describedby={error ? `${id}-error` : undefined}
         >
-          <option value="">Select a model…</option>
+          <option value="">{t("options.selectModel")}</option>
           {choices.map((model) => (
             <option key={model} value={model}>
               {model}
@@ -151,7 +154,7 @@ function ModelField({ id, value, onChange, models, error, loading, onRefresh }) 
           type="text"
           dir="ltr"
           className="ui-input ui-input--mono"
-          placeholder="Type a model id, or load the list"
+          placeholder={t("options.modelIdPlaceholder")}
           value={value || ""}
           onChange={onChange}
           aria-describedby={error ? `${id}-error` : `${id}-hint`}
@@ -164,8 +167,7 @@ function ModelField({ id, value, onChange, models, error, loading, onRefresh }) 
       ) : (
         !listed && (
           <p className="ui-field-hint" id={`${id}-hint`}>
-            The endpoint returned no models. Enter the key above (or start the local server), then
-            Refresh — or type the model id.
+            {t("options.noModelsHint")}
           </p>
         )
       )}
@@ -205,6 +207,7 @@ const OptionsModal = ({
   onWebMcpEnabledChange,
   onClose,
 }) => {
+  const t = useMessages();
   const [models, setModels] = useState([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState("");
@@ -265,7 +268,7 @@ const OptionsModal = ({
       setModels(models);
     } catch (e) {
       setModels([]);
-      setModelsError(e?.message || "Failed to load models");
+      setModelsError(e?.message || t("options.failedToLoadModels"));
     } finally {
       setIsLoadingModels(false);
     }
@@ -273,7 +276,7 @@ const OptionsModal = ({
 
   useEffect(() => {
     if (!isValidBaseUrl(debouncedBaseUrl)) {
-      setBaseUrlError("Not a Valid Url Pattern");
+      setBaseUrlError(t("options.invalidBaseUrl"));
       return;
     }
     setBaseUrlError("");
@@ -282,11 +285,11 @@ const OptionsModal = ({
   }, [provider, debouncedApiKey, debouncedBaseUrl]);
 
   const providerEntries = [
-    { value: LLM_PROVIDERS.GEMINI, label: "Gemini" },
-    { value: LLM_PROVIDERS.OPENAI, label: "OpenAI (ChatGPT)" },
-    { value: LLM_PROVIDERS.GROK, label: "Grok" },
-    { value: LLM_PROVIDERS.OLLAMA, label: "Ollama (Local)" },
-    { value: LLM_PROVIDERS.LMSTUDIO, label: "LM Studio (Local)" },
+    { value: LLM_PROVIDERS.GEMINI, label: t("options.providerGemini") },
+    { value: LLM_PROVIDERS.OPENAI, label: t("options.providerOpenai") },
+    { value: LLM_PROVIDERS.GROK, label: t("options.providerGrok") },
+    { value: LLM_PROVIDERS.OLLAMA, label: t("options.providerOllama") },
+    { value: LLM_PROVIDERS.LMSTUDIO, label: t("options.providerLmstudio") },
   ];
 
   // Models that do not accept a temperature parameter (OpenAI o1/o3 reasoning series)
@@ -308,8 +311,8 @@ const OptionsModal = ({
   return (
     <>
       <Modal
-        title="Options"
-        closeLabel="Close options"
+        title={t("options.title")}
+        closeLabel={t("options.closeLabel")}
         onClose={onClose}
         size="2xl"
         footer={
@@ -318,9 +321,9 @@ const OptionsModal = ({
               variant="body-sm"
               style={{ marginInlineEnd: "auto", alignSelf: "center", ...hintStyle }}
             >
-              Changes save to this browser.
+              {t("options.changesSave")}
             </Typography>
-            <Button onClick={onClose}>Done</Button>
+            <Button onClick={onClose}>{t("options.done")}</Button>
           </>
         }
       >
@@ -338,8 +341,12 @@ const OptionsModal = ({
                   background: "var(--ui-success)",
                 }}
               />
-              Active: {provider || "none"}
-              {providerOptions.model ? ` / ${providerOptions.model}` : ""}
+              {providerOptions.model
+                ? t("options.activeProviderModel", {
+                    provider: provider || t("common.none"),
+                    model: providerOptions.model,
+                  })
+                : t("options.activeProvider", { provider: provider || t("common.none") })}
             </span>
           </div>
 
@@ -351,16 +358,16 @@ const OptionsModal = ({
                 id="options-provider-heading"
                 style={headingStyle}
               >
-                Provider &amp; model
+                {t("options.providerHeading")}
               </Typography>
               <Typography variant="body-sm" style={sublineStyle}>
-                Changes apply immediately and persist to this browser.
+                {t("options.providerSubline")}
               </Typography>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <TokenSelect
-                label="LLM Provider"
+                label={t("options.llmProviderLabel")}
                 id="llm-provider"
                 value={provider}
                 onChange={(e) => onChange?.(e.target.value)}
@@ -370,10 +377,10 @@ const OptionsModal = ({
                   the mockup's two-column row. */}
               {hosted && (
                 <ApiKeyField
-                  label="API Key"
+                  label={t("options.apiKeyLabel")}
                   id="api-key"
                   placeholder={
-                    encryption.locked ? "Locked — unlock below to edit" : "Enter API key"
+                    encryption.locked ? t("options.lockedPlaceholder") : t("options.enterApiKey")
                   }
                   value={providerOptions.apiKey || ""}
                   disabled={encryption.locked}
@@ -384,19 +391,19 @@ const OptionsModal = ({
               )}
               {local && (
                 <ApiKeyField
-                  label="API Key (optional)"
+                  label={t("options.apiKeyOptionalLabel")}
                   id="local-api-key"
                   placeholder={
                     encryption.locked
-                      ? "Locked — unlock below to edit"
-                      : "Only if the server requires one"
+                      ? t("options.lockedPlaceholder")
+                      : t("options.onlyIfServerRequires")
                   }
                   value={providerOptions.apiKey || ""}
                   disabled={encryption.locked}
                   onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
                   hasApiKey={hasApiKey}
                   onClear={clearApiKey}
-                  hint="Neither provider needs a key. Set one only when your server sits behind an authenticating proxy; it is sent as a Bearer token."
+                  hint={t("options.localKeyHint")}
                 />
               )}
             </div>
@@ -415,7 +422,7 @@ const OptionsModal = ({
                 {(provider === LLM_PROVIDERS.OPENAI || provider === LLM_PROVIDERS.GROK) && (
                   <div className="ui-field">
                     <InputField
-                      label="Base URL (optional)"
+                      label={t("options.baseUrlOptionalLabel")}
                       id="base-url"
                       type="text"
                       dir="ltr"
@@ -447,7 +454,7 @@ const OptionsModal = ({
                 />
                 <div className="ui-field">
                   <InputField
-                    label="Base URL"
+                    label={t("options.baseUrlLabel")}
                     id="ollama-url"
                     type="text"
                     dir="ltr"
@@ -492,11 +499,11 @@ const OptionsModal = ({
                           : "var(--ui-on-surface-variant)",
                       }}
                     >
-                      Set temperature
+                      {t("options.setTemperature")}
                     </label>
                     {!supportsTemp && (
                       <Typography variant="body-sm" as="span" style={hintStyle}>
-                        (not supported by this model)
+                        {t("options.temperatureUnsupported")}
                       </Typography>
                     )}
                     {isEnabled && (
@@ -506,7 +513,7 @@ const OptionsModal = ({
                     )}
                   </div>
                   <Typography variant="body-sm" style={{ margin: "8px 0 0", ...hintStyle }}>
-                    Higher values make responses more varied. Leave off to use the provider default.
+                    {t("options.temperatureHint")}
                   </Typography>
                   {isEnabled && (
                     <div className="mt-2 flex items-center gap-3">
@@ -524,7 +531,7 @@ const OptionsModal = ({
                         }
                         className="flex-1"
                         style={{ accentColor: "var(--ui-primary-container)" }}
-                        aria-label="Temperature value"
+                        aria-label={t("options.temperatureAria")}
                       />
                       <Typography variant="body-sm" as="span" style={hintStyle}>
                         2
@@ -552,20 +559,20 @@ const OptionsModal = ({
               id="options-appearance-heading"
               style={headingStyle}
             >
-              Appearance
+              {t("options.appearanceHeading")}
             </Typography>
             <TokenSelect
-              label="Theme"
+              label={t("options.themeLabel")}
               id="theme-select"
               value={currentTheme}
               onChange={(e) => onThemeChange?.(e.target.value)}
               options={Object.keys(themes)}
-              hint="Select a theme to apply."
+              hint={t("options.themeHint")}
             />
             <div className="ui-field">
               <div className="flex items-center justify-between gap-2">
-                <span className="ui-type-label-md">Upload custom theme</span>
-                <IconButton label="Show theme example" onClick={() => setShowExample(true)}>
+                <span className="ui-type-label-md">{t("options.themeUploadLabel")}</span>
+                <IconButton label={t("options.themeExample")} onClick={() => setShowExample(true)}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -589,7 +596,7 @@ const OptionsModal = ({
                     picker action; the native input stays the event source so
                     re-picking the same file keeps firing change (#25). */}
                 <Button intent="secondary" onClick={() => fileInputRef.current?.click()}>
-                  Choose File
+                  {t("options.chooseFile")}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -606,7 +613,7 @@ const OptionsModal = ({
                 />
               </div>
               <Typography variant="body-sm" style={hintStyle}>
-                Upload a JSON or YAML theme file.
+                {t("options.themeFileHint")}
               </Typography>
             </div>
             {/* Decorative 3D effects: pure presentation, on by default, off in
@@ -620,11 +627,9 @@ const OptionsModal = ({
                 style={{ accentColor: "var(--ui-primary-container)" }}
               />
               <span className="flex flex-col gap-0.5">
-                <span className="ui-type-label-md">Show 3D effects</span>
+                <span className="ui-type-label-md">{t("options.effectsLabel")}</span>
                 <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
-                  A dimensional brand mark in the header and a small animated card stack on an empty
-                  shelf. Both are rendered locally and stay still when your system asks for reduced
-                  motion; turning this off shows the static marks instead.
+                  {t("options.effectsHint")}
                 </span>
               </span>
             </label>
@@ -637,7 +642,7 @@ const OptionsModal = ({
               id="options-privacy-heading"
               style={headingStyle}
             >
-              Privacy
+              {t("options.privacyHeading")}
             </Typography>
             <label className="flex items-start gap-3 cursor-pointer">
               <input
@@ -648,12 +653,9 @@ const OptionsModal = ({
                 style={{ accentColor: "var(--ui-primary-container)" }}
               />
               <span className="flex flex-col gap-0.5">
-                <span className="ui-type-label-md">Load site icons from the web</span>
+                <span className="ui-type-label-md">{t("options.remoteFaviconsLabel")}</span>
                 <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
-                  Off by default: no icon is fetched over the network. BookmarkIt uses your
-                  browser&rsquo;s own icon cache when the extension can, and a neutral placeholder
-                  otherwise. When on, each visible bookmark fetches its icon &mdash; from the
-                  address saved with it, or from google.com by domain when it has none.
+                  {t("options.remoteFaviconsHint")}
                 </span>
               </span>
             </label>
@@ -668,7 +670,7 @@ const OptionsModal = ({
               id="options-agents-heading"
               style={headingStyle}
             >
-              Agent access
+              {t("options.agentAccessHeading")}
             </Typography>
             <label className={`flex items-start gap-3 ${webMcpAvailable ? "cursor-pointer" : ""}`}>
               <input
@@ -684,12 +686,10 @@ const OptionsModal = ({
                   className="ui-type-label-md"
                   style={webMcpAvailable ? undefined : { color: "var(--ui-on-surface-variant)" }}
                 >
-                  Let browser agents search my bookmarks
+                  {t("options.webMcpLabel")}
                 </span>
                 <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
-                  {webMcpAvailable
-                    ? "Off by default. When on, this tab offers two read-only tools — search and folder listing — to AI agents running in this browser, for as long as it stays open. Agents can look, never change or fetch anything. Requires a browser with WebMCP enabled."
-                    : "This browser does not expose WebMCP, so there is nothing to turn on here yet."}
+                  {webMcpAvailable ? t("options.webMcpHint") : t("options.webMcpUnavailable")}
                 </span>
               </span>
             </label>
@@ -699,14 +699,14 @@ const OptionsModal = ({
 
       {showExample && (
         <Modal
-          title="Theme File Format"
-          closeLabel="Close example"
+          title={t("options.themeExampleTitle")}
+          closeLabel={t("options.closeExample")}
           onClose={() => setShowExample(false)}
-          footer={<Button onClick={() => setShowExample(false)}>Close</Button>}
+          footer={<Button onClick={() => setShowExample(false)}>{t("common.close")}</Button>}
         >
           <div style={{ display: "grid", gap: "var(--ui-space-gutter-md)" }}>
             <Typography variant="body-md" style={{ margin: 0 }}>
-              Upload a JSON or YAML file with the following structure:
+              {t("options.exampleIntro")}
             </Typography>
             <pre
               style={{
@@ -731,7 +731,7 @@ const OptionsModal = ({
 }`}
             </pre>
             <Typography variant="body-sm" style={hintStyle}>
-              All properties are required. Colors should be in hex format (#rrggbb).
+              {t("options.exampleFormatHint")}
             </Typography>
           </div>
         </Modal>

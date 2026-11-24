@@ -12,6 +12,7 @@ import React, { useMemo, useState } from "react";
 import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
 import { describeBulkEdit, isEmptyChange, planBulkEdit } from "../utils/bulkEdit.js";
 import { Button, InputField } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 import { SelectionIcon } from "./icons.jsx";
 
 // Above this many bookmarks, applying takes a second press. Small enough that a
@@ -54,6 +55,7 @@ const BulkEditBar = React.memo(function BulkEditBar({
   onClearSelection,
   onDelete,
 }) {
+  const t = useMessages();
   const [form, setForm] = useState(EMPTY);
   const [confirming, setConfirming] = useState(false);
 
@@ -89,12 +91,12 @@ const BulkEditBar = React.memo(function BulkEditBar({
       className="ui-bulk-bar mb-4"
       {...keepsSelectionProps}
       role="group"
-      aria-label={`Bulk edit ${count} selected bookmark${count === 1 ? "" : "s"}`}
+      aria-label={t("bulkEdit.groupAria", { count })}
     >
       <div className="flex items-center gap-2 flex-wrap">
         <span className="ui-bulk-count ui-type-label-md ui-numeric">
           <SelectionIcon />
-          {count} selected
+          {t("bulkEdit.selectedCount", { count })}
         </span>
 
         <InputField
@@ -102,9 +104,9 @@ const BulkEditBar = React.memo(function BulkEditBar({
           type="text"
           value={form.addTags}
           onChange={set("addTags")}
-          placeholder="Add tags…"
-          aria-label="Tags to add, comma separated"
-          wrapperClassName="w-[11.25rem]"
+          placeholder={t("bulkEdit.addTagsPlaceholder")}
+          aria-label={t("bulkEdit.addTagsAria")}
+          wrapperClassName="min-w-[11.25rem] max-w-full"
         />
 
         <InputField
@@ -112,26 +114,26 @@ const BulkEditBar = React.memo(function BulkEditBar({
           type="text"
           value={form.removeTags}
           onChange={set("removeTags")}
-          placeholder="Remove tags…"
-          aria-label="Tags to remove, comma separated"
-          wrapperClassName="w-[11.25rem]"
+          placeholder={t("bulkEdit.removeTagsPlaceholder")}
+          aria-label={t("bulkEdit.removeTagsAria")}
+          wrapperClassName="min-w-[11.25rem] max-w-full"
         />
 
         <select
           id="bulk-folder"
-          className="ui-input ui-bulk-select w-[11.25rem]"
+          className="ui-input ui-bulk-select ui-bulk-select--folder"
           value={form.folder}
           onChange={set("folder")}
-          aria-label="Folder to move the selection into"
+          aria-label={t("bulkEdit.folderAria")}
         >
-          <option value={KEEP}>Keep folders</option>
-          <option value={ROOT}>No folder</option>
+          <option value={KEEP}>{t("bulkEdit.keepFolders")}</option>
+          <option value={ROOT}>{t("bulkEdit.noFolder")}</option>
           {folders.map((folder) => (
             <option key={folder} value={folder}>
               {folder}
             </option>
           ))}
-          <option value={NEW_FOLDER}>New folder…</option>
+          <option value={NEW_FOLDER}>{t("bulkEdit.newFolder")}</option>
         </select>
 
         {form.folder === NEW_FOLDER && (
@@ -140,22 +142,22 @@ const BulkEditBar = React.memo(function BulkEditBar({
             type="text"
             value={form.newFolder}
             onChange={set("newFolder")}
-            placeholder="Folder path…"
-            aria-label="New folder path"
-            wrapperClassName="w-[11.25rem]"
+            placeholder={t("bulkEdit.folderPathPlaceholder")}
+            aria-label={t("bulkEdit.newFolderAria")}
+            wrapperClassName="min-w-[11.25rem] max-w-full"
             autoFocus
           />
         )}
 
         <select
           id="bulk-rating"
-          className="ui-input ui-bulk-select w-[9.375rem]"
+          className="ui-input ui-bulk-select ui-bulk-select--rating"
           value={form.rating}
           onChange={set("rating")}
-          aria-label="Rating to set"
+          aria-label={t("bulkEdit.ratingAria")}
         >
-          <option value={KEEP}>Keep ratings</option>
-          <option value={0}>Clear rating</option>
+          <option value={KEEP}>{t("bulkEdit.keepRatings")}</option>
+          <option value={0}>{t("bulkEdit.clearRating")}</option>
           {[1, 2, 3, 4, 5].map((n) => (
             <option key={n} value={n}>
               {"★".repeat(n)}
@@ -164,28 +166,28 @@ const BulkEditBar = React.memo(function BulkEditBar({
         </select>
 
         <Button type="button" onClick={apply} disabled={nothingToDo}>
-          {confirming ? `Apply to ${patches.length}?` : "Apply"}
+          {confirming ? t("bulkEdit.applyTo", { count: patches.length }) : t("bulkEdit.apply")}
         </Button>
 
         {onDelete && (
           <Button type="button" intent="destructive" onClick={onDelete}>
-            Delete
+            {t("common.delete")}
           </Button>
         )}
 
         <Button type="button" intent="secondary" onClick={onClearSelection}>
-          Clear selection
+          {t("bulkEdit.clearSelection")}
         </Button>
       </div>
 
       {/* Says what would happen before it happens, and stays quiet when nothing would. */}
       <div className="ui-bulk-summary mt-2" aria-live="polite">
         {isEmptyChange(change)
-          ? "Tags are added and removed, not replaced."
+          ? t("bulkEdit.hint")
           : nothingToDo
-            ? `Nothing to change — all ${count} already match.`
-            : `${describeBulkEdit(change, patches.length)}${
-                unchanged > 0 ? ` (${unchanged} already match)` : ""
+            ? t("bulkEdit.allMatch", { count })
+            : `${describeBulkEdit(change, patches.length, t)}${
+                unchanged > 0 ? ` ${t("bulkEdit.alreadyMatch", { count: unchanged })}` : ""
               }`}
       </div>
     </div>

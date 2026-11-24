@@ -157,6 +157,16 @@ describe("SidebarNav (#283)", () => {
     expect(onApplyView).toHaveBeenCalledWith(views[0]);
   });
 
+  it("forgets a saved view from its delete button", () => {
+    // The bar calls its own prop, onForget; the rail's handler goes in under
+    // that name or the button throws on a missing function.
+    const views = [{ id: "v1", name: "Reading list", plan: [], filters: {} }];
+    const { onForgetView } = setup({ views, canSaveView: true });
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete view Reading list" }));
+    expect(onForgetView).toHaveBeenCalledWith("v1");
+  });
+
   it("shows no saved-views section while there is nothing saved or to save", () => {
     setup();
 

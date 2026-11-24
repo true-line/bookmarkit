@@ -1,8 +1,10 @@
 // ARCH-07: React error boundary — prevents unhandled render errors from showing a blank screen.
-// Class component required by React's error boundary API.
+// Class component required by React's error boundary API. The visible fallback
+// is a separate function component, because only a function component can read
+// the message catalogue (#284).
 
 import React from "react";
-import { Button } from "../design-system/index.js";
+import ErrorBoundaryFallback from "./ErrorBoundaryFallback.jsx";
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -28,45 +30,7 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div
-          className="ui-error-fallback"
-          style={{
-            minHeight: "200px",
-            color: "var(--text-primary, #111827)",
-            backgroundColor: "var(--bg-primary, #ffffff)",
-          }}
-        >
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#ef4444"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ marginBottom: "12px" }}
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <p style={{ fontWeight: 600, fontSize: "16px", marginBottom: "8px" }}>
-            Something went wrong.
-          </p>
-          <p
-            style={{
-              fontSize: "14px",
-              color: "var(--text-secondary, #6b7280)",
-              marginBottom: "16px",
-            }}
-          >
-            {this.props.fallbackMessage || "An unexpected error occurred in this section."}
-          </p>
-          <Button onClick={() => window.location.reload()}>Reload</Button>
-        </div>
-      );
+      return <ErrorBoundaryFallback fallbackMessage={this.props.fallbackMessage} />;
     }
     return this.props.children;
   }

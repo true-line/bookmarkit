@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { createTranslator } from "../i18n/index.js";
 import { planBulkEdit, previousValuesFor, describeBulkEdit, isEmptyChange } from "./bulkEdit.js";
 
 const selection = [
@@ -139,16 +140,38 @@ describe("previousValuesFor (#54)", () => {
 });
 
 describe("describeBulkEdit (#54)", () => {
+  // The words are the catalogue's (#284); the utility only arranges them.
+  const t = createTranslator("en");
+
   it("says what is about to happen, and to how many", () => {
-    expect(describeBulkEdit({ addTags: "a, b", rating: 4 }, 12)).toBe(
+    expect(describeBulkEdit({ addTags: "a, b", rating: 4 }, 12, t)).toBe(
       "add a, b, rate 4 — 12 bookmarks"
     );
-    expect(describeBulkEdit({ removeTags: "old" }, 1)).toBe("remove old — 1 bookmark");
-    expect(describeBulkEdit({ folderId: "" }, 3)).toBe("move to no folder — 3 bookmarks");
-    expect(describeBulkEdit({ rating: 0 }, 3)).toBe("clear rating — 3 bookmarks");
+    expect(describeBulkEdit({ removeTags: "old" }, 1, t)).toBe("remove old — 1 bookmark");
+    expect(describeBulkEdit({ folderId: "" }, 3, t)).toBe("move to no folder — 3 bookmarks");
+    expect(describeBulkEdit({ rating: 0 }, 3, t)).toBe("clear rating — 3 bookmarks");
+  });
+
+  it("takes its words from the translator it is given", () => {
+    const de = createTranslator("de", {
+      bulkEdit: {
+        describe: {
+          addTags: "{tags} hinzufügen",
+          summary: {
+            one: "{changes} — {count} Lesezeichen",
+            other: "{changes} — {count} Lesezeichen",
+          },
+        },
+      },
+    });
+
+    // A message the locale lacks falls back to English, as it does everywhere.
+    expect(describeBulkEdit({ addTags: "a", rating: 0 }, 2, de)).toBe(
+      "a hinzufügen, clear rating — 2 Lesezeichen"
+    );
   });
 
   it("says nothing about an empty change", () => {
-    expect(describeBulkEdit({}, 5)).toBe("");
+    expect(describeBulkEdit({}, 5, t)).toBe("");
   });
 });

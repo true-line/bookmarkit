@@ -41,6 +41,15 @@ describe("BulkEditBar (#54)", () => {
     expect(screen.getByText("4 selected")).toBeInTheDocument();
   });
 
+  // #284: the pickers' widths are floors declared in index.css; these classes
+  // carry them, so a longer translated label grows the select.
+  it("gives the folder and rating pickers the class that holds their width floor", () => {
+    setup();
+
+    expect(folder()).toHaveClass("ui-bulk-select--folder");
+    expect(rating()).toHaveClass("ui-bulk-select--rating");
+  });
+
   it("will not apply an empty change", () => {
     setup();
 

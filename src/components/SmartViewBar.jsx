@@ -15,6 +15,7 @@
 
 import React, { useState } from "react";
 import { Button, InputField } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 const SmartViewBar = React.memo(function SmartViewBar({
   views,
@@ -25,6 +26,7 @@ const SmartViewBar = React.memo(function SmartViewBar({
   onForget,
   layout = "bar",
 }) {
+  const t = useMessages();
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState("");
   const stack = layout === "stack";
@@ -57,7 +59,7 @@ const SmartViewBar = React.memo(function SmartViewBar({
           type="button"
           onClick={() => onForget(view.id)}
           className="ui-view-chip-forget"
-          aria-label={`Delete view ${view.name}`}
+          aria-label={t("smartView.deleteView", { name: view.name })}
         >
           ✕
         </button>
@@ -69,9 +71,9 @@ const SmartViewBar = React.memo(function SmartViewBar({
     <div
       className={stack ? "ui-sidebar-saved" : "mb-4 flex items-center gap-2 flex-wrap"}
       role="group"
-      aria-label="Saved views"
+      aria-label={t("smartView.groupLabel")}
     >
-      {stack && <p className="ui-sidebar-caption">Saved views</p>}
+      {stack && <p className="ui-sidebar-caption">{t("smartView.savedViewsCaption")}</p>}
       {stack ? <div className="ui-sidebar-saved-chips">{chips}</div> : chips}
 
       {canSave && !naming && (
@@ -80,7 +82,7 @@ const SmartViewBar = React.memo(function SmartViewBar({
           onClick={() => setNaming(true)}
           className={stack ? "w-full" : ""}
         >
-          Save current view
+          {t("smartView.saveCurrent")}
         </Button>
       )}
 
@@ -94,14 +96,14 @@ const SmartViewBar = React.memo(function SmartViewBar({
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Name this view…"
-            aria-label="Name for the saved view"
-            wrapperClassName={stack ? "w-full" : "w-[12.5rem]"}
+            placeholder={t("smartView.namePlaceholder")}
+            aria-label={t("smartView.nameAria")}
+            wrapperClassName={stack ? "w-full" : "min-w-[12.5rem] max-w-full"}
             autoFocus
           />
           <div className={stack ? "ui-sidebar-saved-actions" : "flex items-center gap-2"}>
             <Button type="submit" disabled={!name.trim()}>
-              Save
+              {t("common.save")}
             </Button>
             <Button
               type="button"
@@ -111,7 +113,7 @@ const SmartViewBar = React.memo(function SmartViewBar({
                 setName("");
               }}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>

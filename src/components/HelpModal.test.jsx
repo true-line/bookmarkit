@@ -61,6 +61,20 @@ describe("HelpModal on the unified design system", () => {
     expect(chips).toContain('"remove duplicates"');
   });
 
+  it("keeps the emphasis on the two tips, each one message from the catalogue", () => {
+    // #284: a tip is a single template with its <strong> inside it, not three
+    // fragments joined around the element.
+    renderHelp();
+    const duplicates = screen.getByText("Remove Duplicates");
+    const portability = screen.getByText("Import/Export");
+
+    expect(duplicates.tagName).toBe("STRONG");
+    expect(portability.tagName).toBe("STRONG");
+    expect(duplicates.closest("li")).toHaveTextContent(
+      'Use the Remove Duplicates button (or type "remove duplicates" into the search) to find and delete duplicates by title+URL.'
+    );
+  });
+
   it("closes from the footer's Got it button", () => {
     const onClose = vi.fn();
     renderHelp(onClose);

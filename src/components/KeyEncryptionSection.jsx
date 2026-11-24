@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button, InputField, Typography } from "../design-system/index.js";
+import { useMessages } from "../i18n/index.js";
 
 // #29: passphrase encryption-at-rest controls. Rendered regardless of the
 // selected provider so a locked key can always be unlocked (a provider that
@@ -23,6 +24,7 @@ const KeyEncryptionSection = ({
   onDisableEncryption,
   onUnlock,
 }) => {
+  const t = useMessages();
   const [passInput, setPassInput] = useState("");
   const [passConfirm, setPassConfirm] = useState("");
   const [unlockInput, setUnlockInput] = useState("");
@@ -32,11 +34,11 @@ const KeyEncryptionSection = ({
   const submitEnable = async () => {
     setError("");
     if (passInput.length < 6) {
-      setError("Use a passphrase of at least 6 characters.");
+      setError(t("encryption.shortPassphrase"));
       return;
     }
     if (passInput !== passConfirm) {
-      setError("Passphrases don't match.");
+      setError(t("encryption.mismatch"));
       return;
     }
     setBusy(true);
@@ -55,7 +57,7 @@ const KeyEncryptionSection = ({
     try {
       const ok = await onUnlock?.(unlockInput);
       if (ok) setUnlockInput("");
-      else setError("Incorrect passphrase.");
+      else setError(t("encryption.incorrect"));
     } finally {
       setBusy(false);
     }
@@ -76,27 +78,26 @@ const KeyEncryptionSection = ({
         id="options-encryption-heading"
         style={headingStyle}
       >
-        API key encryption
+        {t("encryption.heading")}
       </Typography>
       {!encryption.encrypted && (
         <div style={fieldGap}>
           <Typography variant="body-sm" style={copyStyle}>
-            Optionally encrypt your stored API key with a passphrase. You'll enter it once per
-            session; if you forget it you'll need to re-enter your API key.
+            {t("encryption.intro")}
           </Typography>
           <InputField
-            label="Passphrase"
+            label={t("encryption.passphraseLabel")}
             id="encryption-passphrase"
             type="password"
-            placeholder="Passphrase (min 6 characters)"
+            placeholder={t("encryption.passphrasePlaceholder")}
             value={passInput}
             onChange={(e) => setPassInput(e.target.value)}
           />
           <InputField
-            label="Confirm passphrase"
+            label={t("encryption.confirmLabel")}
             id="encryption-passphrase-confirm"
             type="password"
-            placeholder="Confirm passphrase"
+            placeholder={t("encryption.confirmPlaceholder")}
             value={passConfirm}
             onChange={(e) => setPassConfirm(e.target.value)}
             onKeyDown={(e) => {
@@ -110,7 +111,7 @@ const KeyEncryptionSection = ({
           )}
           <div>
             <Button type="button" disabled={busy} loading={busy} onClick={submitEnable}>
-              Encrypt API key
+              {t("encryption.encrypt")}
             </Button>
           </div>
         </div>
@@ -118,13 +119,13 @@ const KeyEncryptionSection = ({
       {encryption.encrypted && encryption.locked && (
         <div style={fieldGap}>
           <Typography variant="body-sm" style={copyStyle}>
-            🔒 Your API key is encrypted. Enter your passphrase to unlock it for this session.
+            {t("encryption.lockedIntro")}
           </Typography>
           <InputField
-            label="Passphrase"
+            label={t("encryption.passphraseLabel")}
             id="encryption-unlock-passphrase"
             type="password"
-            placeholder="Passphrase"
+            placeholder={t("encryption.unlockPlaceholder")}
             value={unlockInput}
             onChange={(e) => setUnlockInput(e.target.value)}
             onKeyDown={(e) => {
@@ -138,10 +139,10 @@ const KeyEncryptionSection = ({
           )}
           <div className="flex items-center gap-3">
             <Button type="button" disabled={busy} loading={busy} onClick={submitUnlock}>
-              Unlock
+              {t("encryption.unlock")}
             </Button>
             <Button type="button" intent="secondary" onClick={() => onDisableEncryption?.()}>
-              Forgot passphrase? Remove encryption
+              {t("encryption.forgotPassphrase")}
             </Button>
           </div>
         </div>
@@ -149,11 +150,11 @@ const KeyEncryptionSection = ({
       {encryption.encrypted && !encryption.locked && (
         <div style={fieldGap}>
           <Typography variant="body-sm" style={copyStyle}>
-            🔓 Your API key is encrypted (unlocked for this session).
+            {t("encryption.unlockedIntro")}
           </Typography>
           <div>
             <Button type="button" intent="secondary" onClick={() => onDisableEncryption?.()}>
-              Remove encryption
+              {t("encryption.removeEncryption")}
             </Button>
           </div>
         </div>
