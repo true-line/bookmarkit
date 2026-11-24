@@ -8,11 +8,20 @@ import {
   GRID_MIN_CARD_WIDTH,
   MAX_COLUMNS,
   MIN_CARD_WIDTH,
+  SINGLE_COLUMN_MAX_WIDTH,
 } from "./listColumns.js";
 
 describe("columnsForWidth (#193)", () => {
   // n columns fit exactly when width = n * MIN_CARD_WIDTH + (n - 1) * COLUMN_GAP
   const atColumns = (n) => n * MIN_CARD_WIDTH + (n - 1) * COLUMN_GAP;
+
+  // #294: the mobile manager's feed is single-column. The grid's tiles are
+  // small enough to pair up at half this width, so the floor is what stops them.
+  it("stays one column at phone width in every mode", () => {
+    expect(columnsForWidth(320, "flow")).toBe(1);
+    expect(columnsForWidth(SINGLE_COLUMN_MAX_WIDTH - 1, "grid")).toBe(1);
+    expect(columnsForWidth(SINGLE_COLUMN_MAX_WIDTH, "grid")).toBe(2);
+  });
 
   it("keeps one column while a second card would not fit", () => {
     expect(columnsForWidth(0)).toBe(1);
