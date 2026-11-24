@@ -125,7 +125,7 @@ describe("classifyLLMError messages come from the catalogue", () => {
     const classified = classifyLLMError(error(message), provider, echo);
 
     expect(classified.category).toBe(category);
-    expect(classified.message).toMatch(new RegExp(`^${key.replace(/\./gu, "\\.")}`, "u"));
+    expect(classified.message.startsWith(key)).toBe(true);
   });
 
   it("hands a local refusal its status as a number for the locale to format", () => {

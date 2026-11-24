@@ -21,7 +21,7 @@
 // a component's render — a hook's callback, a utility — calls getMessages()
 // at the moment it needs a message instead.
 
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
 import {
   formatDate,
   formatMessage,
@@ -133,7 +133,10 @@ export function createTranslator(locale, messages) {
 //
 // It is read when a message is raised, never captured at module load, so a
 // message raised after the locale changed reads in the new locale. It stays
-// the last one published until another provider renders.
+// unmounts, which hands back to English. Nothing in the app mounts a provider
+// yet, so in practice it is English until a language selector does; nested
+// providers are not a supported shape, and an inner one does not restore its
+// outer one when it goes.
 let current = null;
 
 /** The translator in effect outside React's tree. See the note above. */
@@ -151,6 +154,14 @@ export function MessageProvider({ locale = DEFAULT_LOCALE, messages, children })
     current = translator;
     return { locale, messages, translator };
   }, [locale, messages]);
+  // Taking it back waits for the effect, since a render that is discarded
+  // must not. The assignment covers an effect that StrictMode runs twice.
+  useEffect(() => {
+    current = value.translator;
+    return () => {
+      if (current === value.translator) current = null;
+    };
+  }, [value]);
   // createElement rather than JSX: this module keeps a .js extension (no
   // JSX transform), and a one-element provider loses nothing by it.
   return React.createElement(MessageContext.Provider, { value }, children);

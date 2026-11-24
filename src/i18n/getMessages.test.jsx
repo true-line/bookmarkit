@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { getMessages, MessageProvider } from "./index.js";
 
@@ -21,15 +21,6 @@ const Raiser = () => {
   }, []);
   return null;
 };
-
-// The translator in effect is module state, so each test leaves English behind.
-afterEach(() => {
-  render(
-    <MessageProvider>
-      <span />
-    </MessageProvider>
-  );
-});
 
 describe("getMessages", () => {
   it("reads English with no provider, and is the same translator on every call", () => {
@@ -84,6 +75,18 @@ describe("getMessages", () => {
 
     expect(raiser.current).toBe(before);
     expect(raiser.current()).toBe("Save");
+  });
+
+  it("hands back to English when the provider unmounts", () => {
+    const { unmount } = render(
+      <MessageProvider locale="en-PT" messages={pirate}>
+        <Raiser />
+      </MessageProvider>
+    );
+
+    unmount();
+
+    expect(getMessages()(KEY)).toBe("Save");
   });
 
   it("falls back to English for a key the locale lacks", () => {

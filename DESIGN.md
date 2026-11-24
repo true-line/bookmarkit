@@ -207,8 +207,12 @@ rendered with, and English with no provider. `MessageProvider` publishes its
 translator as it renders, so a child's effect already sees it, and the call is
 made when a message is raised rather than at module load, so a hook's callbacks
 keep their empty dependency arrays and a message raised after a locale change
-reads in the new locale. A message already on screen keeps the language it was
-raised in. `classifyLLMError` follows the same split as everything else that
+reads in the new locale — so a hook reads it at the point it raises a message,
+not once for an operation that awaits. A message already on screen keeps the
+language it was raised in, and English returns when the provider unmounts. The
+app mounts no provider yet, so this is English until a language selector does;
+nested providers are not a supported shape.
+`classifyLLMError` follows the same split as everything else that
 touches an error: the _category_ is decided in code and callers branch on it,
 and only the sentence comes from the catalogue (`llmError.*`), read through the
 translator in effect or one the caller passes.
