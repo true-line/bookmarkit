@@ -16,14 +16,16 @@ import { useTheme } from "../hooks/useTheme.js";
 import { isSafeHttpUrl } from "../utils/url.js";
 import { Button, InputField, Tag } from "../design-system/index.js";
 import { StarRating } from "../components/StarRating.jsx";
+import { useMessages } from "../i18n/index.js";
 
 function QuickAddFields({ form, setForm, folderOptions }) {
+  const t = useMessages();
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   return (
     <>
       <InputField
         id="qa-title"
-        label="Title"
+        label={t("quickAdd.titleLabel")}
         type="text"
         value={form.title}
         onChange={set("title")}
@@ -34,7 +36,7 @@ function QuickAddFields({ form, setForm, folderOptions }) {
           the screens set dir="ltr" on URL inputs. */}
       <InputField
         id="qa-url"
-        label="URL"
+        label={t("quickAdd.urlLabel")}
         type="url"
         value={form.url}
         onChange={set("url")}
@@ -46,11 +48,11 @@ function QuickAddFields({ form, setForm, folderOptions }) {
       <div className="grid grid-cols-2 gap-2">
         <InputField
           id="qa-folder"
-          label="Folder"
+          label={t("quickAdd.folderLabel")}
           type="text"
           value={form.folderId}
           onChange={set("folderId")}
-          placeholder="Folder (e.g. Work/API)"
+          placeholder={t("quickAdd.folderPlaceholder")}
           list="qa-folders"
         />
         {/* Cheap folder autocomplete against paths already in use — typing a folder
@@ -62,11 +64,11 @@ function QuickAddFields({ form, setForm, folderOptions }) {
         </datalist>
         <InputField
           id="qa-tags"
-          label="Tags"
+          label={t("quickAdd.tagsLabel")}
           type="text"
           value={form.tags}
           onChange={set("tags")}
-          placeholder="tags, comma, separated"
+          placeholder={t("quickAdd.tagsPlaceholder")}
         />
       </div>
     </>
@@ -78,6 +80,7 @@ function QuickAddFields({ form, setForm, folderOptions }) {
 // dark, and the square reads --ui-brand-crimson, which the theme bridge maps
 // onto the user's accent.
 function PopupHeader({ existing }) {
+  const t = useMessages();
   return (
     <header
       className="flex items-center justify-between gap-2 pb-3"
@@ -93,10 +96,10 @@ function PopupHeader({ existing }) {
           </svg>
         </div>
         <h1 className="ui-type-headline-sm truncate" style={{ color: "var(--ui-on-surface)" }}>
-          Quick Add
+          {t("quickAdd.headerTitle")}
         </h1>
       </div>
-      {existing && <Tag>Already saved</Tag>}
+      {existing && <Tag>{t("quickAdd.alreadySaved")}</Tag>}
     </header>
   );
 }
@@ -104,6 +107,7 @@ function PopupHeader({ existing }) {
 // The mockup's non-http(s) fallback state: an info box on the container
 // surface, then the full-width primary way out.
 function PopupError({ message, onOpenApp }) {
+  const t = useMessages();
   return (
     <div className="flex flex-col gap-4 py-2">
       <div
@@ -123,16 +127,17 @@ function PopupError({ message, onOpenApp }) {
         </p>
       </div>
       <Button intent="primary" className="w-full" onClick={onOpenApp}>
-        Open BookmarkIt
+        {t("quickAdd.openApp")}
       </Button>
     </div>
   );
 }
 
 function PopupLoading() {
+  const t = useMessages();
   return (
     <div className="p-6 flex items-center justify-center">
-      <span className="ui-spinner" role="status" aria-label="Loading" />
+      <span className="ui-spinner" role="status" aria-label={t("quickAdd.loading")} />
     </div>
   );
 }
@@ -141,6 +146,7 @@ function PopupLoading() {
 // the tonal way out with the crimson save. The rating editor sits between the
 // fields and the footer — the mockup omits it, but the save flow writes it.
 function QuickAddBody({ form, setForm, folderOptions, existing, status, onSave, onOpenApp }) {
+  const t = useMessages();
   const saving = status.state === "saving";
   const saved = status.state === "saved";
 
@@ -168,16 +174,16 @@ function QuickAddBody({ form, setForm, folderOptions, existing, status, onSave, 
         style={{ borderTop: "1px solid var(--ui-outline-variant)" }}
       >
         <Button intent="secondary" onClick={onOpenApp}>
-          Open BookmarkIt
+          {t("quickAdd.openApp")}
         </Button>
         <Button intent="primary" onClick={onSave} disabled={saving || saved} loading={saving}>
           {saving
-            ? "Saving…"
+            ? t("quickAdd.saving")
             : saved
               ? `✓ ${status.message}`
               : existing
-                ? "Update Bookmark"
-                : "Save Bookmark"}
+                ? t("quickAdd.update")
+                : t("quickAdd.save")}
         </Button>
       </footer>
 
@@ -186,7 +192,7 @@ function QuickAddBody({ form, setForm, folderOptions, existing, status, onSave, 
         style={{ color: "var(--ui-on-surface-variant)" }}
         aria-hidden="true"
       >
-        Enter to save · Esc to close
+        {t("quickAdd.hint")}
       </p>
     </>
   );
@@ -194,6 +200,7 @@ function QuickAddBody({ form, setForm, folderOptions, existing, status, onSave, 
 
 const QuickAdd = () => {
   useTheme(); // applies the user's theme CSS variables to this popup too
+  const t = useMessages();
 
   const { bookmarks, isLoading, init, saveBookmark, storeRef } = useBookmarkStore();
   useEffect(() => init(), [init]);
@@ -222,22 +229,22 @@ const QuickAdd = () => {
     if (requestedUrl) {
       if (isSafeHttpUrl(requestedUrl))
         setTab({ url: requestedUrl, title: requested.get("title") || "" });
-      else setTabError("That link can't be bookmarked (only http and https pages).");
+      else setTabError(t("quickAdd.linkUnsupported"));
       return;
     }
     (async () => {
       try {
         const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!active || !isSafeHttpUrl(active.url)) {
-          setTabError("This page can't be bookmarked (only http and https pages).");
+          setTabError(t("quickAdd.pageUnsupported"));
           return;
         }
         setTab(active);
       } catch {
-        setTabError("Couldn't read the current tab.");
+        setTabError(t("quickAdd.tabReadFailed"));
       }
     })();
-  }, []);
+  }, [t]);
 
   // Prefill exactly once. `bookmarks` is a live subscription, so re-running this on
   // every store push would overwrite whatever the user had typed.
@@ -266,13 +273,13 @@ const QuickAdd = () => {
     if (status.state === "saving") return;
     const url = form.url.trim();
     if (!isSafeHttpUrl(url)) {
-      setStatus({ state: "error", message: "Enter a valid http(s) URL." });
+      setStatus({ state: "error", message: t("quickAdd.invalidUrl") });
       return;
     }
     // saveBookmark no-ops (rather than throwing) on an uninitialized store, which
     // would otherwise show "Saved" for a write that never happened.
     if (!storeRef.current) {
-      setStatus({ state: "error", message: "Store not ready — try again in a moment." });
+      setStatus({ state: "error", message: t("quickAdd.storeNotReady") });
       return;
     }
     setStatus({ state: "saving", message: "" });
@@ -294,12 +301,15 @@ const QuickAdd = () => {
         // bookmark never needs the Google favicon fallback (#39).
         faviconUrl: existing?.faviconUrl || (isSafeHttpUrl(tab?.favIconUrl) ? tab.favIconUrl : ""),
       });
-      setStatus({ state: "saved", message: existing ? "Updated" : "Saved" });
+      setStatus({
+        state: "saved",
+        message: existing ? t("quickAdd.updated") : t("quickAdd.saved"),
+      });
       setTimeout(() => window.close(), 700);
     } catch {
-      setStatus({ state: "error", message: "Couldn't save. Try the full app." });
+      setStatus({ state: "error", message: t("quickAdd.saveFailed") });
     }
-  }, [form, existing, tab, saveBookmark, storeRef, status.state]);
+  }, [form, existing, tab, saveBookmark, storeRef, status.state, t]);
 
   const openFullApp = useCallback(() => {
     chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
