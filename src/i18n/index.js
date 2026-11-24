@@ -133,6 +133,7 @@ export function createTranslator(locale, messages) {
 //
 // It is read when a message is raised, never captured at module load, so a
 // message raised after the locale changed reads in the new locale. It stays
+// the last one published until another provider renders or that provider
 // unmounts, which hands back to English. Nothing in the app mounts a provider
 // yet, so in practice it is English until a language selector does; nested
 // providers are not a supported shape, and an inner one does not restore its
