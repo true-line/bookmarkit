@@ -99,3 +99,56 @@ describe("classifyLLMError", () => {
     expect(classifyLLMError(new Error("HTTP 429"), "lmstudio").category).toBe("rate_limit");
   });
 });
+
+// #307: the wording is the catalogue's. A caller that only wants the category
+// still gets it, and a caller with its own translator gets that translator's
+// sentence — so a classifier is the same classifier in every language.
+describe("classifyLLMError messages come from the catalogue", () => {
+  // A translator that answers with the key it was asked for and the parameters
+  // it was given, so the test can see exactly which message was requested.
+  const echo = (key, params) =>
+    params && Object.keys(params).length ? `${key} ${JSON.stringify(params)}` : key;
+  const error = (message) => new Error(message);
+
+  it.each([
+    ["no model is selected", undefined, "no_model", "llmError.noModel"],
+    ["Invalid API key provided", undefined, "api_key", "llmError.apiKey"],
+    ["HTTP 429", undefined, "rate_limit", "llmError.rateLimit"],
+    ["Failed to fetch", undefined, "network", "llmError.network"],
+    ["Unexpected token in JSON", undefined, "parse", "llmError.parse"],
+    ["something else entirely", undefined, "generic", "llmError.generic"],
+    ["Ollama API error 403", "ollama", "local_refused", "llmError.ollamaRefused"],
+    ["Failed to fetch", "ollama", "local_unreachable", "llmError.ollamaUnreachable"],
+    ["LM Studio API error 401", "lmstudio", "local_refused", "llmError.lmStudioRefused"],
+    ["Failed to fetch", "lmstudio", "local_unreachable", "llmError.lmStudioUnreachable"],
+  ])("reads %s (%s) as %s from %s", (message, provider, category, key) => {
+    const classified = classifyLLMError(error(message), provider, echo);
+
+    expect(classified.category).toBe(category);
+    expect(classified.message.startsWith(key)).toBe(true);
+  });
+
+  it("hands a local refusal its status as a number for the locale to format", () => {
+    expect(classifyLLMError(error("Ollama API error 403"), "ollama", echo).message).toBe(
+      'llmError.ollamaRefused {"status":403}'
+    );
+  });
+
+  it("reads the message in effect outside a component when given no translator", () => {
+    expect(classifyLLMError(error("HTTP 429")).message).toBe(
+      "Rate limit reached. Please wait a moment before trying again."
+    );
+  });
+
+  it("is the same classification with and without a translator", () => {
+    for (const [message, provider] of [
+      ["Invalid API key", undefined],
+      ["Failed to fetch", "ollama"],
+      ["HTTP 500", "lmstudio"],
+    ]) {
+      expect(classifyLLMError(error(message), provider, echo).category).toBe(
+        classifyLLMError(error(message), provider).category
+      );
+    }
+  });
+});

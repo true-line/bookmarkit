@@ -20,6 +20,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { getMessages } from "../i18n/index.js";
 import { readSetting, writeSetting } from "../utils/extensionStorage.js";
 import {
   BATCH_SIZE,
@@ -141,7 +142,7 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
       }
       const total = countDue(latest.current.bookmarks, checkedAtRef.current);
       if (total === 0) {
-        showMessage?.("Every link has been checked recently.", "info");
+        showMessage?.(getMessages()("linkSweep.allCheckedRecently"), "info");
         return;
       }
       setProgress({ running: true, checked: 0, total });
@@ -176,7 +177,7 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
       }
     } catch (error) {
       console.error("Link sweep failed:", error);
-      latest.current.showMessage?.("The link check stopped early. Please try again.", "error");
+      latest.current.showMessage?.(getMessages()("linkSweep.stoppedEarly"), "error");
     } finally {
       runningRef.current = false;
       setProgress(IDLE);

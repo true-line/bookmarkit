@@ -1,7 +1,8 @@
 // English messages for the app shell and the system modals (#284): the change
 // review, delete confirmation, message, error boundary, the agent-plan and
 // star-rating components, the BookmarkApp bar and the navigation sidebar
-// (#283). Merged into the catalogue by en.js.
+// (#283), and the messages raised by the app's logic (#307). Merged into the
+// catalogue by en.js.
 
 export const dialogMessages = {
   // ChangeReviewModal
@@ -151,5 +152,90 @@ export const dialogMessages = {
     untagged: "Untagged",
     views: "Views",
     viewsLabel: "Smart views",
+  },
+
+  // #307: messages raised by logic rather than rendered by a component. They
+  // reach the page as toasts, banners and form errors, and are read with
+  // getMessages() when raised — see src/i18n/index.js.
+
+  // src/llm/errors.js — one per classification rule; the category is the
+  // rule's and stays in code, only the sentence is here.
+  llmError: {
+    apiKey:
+      'API key is missing or invalid. Open Options (type "options" in the search bar) to enter your API key.',
+    generic: "Could not process your request. Check your LLM provider settings and try again.",
+    lmStudioRefused:
+      'LM Studio refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure its local server is running with "Enable CORS" turned on in its Developer settings.',
+    lmStudioUnreachable:
+      "Could not reach LM Studio. Make sure its local server is running and that the server address in Options matches it.",
+    network:
+      "Could not reach the LLM provider. Check your internet connection and provider settings.",
+    noModel:
+      'No model is selected. Open Options (type "options" in the search bar) and choose one from the list, or type its id.',
+    ollamaRefused:
+      "Ollama refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure Ollama is running and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
+    ollamaUnreachable:
+      "Could not reach Ollama. Make sure it is running locally and that the server address in Options matches it.",
+    parse: "The AI returned an unexpected response. Try rephrasing your query.",
+    rateLimit: "Rate limit reached. Please wait a moment before trying again.",
+  },
+
+  // useLLMSettings, useAgentEngine, useOrganizer
+  llmSettings: {
+    encryptFailed: "Couldn't encrypt the API key. Encryption not enabled.",
+    encryptSaveFailed: "Couldn't save the encrypted key. Encryption not enabled.",
+    encrypted: "API key encrypted. You'll enter this passphrase once per session.",
+    // The same sentence for the agent and the organizer: both cannot run until
+    // the key is unlocked, and the user should not have to learn two wordings.
+    keyLocked:
+      "Your API key is encrypted. Open Options and enter your passphrase to unlock it for this session.",
+    organizeNeedsProvider: "Organizing needs an LLM provider. Open Options to configure one.",
+  },
+
+  // useArchiveRecovery
+  archiveRecovery: {
+    noDeadLinks: "No dead links here to look up. Try Check Links first.",
+    noneFound: "No archived copies found.",
+    stoppedEarly: "The archive lookup stopped early. Please try again.",
+  },
+
+  // useTheme.uploadTheme. Key names are shown as they are, joined with ", ".
+  themeUpload: {
+    failed: "Failed to upload theme. Please ensure the file is valid JSON or YAML.",
+    invalidColors:
+      "Theme contains invalid color values. Use valid CSS colors (e.g., #rrggbb, rgb(), hsl(), named colors).",
+    invalidFormat: "Invalid theme format. Expected a JSON object with color properties.",
+    missingProperties: "Theme is missing required properties: {properties}",
+    tooLarge: "Theme file is too large. Maximum allowed size is 100 KB.",
+    unknownProperties:
+      "Theme contains unknown properties: {properties}. Only the 7 color properties are allowed.",
+    uploaded: 'Theme "{name}" uploaded successfully.',
+  },
+
+  // useBookmarkStore
+  store: {
+    // Two whole sentences rather than one with an optional tail: a detail is
+    // either there to show or it is not.
+    couldNotOpen: "Could not open your bookmarks. {detail}",
+    imported: "Imported {count} bookmarks successfully.",
+    notInitialized: "Error: Bookmark store is not initialized. Please reload.",
+    staleCopy: "Could not refresh bookmarks, so this is the last loaded copy.",
+    staleCopyDetail: "Could not refresh bookmarks, so this is the last loaded copy. {detail}",
+  },
+
+  // utils/bookmarkUndo.js — the label of each undo entry, as the toast offers it
+  undo: {
+    add: "Undo add",
+    bulkEdit: "Undo bulk edit ({count})",
+    delete: "Undo delete ({count})",
+    edit: "Undo edit",
+    // useUndoHistory, when an entry's inverse throws
+    failed: "{label} failed. Nothing was changed.",
+    import: "Undo import ({count})",
+    replaceAll: {
+      one: "Undo replace all ({count} bookmark)",
+      other: "Undo replace all ({count} bookmarks)",
+    },
+    sort: "Undo sort",
   },
 };

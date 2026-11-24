@@ -13,6 +13,7 @@
 //   so a failed write cannot lose the key.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getMessages } from "../i18n/index.js";
 import { LLM_PROVIDERS } from "../llm/index.js";
 import { decryptString, encryptString, isEncryptedBlob } from "../utils/keyCrypto.js";
 import {
@@ -145,16 +146,16 @@ export function useLLMSettings(showMessage) {
         const blob = await encryptString(JSON.stringify(options), passphrase);
         // #36: staying plaintext is recoverable; losing the key is not.
         if (!(await writeSetting(OPTIONS_ENC_KEY, blob))) {
-          showMessage("Couldn't save the encrypted key. Encryption not enabled.", "error");
+          showMessage(getMessages()("llmSettings.encryptSaveFailed"), "error");
           return;
         }
         await dropSetting(OPTIONS_KEY);
         passphraseRef.current = passphrase;
         setEncrypted(true);
         setLocked(false);
-        showMessage("API key encrypted. You'll enter this passphrase once per session.", "success");
+        showMessage(getMessages()("llmSettings.encrypted"), "success");
       } catch {
-        showMessage("Couldn't encrypt the API key. Encryption not enabled.", "error");
+        showMessage(getMessages()("llmSettings.encryptFailed"), "error");
       }
     },
     [options, showMessage]

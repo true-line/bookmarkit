@@ -1,6 +1,12 @@
 // UX-07: LLM error classification — maps raw errors to user-friendly messages.
 // Error strings are never exposed verbatim; users see actionable guidance instead.
+//
+// #307: what an error *is* is decided here; what it *says* is the message
+// catalogue's. Each rule names a category and a message key, and the sentence
+// is resolved when the error is classified, so a caller that only wants the
+// category still gets it without any wording.
 
+import { getMessages } from "../i18n/index.js";
 import { LLM_PROVIDERS } from "./index.js";
 
 /**
@@ -32,16 +38,12 @@ const isNetworkFailure = ({ name, msg }) =>
 // is only worth checking first, not the thing the user must go get.
 const LOCAL_PROVIDERS = {
   [LLM_PROVIDERS.OLLAMA]: {
-    refused:
-      "Ollama refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure Ollama is running and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
-    unreachable:
-      "Could not reach Ollama. Make sure it is running locally and that the server address in Options matches it.",
+    refusedKey: "llmError.ollamaRefused",
+    unreachableKey: "llmError.ollamaUnreachable",
   },
   [LLM_PROVIDERS.LMSTUDIO]: {
-    refused:
-      'LM Studio refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure its local server is running with "Enable CORS" turned on in its Developer settings.',
-    unreachable:
-      "Could not reach LM Studio. Make sure its local server is running and that the server address in Options matches it.",
+    refusedKey: "llmError.lmStudioRefused",
+    unreachableKey: "llmError.lmStudioUnreachable",
   },
 };
 
@@ -51,14 +53,12 @@ const CATEGORY_RULES = [
     // #224: a provider without a chosen model is one decision away from
     // working, and the message must say so rather than read as a failure.
     category: "no_model",
-    message:
-      'No model is selected. Open Options (type "options" in the search bar) and choose one from the list, or type its id.',
+    key: "llmError.noModel",
     matches: ({ msg }) => msg.includes("no model is selected"),
   },
   {
     category: "api_key",
-    message:
-      'API key is missing or invalid. Open Options (type "options" in the search bar) to enter your API key.',
+    key: "llmError.apiKey",
     matches: ({ status, msg }) =>
       status === 401 ||
       status === 403 ||
@@ -68,7 +68,7 @@ const CATEGORY_RULES = [
   },
   {
     category: "rate_limit",
-    message: "Rate limit reached. Please wait a moment before trying again.",
+    key: "llmError.rateLimit",
     matches: ({ status, msg }) =>
       status === 429 ||
       msg.includes("rate limit") ||
@@ -77,13 +77,12 @@ const CATEGORY_RULES = [
   },
   {
     category: "network",
-    message:
-      "Could not reach the LLM provider. Check your internet connection and provider settings.",
+    key: "llmError.network",
     matches: isNetworkFailure,
   },
   {
     category: "parse",
-    message: "The AI returned an unexpected response. Try rephrasing your query.",
+    key: "llmError.parse",
     matches: ({ msg }) =>
       msg.includes("json") ||
       msg.includes("parse") ||
@@ -92,10 +91,7 @@ const CATEGORY_RULES = [
   },
 ];
 
-const GENERIC = {
-  category: "generic",
-  message: "Could not process your request. Check your LLM provider settings and try again.",
-};
+const GENERIC = { category: "generic", key: "llmError.generic" };
 
 /**
  * Classify a fetch/LLM error into a category and return a user-friendly message.
@@ -108,9 +104,11 @@ const GENERIC = {
  *
  * @param {Error} error
  * @param {string} [provider]
+ * @param {Function} [t] The translator to read the message with; the one in
+ *   effect outside a component unless a caller has its own.
  * @returns {{ category: LLMErrorCategory, message: string }}
  */
-export function classifyLLMError(error, provider) {
+export function classifyLLMError(error, provider, t = getMessages()) {
   const msg = (error?.message || "").toLowerCase();
   const name = error?.name;
   // The AI SDK's APICallError reports `statusCode`; the hand-rolled adapters
@@ -120,22 +118,19 @@ export function classifyLLMError(error, provider) {
 
   if (local) {
     if (status === 401 || status === 403) {
-      return {
-        category: "local_refused",
-        message: local.refused.replace("{status}", String(status)),
-      };
+      return { category: "local_refused", message: t(local.refusedKey, { status }) };
     }
     if (isNetworkFailure({ name, msg })) {
       // Its own category rather than `network`: a local outage repeats for every
       // request until the server is back, where a hosted provider's network
       // error may pass on a retry — callers reason about fatality off this.
-      return { category: "local_unreachable", message: local.unreachable };
+      return { category: "local_unreachable", message: t(local.unreachableKey) };
     }
   }
 
   const subject = { msg, name, status };
   const rule = CATEGORY_RULES.find((candidate) => candidate.matches(subject)) || GENERIC;
-  return { category: rule.category, message: rule.message };
+  return { category: rule.category, message: t(rule.key) };
 }
 
 function extractHttpStatus(msg) {

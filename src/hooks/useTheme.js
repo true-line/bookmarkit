@@ -1,6 +1,7 @@
 // ARCH-06: Encapsulates theme state, persistence, and CSS variable application.
 
 import { useCallback, useEffect, useState } from "react";
+import { getMessages } from "../i18n/index.js";
 
 // The default palette is the same one :root declares in index.css: warm paper
 // surfaces, ink text, and the brand mark's bookmark red. Keep the two in sync —
@@ -147,7 +148,7 @@ export function useTheme() {
   const uploadTheme = useCallback(async (file, showMessage) => {
     if (!file) return;
     if (file.size > 100 * 1024) {
-      showMessage("Theme file is too large. Maximum allowed size is 100 KB.", "error");
+      showMessage(getMessages()("themeUpload.tooLarge"), "error");
       return;
     }
     try {
@@ -160,20 +161,23 @@ export function useTheme() {
         themeData = JSON.parse(text);
       }
       if (!themeData || typeof themeData !== "object" || Array.isArray(themeData)) {
-        showMessage("Invalid theme format. Expected a JSON object with color properties.", "error");
+        showMessage(getMessages()("themeUpload.invalidFormat"), "error");
         return;
       }
       const unknownKeys = Object.keys(themeData).filter((k) => !REQUIRED_THEME_KEYS.includes(k));
       if (unknownKeys.length > 0) {
         showMessage(
-          `Theme contains unknown properties: ${unknownKeys.join(", ")}. Only the 7 color properties are allowed.`,
+          getMessages()("themeUpload.unknownProperties", { properties: unknownKeys.join(", ") }),
           "error"
         );
         return;
       }
       const missing = REQUIRED_THEME_KEYS.filter((key) => !themeData[key]);
       if (missing.length > 0) {
-        showMessage(`Theme is missing required properties: ${missing.join(", ")}`, "error");
+        showMessage(
+          getMessages()("themeUpload.missingProperties", { properties: missing.join(", ") }),
+          "error"
+        );
         return;
       }
       const isSafeColor = (v) => {
@@ -182,10 +186,7 @@ export function useTheme() {
       };
       const invalidKeys = REQUIRED_THEME_KEYS.filter((k) => !isSafeColor(themeData[k]));
       if (invalidKeys.length > 0) {
-        showMessage(
-          "Theme contains invalid color values. Use valid CSS colors (e.g., #rrggbb, rgb(), hsl(), named colors).",
-          "error"
-        );
+        showMessage(getMessages()("themeUpload.invalidColors"), "error");
         return;
       }
       const themeName = file.name.replace(/\.(json|yaml|yml)$/i, "");
@@ -194,9 +195,9 @@ export function useTheme() {
         saveThemeToPersistence("bm_themes", JSON.stringify(next));
         return next;
       });
-      showMessage(`Theme "${themeName}" uploaded successfully.`, "success");
+      showMessage(getMessages()("themeUpload.uploaded", { name: themeName }), "success");
     } catch {
-      showMessage("Failed to upload theme. Please ensure the file is valid JSON or YAML.", "error");
+      showMessage(getMessages()("themeUpload.failed"), "error");
     }
   }, []);
 

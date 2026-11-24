@@ -9,6 +9,7 @@
 // That order matters. A digest whose useful half needed an API key would be a
 // feature most installs never see.
 
+import { getMessages } from "../i18n/index.js";
 import { extractJsonArray } from "../llm/jsonArray.js";
 import { addedAt, findNeverOpened } from "./openHistory.js";
 
@@ -117,7 +118,9 @@ const groupNameFor = (bookmark) => {
   const folder = String(bookmark?.folderId ?? "").trim();
   if (folder) return folder;
   const tag = (Array.isArray(bookmark?.tags) ? bookmark.tags : []).find(Boolean);
-  return tag ? String(tag) : "Everything else";
+  // #307: the one title no folder or tag supplied is catalogue copy, read here
+  // as the groups are built.
+  return tag ? String(tag) : getMessages()("digest.everythingElse");
 };
 
 /**
@@ -132,7 +135,8 @@ const groupNameFor = (bookmark) => {
 export function withRemainder(themes = [], added = []) {
   const claimed = new Set(themes.flatMap((theme) => theme.ids));
   const rest = added.map((bookmark) => bookmark?.id).filter((id) => id && !claimed.has(id));
-  return rest.length === 0 ? themes : [...themes, { title: "Also saved", summary: "", ids: rest }];
+  if (rest.length === 0) return themes;
+  return [...themes, { title: getMessages()("digest.alsoSaved"), summary: "", ids: rest }];
 }
 
 /**

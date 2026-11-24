@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { getMessages } from "../i18n/index.js";
 import { archiveRow, findSnapshot, recoverable } from "../utils/archiveRecovery.js";
 
 const PACING = Object.freeze({
@@ -54,7 +55,7 @@ export function useArchiveRecovery({ showMessage, pacing } = {}) {
     const { showMessage, pacing } = latest.current;
     const dead = recoverable(list).slice(0, pacing.limit);
     if (dead.length === 0) {
-      showMessage?.("No dead links here to look up. Try Check Links first.", "info");
+      showMessage?.(getMessages()("archiveRecovery.noDeadLinks"), "info");
       return [];
     }
 
@@ -71,11 +72,11 @@ export function useArchiveRecovery({ showMessage, pacing } = {}) {
       }
       // A lookup that finds nothing is the common case for a link that died young,
       // so it is reported as an outcome rather than as a failure.
-      if (rows.length === 0) showMessage?.("No archived copies found.", "info");
+      if (rows.length === 0) showMessage?.(getMessages()("archiveRecovery.noneFound"), "info");
       return rows;
     } catch (error) {
       console.error("Archive lookup failed:", error);
-      showMessage?.("The archive lookup stopped early. Please try again.", "error");
+      showMessage?.(getMessages()("archiveRecovery.stoppedEarly"), "error");
       return rows;
     } finally {
       runningRef.current = false;

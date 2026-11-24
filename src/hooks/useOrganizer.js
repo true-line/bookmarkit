@@ -14,6 +14,7 @@ import { useCallback, useRef, useState } from "react";
 import { contained } from "../llm/containment.js";
 import { classifyLLMError } from "../llm/errors.js";
 import { createLLM, isProviderReady, LLM_PROVIDERS } from "../llm/index.js";
+import { getMessages } from "../i18n/index.js";
 import {
   chunkForOrganize,
   existingFolders,
@@ -168,12 +169,9 @@ async function askSlice(llm, chunk, folders, fields, chosen) {
  * rather than fail it afterwards.
  */
 const refuseReason = ({ locked, chosen, options }) => {
-  if (locked) {
-    return "Your API key is encrypted. Open Options and enter your passphrase to unlock it for this session.";
-  }
-  if (!isProviderReady(chosen, options)) {
-    return "Organizing needs an LLM provider. Open Options to configure one.";
-  }
+  const t = getMessages();
+  if (locked) return t("llmSettings.keyLocked");
+  if (!isProviderReady(chosen, options)) return t("llmSettings.organizeNeedsProvider");
   return null;
 };
 
