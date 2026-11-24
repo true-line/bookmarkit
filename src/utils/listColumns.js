@@ -17,6 +17,10 @@ export const COLUMN_GAP = 16;
 // footprint and a higher ceiling — so it reads as many small tiles.
 export const GRID_MIN_CARD_WIDTH = 280;
 export const GRID_MAX_COLUMNS = 8;
+// #294: a phone-width list is one column in every mode. Below 40rem the mobile
+// manager's feed is single-column; the grid's small tiles would otherwise
+// squeeze two into the width a phone has. The list is the viewport's width.
+export const SINGLE_COLUMN_MAX_WIDTH = 640; // 40rem
 
 /**
  * How many equal columns fit `width` px of list in `mode`. "single" is always
@@ -26,6 +30,7 @@ export const GRID_MAX_COLUMNS = 8;
  */
 export function columnsForWidth(width, mode = "flow") {
   if (mode === "single") return 1;
+  if (width < SINGLE_COLUMN_MAX_WIDTH) return 1;
   const minCardWidth = mode === "grid" ? GRID_MIN_CARD_WIDTH : MIN_CARD_WIDTH;
   const maxColumns = mode === "grid" ? GRID_MAX_COLUMNS : MAX_COLUMNS;
   if (!Number.isFinite(width) || width <= 0) return 1;

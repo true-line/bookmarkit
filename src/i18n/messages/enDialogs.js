@@ -95,8 +95,6 @@ export const dialogMessages = {
     folders: "Folders",
     // `shift` and `e` are the two key caps (t.rich)
     clickHint: "Click to select, {shift}+click to open, double-click or {e} to edit.",
-    help: "Help",
-    hideFolders: "Hide Folders",
     htmlParseFailed: "Failed to parse HTML bookmarks.",
     importExport: "Import/Export",
     importNone: "No new bookmarks imported.",
@@ -152,6 +150,15 @@ export const dialogMessages = {
     untagged: "Untagged",
     views: "Views",
     viewsLabel: "Smart views",
+  },
+
+  // MobileTopBar and NavDrawer — the shell below `lg` (#294). The title is the
+  // sidebar's own view label (sidebar.*); only the bar's controls are here.
+  shell: {
+    add: "Add",
+    closeNav: "Close navigation menu",
+    openNav: "Open navigation menu",
+    saved: "{count} saved",
   },
 
   // #307: messages raised by logic rather than rendered by a component. They

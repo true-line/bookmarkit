@@ -47,7 +47,8 @@ import { useTheme } from "../hooks/useTheme.js";
 import { useDebounce } from "../hooks/useDebounce.js";
 import { useSmartViews } from "../hooks/useSmartViews.js";
 import { useUndoHistory } from "../hooks/useUndoHistory.js";
-import { useFolderSheetViewport } from "../hooks/useFolderSheetViewport.js";
+import MobileTopBar from "./MobileTopBar.jsx";
+import NavDrawer from "./NavDrawer.jsx";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 
 import { useMessages } from "../i18n/index.js";
@@ -63,12 +64,10 @@ import BookmarkList from "./BookmarkList.jsx";
 import ViewSelector from "./ViewSelector.jsx";
 import BulkEditBar from "./BulkEditBar.jsx";
 import DigestModal from "./DigestModal.jsx";
-import FolderTree, { DRAG_BOOKMARKS } from "./FolderTree.jsx";
+import { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
-import SidebarNav from "./SidebarNav.jsx";
-import SmartViewBar from "./SmartViewBar.jsx";
-import BrandMark from "./effects/BrandMark.jsx";
+import SidebarNav, { SMART_VIEW_LABEL_KEYS } from "./SidebarNav.jsx";
 import AgentPlan from "./AgentPlan.jsx";
 import Kbd from "./Kbd.jsx";
 import Toast from "./Toast.jsx";
@@ -83,7 +82,6 @@ import {
   CalendarIcon,
   CopiesIcon,
   HealthIcon,
-  HelpIcon,
   SearchIcon,
   SparkIcon,
   SwapIcon,
@@ -208,25 +206,19 @@ const BookmarkApp = () => {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  // #55: the folder tree, shown on request. It is a way to browse, not something
-  // the collection needs, so it does not take space until asked for. #283: from
-  // `lg` up it always has that space — the navigation sidebar — so the on-request
-  // pane is the narrower viewports' way in.
-  const [isFolderPaneOpen, setIsFolderPaneOpen] = useState(false);
-  // #151: below `sm` the pane overlays the content as a full-width sheet, which
-  // gets sheet keyboard behavior — see the Escape binding and selectFolder.
-  const isFolderSheetViewport = useFolderSheetViewport();
-  const isFolderSheet = isFolderPaneOpen && isFolderSheetViewport;
   // #283: which chrome is mounted follows the viewport, not a preference. From
-  // `lg` the sidebar carries the folder tree and the saved views; below it they
-  // are the toggled pane and the row above the list. Neither holds state worth
-  // carrying across, and both would otherwise be on screen at once.
+  // `lg` the navigation sidebar is a fixed rail. #294: below it the same rail
+  // is the navigation drawer, opened from the top bar's menu button, so the
+  // folder tree and the saved views have exactly one home at every width.
   const isSidebarViewport = useSidebarViewport();
-  const folderToggleRef = useRef(null);
-  const closeFolderSheet = useCallback(() => {
-    setIsFolderPaneOpen(false);
-    folderToggleRef.current?.focus();
-  }, []);
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  // Crossing into the rail's viewport takes the drawer away, and its state must
+  // not outlive it: the page would stay inert with no dialog on screen. The
+  // flag is masked for that first render and cleared straight after.
+  const navDrawerOpen = isNavDrawerOpen && !isSidebarViewport;
+  useEffect(() => {
+    if (isSidebarViewport) setIsNavDrawerOpen(false);
+  }, [isSidebarViewport]);
   const [bookmarksToDelete, setBookmarksToDelete] = useState([]);
   // #50: the digest being read, null when none is.
   const [digest, setDigest] = useState(null);
@@ -505,11 +497,11 @@ const BookmarkApp = () => {
     (folder) => {
       clearSelectedBookmarks();
       setManualFilters((prev) => ({ ...prev, folder }));
-      // On the mobile sheet the pane is in the way of the list it just
-      // filtered, so picking a folder is also done with it.
-      if (isFolderSheet) closeFolderSheet();
+      // #294: the drawer covers the list it just filtered, so picking a
+      // folder is also done with it.
+      setIsNavDrawerOpen(false);
     },
-    [clearSelectedBookmarks, isFolderSheet, closeFolderSheet]
+    [clearSelectedBookmarks]
   );
 
   // A dragged card carries the selection it belongs to, and only itself otherwise.
@@ -677,6 +669,12 @@ const BookmarkApp = () => {
     () => currentSmartView(manualFilters, { digestOpen: Boolean(digest) }),
     [digest, manualFilters]
   );
+  // #294: the top bar's title is the view on screen: the smart view, or the
+  // folder narrowing the list, and otherwise the whole collection.
+  const shellTitle = useMemo(() => {
+    if (currentView) return t(SMART_VIEW_LABEL_KEYS[currentView]);
+    return manualFilters.folder || t(SMART_VIEW_LABEL_KEYS.all);
+  }, [currentView, manualFilters.folder, t]);
 
   // "Triage these" is the organizer, pointed at the untagged set rather than at
   // whatever is on screen.
@@ -758,21 +756,16 @@ const BookmarkApp = () => {
     isOptionsOpen ||
     isMessageModalOpen ||
     Boolean(review) ||
-    Boolean(digest);
+    Boolean(digest) ||
+    // #294: the navigation drawer. It handles its own Escape, as every dialog
+    // does; this keeps the list shortcuts from firing behind it.
+    navDrawerOpen;
 
   useKeyboardShortcuts(
     {
-      // The mobile folder sheet behaves like a dialog while it is open, so
-      // Escape dismisses it (and returns focus to its toggle) before doing
-      // anything else. Handlers are read at keypress time, so this sees the
-      // pane's current state without resubscribing.
-      Escape: () => {
-        if (isFolderSheet) {
-          closeFolderSheet();
-          return;
-        }
-        clearSelection();
-      },
+      // Dialogs, the navigation drawer included (#294), take Escape
+      // themselves; with one open the shortcuts are disabled altogether.
+      Escape: clearSelection,
       // #56: the history outlives the toast, so this reaches writes whose offer
       // has already gone.
       "Mod+z": (event) => {
@@ -1099,7 +1092,8 @@ const BookmarkApp = () => {
         </div>
       )}
 
-      {/* #283: the navigation sidebar — from `lg` up, where it has room. */}
+      {/* #283: the navigation sidebar — from `lg` up, where it has room.
+          #294: below it, the same navigation is the drawer. */}
       {isSidebarViewport && (
         <SidebarNav
           effectsEnabled={effects}
@@ -1124,9 +1118,48 @@ const BookmarkApp = () => {
           onDeleteFolder={handleDeleteFolder}
         />
       )}
+      {!isSidebarViewport && navDrawerOpen && (
+        <NavDrawer
+          effectsEnabled={effects}
+          onHelp={() => setIsHelpModalOpen(true)}
+          onClose={() => setIsNavDrawerOpen(false)}
+          // Picking a destination is the end of the trip: each of these
+          // changes the list the drawer is covering.
+          onAddBookmark={() => {
+            setIsNavDrawerOpen(false);
+            handleAddNewBookmark();
+          }}
+          onSmartView={(view) => {
+            setIsNavDrawerOpen(false);
+            applySmartView(view);
+          }}
+          bookmarks={bookmarks}
+          currentView={currentView}
+          digestBusy={digestEngine.running}
+          brokenCount={brokenCount}
+          views={views}
+          activeSavedViewId={activeViewId}
+          canSaveView={isViewWorthSaving(lastAction, manualFilters)}
+          onApplyView={(view) => {
+            setIsNavDrawerOpen(false);
+            applyView(view);
+          }}
+          onSaveView={handleSaveView}
+          onForgetView={forgetView}
+          activeFolder={manualFilters.folder}
+          onSelectFolder={selectFolder}
+          onMoveBookmarks={handleMoveToFolder}
+          onMoveFolder={handleRenameFolder}
+          onRenameFolder={handleRenameFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+      )}
 
+      {/* #294: while the drawer is open the rest of the page is `inert`, so
+          focus and the accessibility tree stay in the dialog. */}
       <header
         ref={headerRef}
+        inert={navDrawerOpen || undefined}
         className={`bookmarkit-header fixed top-0 inset-x-0 z-10 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
         role="banner"
       >
@@ -1137,11 +1170,21 @@ const BookmarkApp = () => {
               content, so the search row keeps its old centered look. */}
           <div className="px-4 py-4 flex flex-col gap-2">
             <h1 className="sr-only">{t("app.brandTitle")}</h1>
+            {/* #294: the top bar is the header's first row — menu, the view on
+                screen and its count, Add. From `lg` the sidebar carries all
+                three, so it is not rendered there. */}
+            {!isSidebarViewport && (
+              <MobileTopBar
+                title={shellTitle}
+                savedCount={displayedBookmarks.length}
+                navOpen={navDrawerOpen}
+                onOpenNav={() => setIsNavDrawerOpen(true)}
+                onAdd={handleAddNewBookmark}
+                effectsEnabled={effects}
+              />
+            )}
             <div className="flex justify-center items-center gap-3">
               {/* #283: from `lg` the brand lives in the navigation sidebar. */}
-              <span className="lg:hidden">
-                <BrandMark enabled={effects} size={44} />
-              </span>
               <div className="w-full max-w-md">
                 <InputField
                   id="search-input"
@@ -1172,39 +1215,13 @@ const BookmarkApp = () => {
                   }
                 />
               </div>
-              {/* #283: from `lg` the help entry point lives in the navigation
-                  sidebar, beside the brand. */}
-              <IconButton
-                label={t("app.help")}
-                onClick={() => setIsHelpModalOpen(true)}
-                className="lg:hidden"
-              >
-                <HelpIcon size={24} />
-              </IconButton>
             </div>
             {/* One horizontally scrollable strip: at phone widths the buttons
-                used to wrap into five rows and eat the viewport. */}
+                used to wrap into five rows and eat the viewport. #294: the
+                entries that used to sit here only below `lg` — Add New, the
+                folder toggle, Digest and Help — are in the navigation drawer
+                now, so the strip is the same at every width. */}
             <div className="bookmarkit-header-actions flex items-center gap-2">
-              {/* #283: from `lg` Add Bookmark and the folder tree live in the
-                  navigation sidebar; this toggle and the pane it opens are the
-                  narrower viewports' way in. */}
-              <Button
-                onClick={handleAddNewBookmark}
-                leadingIcon={<AddIcon />}
-                className="lg:hidden"
-              >
-                {t("common.addNew")}
-              </Button>
-              {!isSidebarViewport && (
-                <Button
-                  ref={folderToggleRef}
-                  intent="outlined"
-                  onClick={() => setIsFolderPaneOpen((open) => !open)}
-                  aria-pressed={isFolderPaneOpen}
-                >
-                  {isFolderPaneOpen ? t("app.hideFolders") : t("app.folders")}
-                </Button>
-              )}
               <Button intent="outlined" onClick={handleImportExportOpen} leadingIcon={<SwapIcon />}>
                 {t("app.importExport")}
               </Button>
@@ -1221,7 +1238,6 @@ const BookmarkApp = () => {
                 onClick={showDigest}
                 loading={digestEngine.running}
                 leadingIcon={<CalendarIcon />}
-                className="lg:hidden"
               >
                 {t("app.digest")}
               </Button>
@@ -1291,6 +1307,7 @@ const BookmarkApp = () => {
       </header>
 
       <main
+        inert={navDrawerOpen || undefined}
         className={`bookmarkit-main flex-1 overflow-hidden flex flex-col transition-all duration-300 ${isHeaderVisible ? "bookmarkit-main--header-visible" : "bookmarkit-main--header-hidden"}`}
         role="main"
       >
@@ -1300,42 +1317,12 @@ const BookmarkApp = () => {
             across a 4K screen. The folder pane narrows the list and the list
             itself decides whether that still earns another column. */}
         <div className="relative flex-1 min-h-0 w-full mx-auto px-4 flex gap-4 max-w-none min-[2752px]:max-w-[2720px]">
-          {isFolderPaneOpen && !isSidebarViewport && (
-            <FolderTree
-              bookmarks={bookmarks}
-              activeFolder={manualFilters.folder}
-              onSelect={selectFolder}
-              onMoveBookmarks={handleMoveToFolder}
-              onMoveFolder={handleRenameFolder}
-              onRenameFolder={handleRenameFolder}
-              onDeleteFolder={handleDeleteFolder}
-              // Below 40rem the fixed 224px column takes most of the viewport,
-              // so the pane overlays the content area as a full-width sheet
-              // instead of crushing the list beside it.
-              className="w-56 shrink-0 py-1 max-sm:absolute max-sm:inset-0 max-sm:z-20 max-sm:w-auto max-sm:bg-primary-bg max-sm:shadow-xl max-sm:py-2"
-            />
-          )}
-          {/* The sheet covers this subtree completely on mobile; `inert` keeps
-              its controls out of the tab order and the accessibility tree while
-              it is open, so focus cannot land somewhere invisible. */}
-          <div className="flex-1 min-w-0 min-h-0 flex flex-col" inert={isFolderSheet || undefined}>
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col">
             {/* Agent plan display */}
             {lastAction && (
               <div className="mb-4">
                 <AgentPlan steps={lastAction} error={lastAction.action === "error"} />
               </div>
-            )}
-
-            {/* #283: from `lg` the saved views live in the navigation sidebar. */}
-            {!isSidebarViewport && (
-              <SmartViewBar
-                views={views}
-                activeViewId={activeViewId}
-                canSave={isViewWorthSaving(lastAction, manualFilters)}
-                onApply={applyView}
-                onSave={handleSaveView}
-                onForget={forgetView}
-              />
             )}
 
             <LinkSweepBar
@@ -1385,7 +1372,9 @@ const BookmarkApp = () => {
                 onBookmarkDoubleClick={handleBookmarkDoubleClick}
                 onBookmarkKeyDown={handleBookmarkKeyDown}
                 onBookmarkDragStart={
-                  isFolderPaneOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
+                  // #55: dragging onto a folder needs the tree on screen — the
+                  // rail from `lg`, the drawer below it while it is open.
+                  navDrawerOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
                 }
                 isLoading={isLoading}
                 bookmarksTotal={bookmarks.length}
