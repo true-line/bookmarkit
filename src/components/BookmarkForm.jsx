@@ -318,8 +318,7 @@ const BookmarkForm = ({
           ...prev,
           tags: prev.tags ? `${prev.tags}, ${csv}` : csv,
         }));
-        if (tagsLiveRef.current)
-          tagsLiveRef.current.textContent = t("bookmarkForm.tagsGenerated");
+        if (tagsLiveRef.current) tagsLiveRef.current.textContent = t("bookmarkForm.tagsGenerated");
       } else {
         // UX-01: Empty response feedback
         showTagsError(t("bookmarkForm.noSuggestion"));
