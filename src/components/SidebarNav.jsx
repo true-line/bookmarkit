@@ -17,7 +17,8 @@
 //   view above is that row here.
 //
 // The rail exists from `lg` up (index.css, `.ui-sidebar`) and BookmarkApp mounts
-// it only there. Its copy is the catalogue's `sidebar` surface (#284).
+// it only there. Its copy is the catalogue's `sidebar` surface (#284). Below
+// `lg` the same rail is the navigation drawer's content (NavDrawer, #294).
 
 import React, { useMemo, useState } from "react";
 import { Button, IconButton, Typography } from "../design-system/index.js";
@@ -30,6 +31,7 @@ import {
   AddIcon,
   BookmarksIcon,
   CalendarIcon,
+  CloseIcon,
   EyeOffIcon,
   HelpIcon,
   LinkOffIcon,
@@ -45,10 +47,19 @@ const SMART_VIEWS = [
   { id: "brokenLinks", labelKey: "sidebar.brokenLinks", Icon: LinkOffIcon, danger: true },
 ];
 
+/** The catalogue key naming a smart view, for a caller that titles the page
+ *  with the view on screen (#294). Null for anything that is not one. */
+export const SMART_VIEW_LABEL_KEYS = Object.fromEntries(
+  SMART_VIEWS.map((view) => [view.id, view.labelKey])
+);
+
 const SidebarNav = React.memo(function SidebarNav({
   effectsEnabled = true,
   onHelp,
   onAddBookmark,
+  // #294: given only when the rail is the navigation drawer's content, which
+  // adds a close control beside the help entry point.
+  onClose,
   bookmarks = [],
   currentView = null,
   digestBusy = false,
@@ -86,9 +97,22 @@ const SidebarNav = React.memo(function SidebarNav({
             </Typography>
           </div>
         </div>
-        <IconButton label={t("sidebar.help")} onClick={onHelp}>
-          <HelpIcon />
-        </IconButton>
+        {onClose ? (
+          // First of the two, so it is the control the drawer's focus trap
+          // lands on, as the mockup does.
+          <div className="flex items-center gap-2">
+            <IconButton label={t("shell.closeNav")} onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+            <IconButton label={t("sidebar.help")} onClick={onHelp}>
+              <HelpIcon />
+            </IconButton>
+          </div>
+        ) : (
+          <IconButton label={t("sidebar.help")} onClick={onHelp}>
+            <HelpIcon />
+          </IconButton>
+        )}
       </div>
 
       <Button onClick={onAddBookmark} leadingIcon={<AddIcon />} className="ui-sidebar-primary">

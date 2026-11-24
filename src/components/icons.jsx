@@ -187,3 +187,23 @@ export function LinkOffIcon({ size = 18 }) {
     </svg>
   );
 }
+
+/** "Open navigation menu" (button-icon leading icon — menu). */
+export function MenuIcon({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <line x1="4" y1="7" x2="20" y2="7" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="17" x2="20" y2="17" />
+    </svg>
+  );
+}
+
+/** "Close navigation menu" (button-icon leading icon — close). */
+export function CloseIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
