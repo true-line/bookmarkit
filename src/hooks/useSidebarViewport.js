@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 
 // #283: from `lg` (1024px) up the app renders its navigation sidebar as a fixed
 // rail (index.css, `.ui-sidebar`). The breakpoint is the stylesheet's and
-// Tailwind's `lg`, exactly — this hook decides which chrome mounts (the sidebar,
-// or the header's Folders toggle, the toggled pane and the saved-view row above
-// the list), and the two must not disagree about where one becomes the other.
+// Tailwind's `lg`, exactly — this hook decides which chrome mounts (the rail,
+// or #294's top bar and the navigation drawer), and the two must not disagree
+// about where one becomes the other.
 //
-// Unlike useFolderSheetViewport it reads the query before the first render, so
-// the first paint already has the right chrome instead of swapping it after
-// mount.
+// It reads the query before the first render, so the first paint already has
+// the right chrome instead of swapping it after mount.
 
 const RAIL_QUERY = "(min-width: 1024px)";
 
