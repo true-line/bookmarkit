@@ -9,6 +9,7 @@
 // the offer does, and the list itself is the feedback that an undo worked.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getMessages } from "../i18n/index.js";
 
 // Deep enough to walk back out of a mistake, shallow enough that the oldest
 // entry still resembles the collection it would restore.
@@ -84,7 +85,7 @@ export function useUndoHistory(showMessage) {
       // The write is still in effect, so the entry goes back on the stack for
       // another try rather than being quietly dropped.
       stackRef.current = [top, ...rest];
-      showMessage?.(`${top.label} failed. Nothing was changed.`, "error");
+      showMessage?.(getMessages()("undo.failed", { label: top.label }), "error");
       return false;
     } finally {
       busyRef.current = false;
