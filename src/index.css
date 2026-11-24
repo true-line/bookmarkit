@@ -484,8 +484,11 @@ body {
    the toast dock give up its width on the inline-start side; below `lg` it is
    not mounted at all (useSidebarViewport) and the header keeps the Folders
    toggle, the toggled pane and the saved-view row above the list. The
-   breakpoint (1024px) is Tailwind's `lg`, which the `lg:hidden` duplicates in
-   the header must agree with; the mobile shell (#294) replaces the fallback.
+   breakpoint (1024px) is Tailwind's `lg`.
+   Below it the same rail is the navigation drawer (#294, NavDrawer): the
+   design system's drawer panel at the rail's width, holding the rail itself.
+   The top bar (MobileTopBar) is the drawer's way in; BookmarkApp mounts it
+   below the same breakpoint and not from `lg` up.
 
    `.ui-sidebar--standalone` is the same rail placed by its caller — Storybook
    — with neither the fixed position nor the viewport rule. */
@@ -505,6 +508,32 @@ body {
   display: flex;
   flex: none;
   height: 100%;
+}
+
+/* The rail as the navigation drawer's content: it fills the drawer panel,
+   which is positioned and animated by the design system. */
+.ui-sidebar--drawer {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  border-inline-end: 0;
+}
+
+/* The navigation drawer (#294): the rail's width, no more than the mockup's
+   85vw, and no padding of the panel's own — the rail brings its own. */
+.ui-nav-drawer > .ui-drawer-panel {
+  width: min(var(--app-sidebar-width), 85vw);
+  border-radius: 0;
+}
+
+.ui-nav-drawer > .ui-drawer-panel > .ui-modal-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -531,6 +560,32 @@ body {
     display: flex;
     overflow-y: auto;
   }
+}
+
+/* ─── Top bar (#294) ───────────────────────────────────────────────────
+   The mobile manager's first header row (design/mockups
+   /bookmarkit_mobile_manager 167–190): the menu button, the view on screen
+   over its saved count, and Add at the inline end. It is not mounted from
+   `lg` up, where the rail is. The heading takes the slack and truncates, so the two
+   controls never leave the row. */
+.ui-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-gutter-sm);
+}
+
+.ui-top-bar-heading {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+  min-width: 0;
+}
+
+.ui-top-bar-count {
+  color: var(--ui-on-surface-variant);
+  font-variant-numeric: tabular-nums;
 }
 
 .ui-sidebar-brand {
@@ -986,6 +1041,22 @@ body {
 @media (max-width: 40rem) {
   .bookmarkit-hint {
     display: none;
+  }
+
+  /* #294: the mobile mockup's min-h-11. On a phone every control is a 44px
+     target whatever the pointer reports — components.css raises its own
+     primitives for a narrow viewport and for coarse pointers, and a narrow
+     window on a desktop is the phone layout. The rows are this file's, so
+     they grow here: the smart-view rows and the tree rows. */
+  .ui-sidebar-row,
+  .ui-tree-row {
+    min-height: 44px;
+  }
+
+  /* The mockup's feed is py-4; the wider spacing belongs to the roomy list.
+     The header's measured height still comes first — it is fixed. */
+  .bookmarkit-main--header-visible {
+    padding-top: calc(var(--app-header-height) + var(--space-4));
   }
 
   .ui-filter-text {

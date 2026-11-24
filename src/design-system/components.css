@@ -796,8 +796,11 @@
 
 /* ------------------------------------------------------- interaction a11y - */
 
-/* Coarse pointers get the spec's 44px targets. */
-@media (pointer: coarse) {
+/* Coarse pointers get the spec's 44px targets. So does a narrow viewport
+   (#294): the mobile mockup's min-h-11 applies whatever the pointer reports,
+   since a phone-width window on a desktop is the phone layout. These rules sit
+   after the primitives on purpose — same specificity, so order decides. */
+@media (pointer: coarse), (max-width: 40rem) {
   .ui-button,
   .ui-icon-button,
   .ui-input {
