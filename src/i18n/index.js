@@ -17,7 +17,9 @@
 // `t` is stable across renders for a given locale, so it is safe in
 // useMemo/useCallback/useEffect dependency arrays and does not disturb
 // React.memo comparisons. Call useMessages() at the top level of a component,
-// never in loops, conditions, event handlers or module scope.
+// never in loops, conditions, event handlers or module scope. Code that is not
+// a component's render — a hook's callback, a utility — calls getMessages()
+// at the moment it needs a message instead.
 
 import React, { createContext, useContext, useMemo } from "react";
 import {
@@ -113,6 +115,8 @@ export function createTranslator(locale, messages) {
     return template === key ? template : toNodes(interpolate(template, params, locale));
   };
   t.locale = locale;
+  // What this translator reads, so a provider can tell its own from another's.
+  t.messages = messages;
   // Counts and dates rendered outside a sentence (a chip, a column) use the
   // same locale the messages do.
   t.count = (value) => formatNumber(value, locale);
@@ -121,8 +125,32 @@ export function createTranslator(locale, messages) {
   return t;
 }
 
+// #307: The translator for code that runs outside a component's render — a
+// hook's callback, a utility, the LLM error classifier — where useMessages()
+// cannot be called. MessageProvider publishes its translator here as it
+// renders, so everything under it resolves against the same locale and
+// catalogue the components do; with no provider it is the default locale.
+//
+// It is read when a message is raised, never captured at module load, so a
+// message raised after the locale changed reads in the new locale. It stays
+// the last one published until another provider renders.
+let current = null;
+
+/** The translator in effect outside React's tree. See the note above. */
+export function getMessages() {
+  current ??= createTranslator(DEFAULT_LOCALE, undefined);
+  return current;
+}
+
 export function MessageProvider({ locale = DEFAULT_LOCALE, messages, children }) {
-  const value = useMemo(() => ({ locale, messages }), [locale, messages]);
+  // Publishing happens here rather than in an effect on purpose: children's
+  // effects run before their parent's, so a child raising a message in its
+  // own effect would otherwise still read the previous locale.
+  const value = useMemo(() => {
+    const translator = createTranslator(locale, messages);
+    current = translator;
+    return { locale, messages, translator };
+  }, [locale, messages]);
   // createElement rather than JSX: this module keeps a .js extension (no
   // JSX transform), and a one-element provider loses nothing by it.
   return React.createElement(MessageContext.Provider, { value }, children);
