@@ -21,7 +21,8 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Folder tree
   - Browse, filter, and rearrange folders; drag bookmarks into one, drag a folder
     into another, rename or remove one without losing what it held
-- Navigation sidebar (on wide windows, `lg` and up)
+- Navigation sidebar (on wide windows, `lg` and up; a slide-over drawer opened
+  from the top bar's menu button on narrower windows)
   - Smart views with a count on each — **All Bookmarks**, **Weekly Digest**,
     **Never Opened**, **Untagged**, **Broken Links** — beside the saved views and
     the folder tree. Choosing a view shows the whole collection that way and
@@ -361,8 +362,9 @@ the last bookmark leaves.
 On wide windows (`lg` and up) the tree those paths imply sits in the navigation
 sidebar, with a count per folder — the total including subfolders, marked with `*`
 when some of it is nested deeper — and **Manage folders** reveals each row's rename
-and remove actions. On narrower windows, "Folders" in the header opens the same
-tree on request. Clicking a folder filters to it and everything under it; clicking
+and remove actions. On narrower windows, the same tree is in the menu: the
+header's **Open navigation menu** button opens the navigation drawer, which
+holds the sidebar's views, saved views and folders. Clicking a folder filters to it and everything under it; clicking
 it again clears that. It is an ordinary filter, so it combines with tags, ratings
 and search, and a saved view can hold it.
 
@@ -440,7 +442,7 @@ button. A slice the model fumbles costs only its own suggestions.
 
 Anything you can narrow the list down to can be named and kept. Once a search or
 a filter is active, **Save current view** appears in the navigation sidebar
-(above the list on narrower windows); saved views become chips you can click to
+(in the navigation drawer on narrower windows); saved views become chips you can click to
 return to them, and the chip for the view you are currently looking at is
 highlighted.
 
@@ -549,8 +551,8 @@ until you accept it, one row at a time or all at once.
 
 ## The weekly digest
 
-**Weekly Digest** in the sidebar's smart views (the **Digest** button in the
-header on narrower windows) answers the question a large collection eventually
+**Weekly Digest** in the sidebar's smart views (in the navigation drawer on
+narrower windows) answers the question a large collection eventually
 raises: what did I save this week, and what have I been ignoring? It reports three
 things.
 

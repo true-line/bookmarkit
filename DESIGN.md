@@ -152,10 +152,16 @@ Two boundaries are worth keeping straight:
   views; `utils/smartViewCounts.js` sizes each view.
 - **Which chrome exists follows the viewport.** `useSidebarViewport` and
   `.ui-sidebar` share Tailwind's `lg` (1024px) and `--app-sidebar-width`. From
-  `lg` the shell, the fixed header and the toast dock inset by the rail, and
-  the header's brand, help, Add, Digest and Folders toggle give way to it. Below
-  `lg` the rail is not mounted and the toggled pane and the saved-view row above
-  the list take over, until the mobile shell (#294) replaces that fallback.
+  `lg` the shell, the fixed header and the toast dock inset by the rail. Below
+  it (`MobileTopBar`, `NavDrawer`, #294) the header's first row is a top bar:
+  a menu button, the view on screen over its saved count, and Add. The rail is
+  the navigation drawer: the design system's drawer `Modal` holding the same
+  `SidebarNav`, so the folder tree and the saved views have one home at every
+  width. The drawer is a modal dialog (focus trap, Escape, scrim, focus
+  restored to the menu button) and the header and the list are `inert` while it
+  is open; choosing a view or a folder from it closes it. Its width is the
+  rail's, capped at 85vw. Under 40rem every control is a 44px target whatever
+  the pointer reports, and the list is one column in every view mode.
 
 ## UI message catalogue
 
