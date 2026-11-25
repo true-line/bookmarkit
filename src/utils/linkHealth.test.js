@@ -6,9 +6,12 @@ import {
   findBrokenLinks,
   isBroken,
   isCheckable,
+  lastScanLabel,
   nextSweepBatch,
   readCheckedAt,
+  readLastSweepAt,
   recordChecked,
+  scanAge,
   statusReasonLabel,
   sweepPatch,
 } from "./linkHealth.js";
@@ -176,6 +179,55 @@ describe("the record of past checks", () => {
     const before = { gone: 1, kept: 1 };
 
     expect(recordChecked(before, ["kept"], 2, new Set(["kept"]))).toEqual({ kept: 2 });
+  });
+});
+
+// #303: the freshness line's inputs — when the sweep last ran, read back
+// from storage; how stale that is, as the relative-time formatter's args;
+// and the words the view puts around them.
+describe("scanAge and the sweep's freshness (#303)", () => {
+  const now = 100 * DAY;
+
+  it("reads back a plausible timestamp, and nothing else", () => {
+    expect(readLastSweepAt("1234567890")).toBe(1234567890);
+    expect(readLastSweepAt(1234567890)).toBe(1234567890);
+    expect(readLastSweepAt("not a time")).toBeNull();
+    expect(readLastSweepAt("-5")).toBeNull();
+    expect(readLastSweepAt(undefined)).toBeNull();
+    expect(readLastSweepAt(null)).toBeNull();
+  });
+
+  it("buckets the age the way a person reads it", () => {
+    expect(scanAge(now - 30 * 1000, now)).toBe("now");
+    expect(scanAge(now - 2 * 60 * 1000, now)).toEqual({ value: -2, unit: "minute" });
+    expect(scanAge(now - 2 * 60 * 60 * 1000, now)).toEqual({ value: -2, unit: "hour" });
+    expect(scanAge(now - 3 * DAY, now)).toEqual({ value: -3, unit: "day" });
+  });
+
+  it("says nothing when no sweep has run, and never points at the future", () => {
+    expect(scanAge(null, now)).toBeNull();
+    expect(scanAge(undefined, now)).toBeNull();
+    expect(scanAge(0, now)).toBeNull();
+    // A clock that ran backwards between writes reads as brand new.
+    expect(scanAge(now + 5 * DAY, now)).toBe("now");
+  });
+
+  it("words the line from the locale's own formatter", () => {
+    const t = (key, params) => {
+      const catalogue = {
+        "linkHealth.lastScanJustNow": "Last scan just now",
+        "linkHealth.lastScanAgo": `Last scan ${params?.age}`,
+      };
+      return catalogue[key];
+    };
+    // The shape the real translator carries (i18n/index.js), in English words.
+    t.relative = (value, unit) => `${-value} ${unit}${-value === 1 ? "" : "s"} ago`;
+
+    // lastScanLabel reads the real clock, so its inputs are real epochs.
+    expect(lastScanLabel(Date.now() - 30 * 1000, t)).toBe("Last scan just now");
+    // The age is ready-worded, so the template only names the scan.
+    expect(lastScanLabel(Date.now() - 2 * 60 * 60 * 1000, t)).toBe("Last scan 2 hours ago");
+    expect(lastScanLabel(null, t)).toBeNull();
   });
 });
 
