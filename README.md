@@ -77,6 +77,10 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Appearance
   - A warm "bookmark shelf" look: paper-tinted surfaces, ink text, and the
     brand mark's red as the accent; custom themes keep working
+  - Interface language: Options → Appearance. "System default" follows the
+    browser's language; the interface ships English today, applies instantly,
+    and the layout mirrors itself for right-to-left locales as their
+    translations land
   - Optional 3D effects — a dimensional brand mark (in the header, or in the
     navigation sidebar on wide windows) and an
     animated card stack on an empty shelf — on by default in
