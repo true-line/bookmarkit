@@ -162,6 +162,20 @@ Two boundaries are worth keeping straight:
   is open; choosing a view or a folder from it closes it. Its width is the
   rail's, capped at 85vw. Under 40rem every control is a 44px target whatever
   the pointer reports, and the list is one column in every view mode.
+- **The shell's rows below `lg` (#299).** The header's next row is the compact
+  filter row (`MobileFilterRow`): the rating filter, the date quick sort, and
+  the select-mode toggle. It owns rating and sort below `lg` — `FilterBar` is
+  handed `showSortControls={false}` and keeps the observed-state toggles and
+  the tag chips — so no control is on screen twice. Select mode is the touch
+  path into the multi-selection: `useBookmarkSelection`'s third argument turns
+  the plain tap and Enter into the set toggle that Ctrl/Cmd+click is on the
+  desktop. The mode leaves with the shell past `lg`, and Escape drops it with
+  the selection. A multi-selection below `lg` pins the selection bar
+  (`SelectionBar`) to the viewport's bottom edge — count, Clear, Bulk Edit on
+  the inverse surface — and "Bulk Edit" raises the list's inline `BulkEditBar`
+  until the mobile sheet (#301) replaces that handoff. The app measures the
+  band into `--app-selectionbar-height`, which `.bookmarkit-main` pays as
+  bottom padding, so the last row is never under it.
 
 ## UI message catalogue
 
