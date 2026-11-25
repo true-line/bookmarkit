@@ -570,21 +570,31 @@ until you accept it, one row at a time or all at once.
 
 **Weekly Digest** in the sidebar's smart views (in the navigation drawer on
 narrower windows) answers the question a large collection eventually
-raises: what did I save this week, and what have I been ignoring? It reports three
+raises: what did I save this week, and what have I been ignoring? From `lg` up
+it opens as a full workspace view beside the sidebar, with the week's range
+under the title, a summary strip of the three counts, and the week's
+additions grouped into named clusters of bookmark rows. It reports three
 things.
 
-- **Saved this week**, grouped into named themes. The grouping is the only part a
-  provider does; with none configured the additions are grouped by the folder or
-  tag they already carry, so the digest works without AI.
-- **Never opened** — saved more than a week ago and never opened since. **Show
-  never opened** turns this into the filter-bar toggle of the same name, so you
-  can work through them with sorting, bulk editing and the rest.
-- **Untagged** — filed in a hurry. **Triage the untagged** hands exactly those to
-  the organizer for tag suggestions, with the same diff to review.
-- On narrow windows the digest is a full-page sheet: the three counts as a
-  summary, and a **Needs Review** queue of the untagged and never-opened with
-  **Open** and **Tag & File** on every card — the edit form and the organizer
-  doing the writing, as everywhere else.
+- **Arrived this week**, grouped into named topics. The grouping is the only
+  part a provider does; with none configured the additions are grouped by the
+  folder or tag they already carry, so the digest works without AI.
+- **Settled & never opened** — saved more than a week ago and never opened
+  since. **Show never opened** turns this into the filter-bar toggle of the
+  same name, so you can work through them with sorting, bulk editing and the
+  rest.
+- **Needs tags** — filed in a hurry. **Triage untagged** hands exactly those
+  to the organizer for tag suggestions, with the same diff to review.
+
+The digest is a view, not a dialog: leave it by choosing another view in the
+sidebar, or by one of the two actions above handing the week's work to the
+filters and the organizer. Opening a bookmark from a cluster row records the
+visit, like every other way of opening one.
+
+On narrow windows the digest is a full-page sheet: the three counts as a
+summary, and a **Needs Review** queue of the untagged and never-opened with
+**Open** and **Tag & File** on every card — the edit form and the organizer
+doing the writing, as everywhere else.
 
 Opening a bookmark from anywhere in the app records when — this is the only thing
 BookmarkIt observes about a bookmark rather than being told, it stays on your
