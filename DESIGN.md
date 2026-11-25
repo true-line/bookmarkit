@@ -205,14 +205,29 @@ Two boundaries are worth keeping straight:
   selection bar with the selection intact, and a suggestion in flight holds
   the sheet still.
 
-## UI message catalogue
+## UI message catalogue and interface language
 
 The copy of the manager's components and the popup lives in the English
-message catalogue under `src/i18n/messages/` (#284) — groundwork for an
-interface-language selector, which does not exist yet. `en.js` merges three
+message catalogue under `src/i18n/messages/` (#284). `en.js` merges three
 files split only by the 400-line lint limit (`enList.js`, `enDialogs.js`,
-`enModals.js`); a locale adds a `<locale>.js` beside them and mounts
-`MessageProvider { locale, messages }`.
+`enModals.js`); a locale adds a `<locale>.js` beside them and an entry in the
+registry (`src/i18n/locales.js`) that imports it — the selector, the
+direction stamping and the message lookup all derive from that entry, so a
+new locale ships a catalogue and one line.
+
+The interface language has a selector in Options → Appearance (#298):
+"System default" resolves against the browser's own preferences (exact tag,
+then language subtag), and an explicit code is taken as-is. `LocaleProvider`
+(`src/i18n/LocaleProvider.js`) mounts at each document root — the app root
+(`App.jsx`) and the popup root (`QuickAddRoot.jsx`) — reads the persisted
+choice (`bm_locale` in chrome.storage.local or localStorage, the same dual
+path as the theme), resolves it against the registry, stamps `dir` and `lang`
+on the document element, and wraps `MessageProvider` with the resolved locale.
+`dir` is the whole mirroring contract: the design system is built on logical
+properties, so one attribute flips the layout; a locale whose catalogue has
+not landed renders the English copy in its own number and date formats. The
+one known holdout is the folder tree's physical indentation utilities, which
+#291's sweep owns.
 
 Components read messages through `useMessages()` from `src/i18n/index.js`: a
 translator `t` that is stable across renders and works with no provider (the
@@ -258,8 +273,8 @@ keep their empty dependency arrays and a message raised after a locale change
 reads in the new locale — so a hook reads it at the point it raises a message,
 not once for an operation that awaits. A message already on screen keeps the
 language it was raised in, and English returns when the provider unmounts. The
-app mounts no provider yet, so this is English until a language selector does;
-nested providers are not a supported shape.
+LocaleProvider at each document root is the provider in practice, so this is
+the selected interface language; nested providers are not a supported shape.
 `classifyLLMError` follows the same split as everything else that
 touches an error: the _category_ is decided in code and callers branch on it,
 and only the sentence comes from the catalogue (`llmError.*`), read through the

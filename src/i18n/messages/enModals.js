@@ -199,6 +199,10 @@ export const surfaceMessages = {
     exampleIntro: "Upload a JSON or YAML file with the following structure:",
     failedToLoadModels: "Failed to load models",
     invalidBaseUrl: "Not a Valid Url Pattern",
+    languageHint:
+      "Menus, labels and messages switch immediately. “System default” follows the browser’s language.",
+    languageLabel: "Interface Language",
+    languageSystemDefault: "System default",
     loading: "Loading…",
     llmProviderLabel: "LLM Provider",
     localKeyHint:

@@ -1,8 +1,9 @@
 // The read side of the UI message catalogue (#284): MessageProvider and the
 // useMessages() hook. Works with no provider — the default locale is "en"
-// regardless of the browser's, because the app ships one UI language until an
-// interface-language selector lands. A locale that lacks a key falls back to
-// the English message, then to the key string itself.
+// regardless of the browser's. The app mounts one through LocaleProvider
+// (#298) at each document root, so what renders is the selected interface
+// language. A locale that lacks a key falls back to the English message, then
+// to the key string itself.
 //
 // The returned `t` is a function with attached formatters:
 //   t("filter.anyRating")                    — plain message
@@ -32,8 +33,7 @@ import {
   selectPluralForm,
 } from "./format.js";
 import en from "./messages/en.js";
-
-const DEFAULT_LOCALE = "en";
+import { DEFAULT_LOCALE } from "./locales.js";
 
 const MessageContext = createContext(null);
 
@@ -134,10 +134,10 @@ export function createTranslator(locale, messages) {
 // It is read when a message is raised, never captured at module load, so a
 // message raised after the locale changed reads in the new locale. It stays
 // the last one published until another provider renders or that provider
-// unmounts, which hands back to English. Nothing in the app mounts a provider
-// yet, so in practice it is English until a language selector does; nested
-// providers are not a supported shape, and an inner one does not restore its
-// outer one when it goes.
+// unmounts, which hands back to English. The app mounts one LocaleProvider
+// (#298) at each document root — the full app and the popup — so in practice
+// it is the selected interface language; nested providers are not a supported
+// shape, and an inner one does not restore its outer one when it goes.
 let current = null;
 
 /** The translator in effect outside React's tree. See the note above. */

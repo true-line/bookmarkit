@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import OptionsModal from "./OptionsModal.jsx";
+import { LocaleProvider } from "../i18n/LocaleProvider.js";
 
 const { createLLM } = vi.hoisted(() => ({ createLLM: vi.fn() }));
 
@@ -265,5 +266,56 @@ describe("OptionsModal model refresh gating", () => {
         baseUrl: undefined,
       })
     );
+  });
+});
+
+// #298: the interface-language select. Rendered under the real
+// LocaleProvider — the same provider the app and popup roots mount — so the
+// select drives the actual persistence and the document's dir stamping.
+describe("OptionsModal interface language (#298)", () => {
+  let languageSelect;
+
+  beforeEach(() => {
+    localStorage.removeItem("bm_locale");
+  });
+
+  afterEach(() => {
+    document.documentElement.removeAttribute("dir");
+    document.documentElement.removeAttribute("lang");
+    localStorage.removeItem("bm_locale");
+  });
+
+  const renderWithOptions = () => {
+    render(
+      <LocaleProvider>
+        <OptionsModal {...baseProps} />
+      </LocaleProvider>
+    );
+    languageSelect = screen.getByLabelText("Interface Language");
+  };
+
+  it("renders the select in the Appearance section with System default first", () => {
+    renderWithOptions();
+    expect(languageSelect).toBeInTheDocument();
+    const labels = [...languageSelect.options].map((option) => option.textContent);
+    expect(labels).toEqual(["System default", "English (LTR)"]);
+    expect(languageSelect).toHaveValue("system");
+  });
+
+  it("persists an explicit choice through the shared locale storage", () => {
+    renderWithOptions();
+    fireEvent.change(languageSelect, { target: { value: "en" } });
+    expect(localStorage.getItem("bm_locale")).toBe("en");
+    expect(screen.getByLabelText("Interface Language")).toHaveValue("en");
+  });
+
+  it("persists the return to the system default", async () => {
+    localStorage.setItem("bm_locale", "en");
+    renderWithOptions();
+    // The stored choice loads one tick after mount.
+    const select = screen.getByLabelText("Interface Language");
+    await waitFor(() => expect(select).toHaveValue("en"));
+    fireEvent.change(select, { target: { value: "system" } });
+    expect(localStorage.getItem("bm_locale")).toBe("system");
   });
 });
