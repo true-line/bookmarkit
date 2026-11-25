@@ -101,13 +101,20 @@ async function writePatches(store, patches) {
  * @param {{current: object|null}} params.storeRef The live store.
  * @param {(message: string, type?: string) => void} [params.showMessage]
  * @param {object} [params.pacing] Overridable delays and batch size, for tests.
- * @returns {{running: boolean, checked: number, total: number, start: Function, stop: Function}}
+ * @returns {{running: boolean, checked: number, total: number, checkedTotal: number, start: Function, stop: Function}}
+ *   `checkedTotal` is the record of past checks — how many links have been
+ *   checked and not yet due again (#295's summary reads it).
  */
 export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
   const [progress, setProgress] = useState(IDLE);
+  // #295: how many links the record of past checks holds — the view summary's
+  // "N checked". Loaded from storage on mount rather than on first start, so
+  // the summary is right before any sweep runs this session.
+  const [checkedTotal, setCheckedTotal] = useState(0);
 
   const runningRef = useRef(false);
   const checkedAtRef = useRef(null);
+  const checkedAtLoadedRef = useRef(false);
   // Read at call time so a long sweep sees added and removed bookmarks.
   const latest = useRef(null);
   latest.current = {
@@ -116,6 +123,22 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
     showMessage,
     pacing: { ...PACING, ...(pacing || {}) },
   };
+
+  const loadCheckedAt = useCallback(async () => {
+    if (checkedAtLoadedRef.current) return checkedAtRef.current;
+    const record = readCheckedAt(await readSetting(CHECKED_AT_KEY));
+    checkedAtRef.current = record;
+    checkedAtLoadedRef.current = true;
+    setCheckedTotal(Object.keys(record).length);
+    return record;
+  }, []);
+
+  useEffect(() => {
+    loadCheckedAt().catch(() => {
+      // Display-only until a sweep runs; start() reports storage failures
+      // through its own message.
+    });
+  }, [loadCheckedAt]);
 
   useEffect(
     () => () => {
@@ -137,9 +160,7 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
     const { gapMs, batchPauseMs, maxPauseMs, idlePollMs, batchSize } = pacing;
 
     try {
-      if (!checkedAtRef.current) {
-        checkedAtRef.current = readCheckedAt(await readSetting(CHECKED_AT_KEY));
-      }
+      await loadCheckedAt();
       const total = countDue(latest.current.bookmarks, checkedAtRef.current);
       if (total === 0) {
         showMessage?.(getMessages()("linkSweep.allCheckedRecently"), "info");
@@ -168,6 +189,7 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
         const liveIds = new Set(latest.current.bookmarks.map((b) => b.id));
         checkedAtRef.current = recordChecked(checkedAtRef.current, checked, Date.now(), liveIds);
         await writeSetting(CHECKED_AT_KEY, JSON.stringify(checkedAtRef.current));
+        setCheckedTotal(Object.keys(checkedAtRef.current).length);
 
         // A batch where every single link failed usually means the network, not
         // the web: back off rather than condemning the collection at full speed.
@@ -182,7 +204,7 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
       runningRef.current = false;
       setProgress(IDLE);
     }
-  }, []);
+  }, [loadCheckedAt]);
 
-  return { ...progress, start, stop };
+  return { ...progress, checkedTotal, start, stop };
 }

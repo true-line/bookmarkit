@@ -153,6 +153,25 @@ describe("archiveRow", () => {
     expect(row.after.unreachable).toBe(false);
   });
 
+  // #295: the stored failure detail explains the verdict it rides with, so it
+  // goes when the verdict goes.
+  it("clears the failure detail with the verdict it explains", () => {
+    const row = archiveRow(
+      {
+        id: "1",
+        title: "Gone",
+        url: "https://gone.test/page",
+        urlStatus: "invalid",
+        urlStatusReason: "http:404",
+      },
+      { url: "https://web.archive.org/web/2020/x" }
+    );
+
+    expect(row.fields).toEqual(["url", "urlStatus", "urlStatusReason"]);
+    expect(row.before.urlStatusReason).toBe("http:404");
+    expect(row.after.urlStatusReason).toBeNull();
+  });
+
   it("proposes nothing when there is nothing to propose", () => {
     expect(archiveRow(broken, null)).toBeNull();
     expect(archiveRow(broken, { url: broken.url })).toBeNull();

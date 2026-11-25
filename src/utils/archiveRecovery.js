@@ -118,9 +118,14 @@ export async function findSnapshot(url) {
 export function archiveRow(bookmark, snapshot) {
   if (!snapshot?.url || snapshot.url === bookmark?.url) return null;
   const status = bookmark?.urlStatus;
+  const reason = bookmark?.urlStatusReason;
   return changeRow(bookmark, {
     url: { before: bookmark.url || "", after: snapshot.url },
     urlStatus: !status || status === UNCHECKED ? null : { before: status, after: UNCHECKED },
+    // #295: the detail the last failing check stored goes with the verdict it
+    // explains — left behind, a recovered bookmark would still carry "HTTP 404"
+    // against a status that no longer says anything failed.
+    urlStatusReason: reason ? { before: reason, after: null } : null,
     // An imported bookmark can carry the old boolean instead, and a recovered
     // bookmark that kept it would stay behind the Broken only filter forever —
     // nothing in the app writes that field any more, so nothing else would clear it.

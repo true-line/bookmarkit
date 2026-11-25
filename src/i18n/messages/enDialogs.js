@@ -26,6 +26,7 @@ export const dialogMessages = {
     fieldFolder: "Folder",
     fieldLinkCheck: "Link check",
     fieldOldBrokenFlag: "Old broken flag",
+    fieldStatusReason: "Last failure",
     fieldTags: "Tags",
     selectAll: "Select all",
     selectionCount: "{accepted} of {total} selected",

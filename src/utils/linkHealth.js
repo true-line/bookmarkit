@@ -4,6 +4,7 @@
 // and the pacing is useLinkSweep.js.
 
 import { isPublicHttpUrl } from "./url.js";
+import { normalizeStatusReason } from "./urlStatus.js";
 
 /** A bookmark the last check could not reach. */
 export const BROKEN = "invalid";
@@ -60,17 +61,42 @@ export const countDue = (bookmarks = [], checkedAt = {}, options = {}) => {
 /**
  * What a check result should write, or null when it agrees with what is stored.
  *
- * Only `urlStatus` is ever written. A redirect target is deliberately not
+ * Only `urlStatus` — and, alongside it, #295's `urlStatusReason`, the detail the
+ * check learned about a failure: "http:404", "timeout", "unreachable". A valid
+ * answer clears the reason, and an invalid one that fails *differently* than
+ * last time is a change worth writing even though the verdict did not move.
+ *
+ * Only `urlStatus` is ever decided here. A redirect target is deliberately not
  * followed home: the privileged worker answers with `redirectUrl: null` by
  * design (#10), because a 30x Location can point at an internal host, and a
  * sweep that re-pointed bookmarks at whatever a redirect claimed would hand
  * that decision to the remote server.
  */
 export function sweepPatch(bookmark, result) {
+  if (!bookmark?.id) return null;
   const status = result?.status === "valid" ? "valid" : BROKEN;
-  if (!bookmark?.id || bookmark.urlStatus === status) return null;
-  return { id: bookmark.id, urlStatus: status };
+  const reason = status === BROKEN ? normalizeStatusReason(result?.reason) : null;
+  if (bookmark.urlStatus === status && (bookmark.urlStatusReason ?? null) === reason) return null;
+  return { id: bookmark.id, urlStatus: status, urlStatusReason: reason };
 }
+
+/**
+ * A stored reason as the words for it, via the catalogue: "HTTP 404", the
+ * mockup's "DNS Unreachable" for the one kind a refused connection and a dead
+ * name are indistinguishable as, "Timeout". ChangeReviewModal renders the same
+ * helper in its diff, so a review and the row it came from say it one way.
+ *
+ * @param {unknown} reason
+ * @param {(key: string, params?: Record<string, unknown>) => string} t
+ * @returns {string}
+ */
+export const statusReasonLabel = (reason, t) => {
+  const normalized = normalizeStatusReason(reason);
+  if (normalized === "timeout") return t("linkHealth.reasonTimeout");
+  if (normalized === "unreachable") return t("linkHealth.reasonDns");
+  if (normalized) return t("linkHealth.reasonHttp", { code: normalized.slice(5) });
+  return t("linkHealth.reasonGeneric");
+};
 
 /**
  * The stored record of past checks, read back defensively: storage is editable
