@@ -8,43 +8,50 @@
 //
 // Its controls are not the design system's Button: the button recipes would
 // bring their light-surface fills back onto the inverse surface, so the band
-// carries its own inverse readings in index.css instead.
+// carries its own inverse readings in index.css instead. The ref lands on the
+// fixed band itself — a fixed element contributes no layout height to a
+// wrapper, so the app's height measurement must read this element, and only
+// forwardRef puts that element in the caller's hands.
 
 import React from "react";
 import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
 import { useMessages } from "../i18n/index.js";
 import { CheckCircleIcon, EditNoteIcon } from "./icons.jsx";
 
-const SelectionBar = React.memo(function SelectionBar({ count, onClear, onBulkEdit }) {
-  const t = useMessages();
-  return (
-    <div
-      className="ui-selection-bar"
-      role="region"
-      aria-label={t("shell.selectionActions")}
-      // Clicking Clear or Bulk Edit must not dismiss the selection they act
-      // on — the same contract the bulk edit bar holds to.
-      {...keepsSelectionProps}
-    >
-      <span className="ui-selection-bar-count">
-        <CheckCircleIcon />
-        {t("bulkEdit.selectedCount", { count })}
-      </span>
-      <div className="ui-selection-bar-actions">
-        <button type="button" className="ui-selection-bar-button" onClick={onClear}>
-          {t("shell.clear")}
-        </button>
-        <button
-          type="button"
-          className="ui-selection-bar-button ui-selection-bar-button--primary"
-          onClick={onBulkEdit}
-        >
-          <EditNoteIcon />
-          {t("shell.bulkEdit")}
-        </button>
+const SelectionBar = React.memo(
+  React.forwardRef(function SelectionBar({ count, onClear, onBulkEdit, ...props }, ref) {
+    const t = useMessages();
+    return (
+      <div
+        ref={ref}
+        className="ui-selection-bar"
+        role="region"
+        aria-label={t("shell.selectionActions")}
+        // Clicking Clear or Bulk Edit must not dismiss the selection they act
+        // on — the same contract the bulk edit bar holds to.
+        {...keepsSelectionProps}
+        {...props}
+      >
+        <span className="ui-selection-bar-count">
+          <CheckCircleIcon />
+          {t("bulkEdit.selectedCount", { count })}
+        </span>
+        <div className="ui-selection-bar-actions">
+          <button type="button" className="ui-selection-bar-button" onClick={onClear}>
+            {t("shell.clear")}
+          </button>
+          <button
+            type="button"
+            className="ui-selection-bar-button ui-selection-bar-button--primary"
+            onClick={onBulkEdit}
+          >
+            <EditNoteIcon />
+            {t("shell.bulkEdit")}
+          </button>
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  })
+);
 
 export default SelectionBar;
