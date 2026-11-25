@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { contained } from "../llm/containment.js";
 import { createLLM, LLM_PROVIDERS } from "../llm/index.js";
+import { useFocusTrap } from "../hooks/useFocusTrap.js";
 import { usePageMetadata } from "../hooks/usePageMetadata.js";
+import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 import { Button, InputField, Modal } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
 // StarRating stays on the legacy library for now: it carries the #24 rating
@@ -65,6 +67,31 @@ function DeleteIcon() {
   );
 }
 
+// The sheet app bar's back arrow (#300, edit-bookmark mockup: button-icon with
+// arrow_back at 20px).
+function BackIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+// The sheet's folder select hands spelling back to the free-text field through
+// this sentinel option value; it cannot collide with a real folder path.
+const CUSTOM_FOLDER = "__custom__";
+
 const BookmarkForm = ({
   bookmark,
   onClose,
@@ -92,6 +119,32 @@ const BookmarkForm = ({
   const [pendingAction, setPendingAction] = useState(null); // { label, fn }
 
   const isLLMPending = isGeneratingDescription || isGeneratingTags;
+
+  // #300: below `lg` the form is the mockup's full-page sheet, not the
+  // centered dialog — same keyboard contract (the shared focus trap, Escape
+  // through the close guard), different chrome. The viewport hook reads
+  // before first paint, so the right composition mounts from the start; the
+  // trap only arms for the sheet, the Modal brings its own.
+  const isDialogViewport = useSidebarViewport();
+  const sheetRef = useRef(null);
+  useFocusTrap(sheetRef, !isDialogViewport);
+  const sheetTitleId = useId();
+  // The sheet picks the folder from the folders that exist (#55's paths). A
+  // stored path outside that list is the user's own spelling, so those
+  // bookmarks open in the free-text field instead of being clobbered.
+  const [isCustomFolder, setIsCustomFolder] = useState(
+    Boolean(bookmark?.folderId) && !folders.includes(bookmark.folderId)
+  );
+  // The chips echo what saving will store: the field's text, parsed the way
+  // doSave parses it.
+  const parsedTags = useMemo(
+    () =>
+      formData.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    [formData.tags]
+  );
 
   // Wrap any action that should be guarded while LLM is running
   const guardedAction = (label, fn) => {
@@ -248,6 +301,17 @@ const BookmarkForm = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // #300: the sheet's select. "No folder" is the empty value the field already
+  // uses; the sentinel swaps the select for the free-text field, so a path the
+  // list doesn't know is still typable — `/` syntax and autocomplete included.
+  const handleFolderSelect = (event) => {
+    if (event.target.value === CUSTOM_FOLDER) {
+      setIsCustomFolder(true);
+      return;
+    }
+    handleChange(event);
+  };
+
   // A11Y-03: Keyboard navigation for star rating
   const handleRatingChange = (rating) => {
     setFormData((prev) => ({ ...prev, rating }));
@@ -362,176 +426,192 @@ const BookmarkForm = ({
     </div>
   );
 
-  return (
-    <Modal
-      title={t(bookmark ? "bookmarkForm.editTitle" : "bookmarkForm.addTitle")}
-      description={t(bookmark ? "bookmarkForm.editDescription" : "bookmarkForm.addDescription")}
-      onClose={closeGuarded}
-      onScrimClick={closeGuarded}
-      footer={
-        pendingAction ? (
-          <div className="flex w-full flex-wrap items-center justify-between gap-3">
-            <p
-              className="ui-type-body-md"
-              role="status"
+  // The pending-confirmation block is shared by both compositions; only the
+  // idle footer differs — the dialog's right-aligned cluster vs the mockup's
+  // two full-width sheet actions.
+  const pendingActions = (
+    <div className="flex w-full flex-wrap items-center justify-between gap-3">
+      <p
+        className="ui-type-body-md"
+        role="status"
+        style={{ color: "var(--ui-on-surface-variant)" }}
+      >
+        {t("bookmarkForm.pendingConfirm")}
+      </p>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Button intent="secondary" onClick={() => setPendingAction(null)}>
+          {t("bookmarkForm.keepWaiting")}
+        </Button>
+        <Button
+          intent="primary"
+          onClick={() => {
+            const fn = pendingAction.fn;
+            setPendingAction(null);
+            fn();
+          }}
+        >
+          {t("bookmarkForm.proceed")}
+        </Button>
+      </div>
+    </div>
+  );
+
+  const dialogFooter = pendingAction ? (
+    pendingActions
+  ) : (
+    <div className="flex w-full flex-wrap items-center gap-3">
+      {bookmark && bookmark.id && (
+        <Button
+          intent="destructive"
+          leadingIcon={<DeleteIcon />}
+          onClick={() => guardedAction("delete", () => onDelete(bookmark.id))}
+        >
+          {t("common.delete")}
+        </Button>
+      )}
+      <div className="ms-auto flex flex-wrap items-center gap-2.5">
+        <Button intent="secondary" onClick={closeGuarded}>
+          {t("common.cancel")}
+        </Button>
+        {/* Outside the scrolled body, joined to the form by id so Enter
+            in any field and this submit share one guarded path. */}
+        <Button intent="primary" type="submit" form="bookmark-form">
+          {t("bookmarkForm.save")}
+        </Button>
+      </div>
+    </div>
+  );
+
+  const form = (
+    <form id="bookmark-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
+      {/* A11Y-04: Visually-hidden live regions for screen reader announcements */}
+      <span ref={descLiveRef} aria-live="polite" className="sr-only" />
+      <span ref={tagsLiveRef} aria-live="polite" className="sr-only" />
+
+      <InputField
+        label={t("bookmarkForm.titleLabel")}
+        type="text"
+        id="title"
+        name="title"
+        value={formData.title}
+        onChange={handleChange}
+        required
+      />
+
+      <InputField
+        label={t("bookmarkForm.urlLabel")}
+        type="url"
+        id="url"
+        name="url"
+        value={formData.url}
+        onChange={handleChange}
+        mono
+        dir="ltr"
+        validity={urlStatus.validity}
+        error={urlStatus.error}
+        success={urlStatus.success}
+        trailing={
+          urlChecking ? (
+            <span className="ui-spinner" aria-hidden="true" />
+          ) : currentUrlValidity === "invalid" && !ignoreUrlValidation ? (
+            <button
+              type="button"
+              onClick={() => setIgnoreUrlValidation(true)}
+              className="shrink-0 text-xs font-medium"
+              style={{ color: "var(--ui-success)" }}
+              aria-label={t("bookmarkForm.ignoreAria")}
+            >
+              {t("bookmarkForm.ignore")}
+            </button>
+          ) : ignoreUrlValidation ? (
+            <button
+              type="button"
+              onClick={() => setIgnoreUrlValidation(false)}
+              aria-label={t("common.dismiss")}
+              className="shrink-0 text-xs leading-none"
               style={{ color: "var(--ui-on-surface-variant)" }}
             >
-              {t("bookmarkForm.pendingConfirm")}
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button intent="secondary" onClick={() => setPendingAction(null)}>
-                {t("bookmarkForm.keepWaiting")}
-              </Button>
-              <Button
-                intent="primary"
-                onClick={() => {
-                  const fn = pendingAction.fn;
-                  setPendingAction(null);
-                  fn();
-                }}
-              >
-                {t("bookmarkForm.proceed")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex w-full flex-wrap items-center gap-3">
-            {bookmark && bookmark.id && (
-              <Button
-                intent="destructive"
-                leadingIcon={<DeleteIcon />}
-                onClick={() => guardedAction("delete", () => onDelete(bookmark.id))}
-              >
-                {t("common.delete")}
-              </Button>
-            )}
-            <div className="ms-auto flex flex-wrap items-center gap-2.5">
-              <Button intent="secondary" onClick={closeGuarded}>
-                {t("common.cancel")}
-              </Button>
-              {/* Outside the scrolled body, joined to the form by id so Enter
-                  in any field and this submit share one guarded path. */}
-              <Button intent="primary" type="submit" form="bookmark-form">
-                {t("bookmarkForm.save")}
-              </Button>
-            </div>
-          </div>
-        )
-      }
-    >
-      <form id="bookmark-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* A11Y-04: Visually-hidden live regions for screen reader announcements */}
-        <span ref={descLiveRef} aria-live="polite" className="sr-only" />
-        <span ref={tagsLiveRef} aria-live="polite" className="sr-only" />
-
-        <InputField
-          label={t("bookmarkForm.titleLabel")}
-          type="text"
-          id="title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          required
-        />
-
-        <InputField
-          label={t("bookmarkForm.urlLabel")}
-          type="url"
-          id="url"
-          name="url"
-          value={formData.url}
-          onChange={handleChange}
-          mono
-          dir="ltr"
-          validity={urlStatus.validity}
-          error={urlStatus.error}
-          success={urlStatus.success}
-          trailing={
-            urlChecking ? (
-              <span className="ui-spinner" aria-hidden="true" />
-            ) : currentUrlValidity === "invalid" && !ignoreUrlValidation ? (
-              <button
-                type="button"
-                onClick={() => setIgnoreUrlValidation(true)}
-                className="shrink-0 text-xs font-medium"
-                style={{ color: "var(--ui-success)" }}
-                aria-label={t("bookmarkForm.ignoreAria")}
-              >
-                {t("bookmarkForm.ignore")}
-              </button>
-            ) : ignoreUrlValidation ? (
-              <button
-                type="button"
-                onClick={() => setIgnoreUrlValidation(false)}
-                aria-label={t("common.dismiss")}
-                className="shrink-0 text-xs leading-none"
-                style={{ color: "var(--ui-on-surface-variant)" }}
-              >
-                ✕
-              </button>
-            ) : undefined
-          }
-          required
-        />
-        {/* A11Y-04 (restored per Codex on #262): the debounced failure is an
+              ✕
+            </button>
+          ) : undefined
+        }
+        required
+      />
+      {/* A11Y-04 (restored per Codex on #262): the debounced failure is an
             async result, so it keeps announcing through a live region — the
             visible error line alone is only wired into aria-describedby. */}
-        <span role="alert" className="sr-only">
-          {urlStatus.error ?? ""}
-        </span>
+      <span role="alert" className="sr-only">
+        {urlStatus.error ?? ""}
+      </span>
 
-        <div className="ui-field">
-          <div className="flex items-center justify-between gap-2">
-            <label htmlFor="description" className="ui-type-label-md">
-              {t("bookmarkForm.descriptionLabel")}
-            </label>
-            <Button
-              intent="tertiary"
-              onClick={generateDescriptionWithGemini}
-              disabled={isGeneratingDescription || !formData.url || !formData.title}
-              loading={isGeneratingDescription}
-              aria-label={t("bookmarkForm.descriptionSuggestAria")}
-            >
-              {t("bookmarkForm.suggest")}
-            </Button>
-          </div>
-          <textarea
-            id="description"
-            name="description"
-            dir="auto"
-            rows={3}
-            value={formData.description}
-            onChange={handleChange}
-            placeholder={t("bookmarkForm.descriptionPlaceholder")}
-            className="ui-input py-2.5"
-          />
-          {descriptionError && suggestionError(descriptionError, () => showDescError(""))}
+      <div className="ui-field">
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="description" className="ui-type-label-md">
+            {t("bookmarkForm.descriptionLabel")}
+          </label>
+          <Button
+            intent="tertiary"
+            onClick={generateDescriptionWithGemini}
+            disabled={isGeneratingDescription || !formData.url || !formData.title}
+            loading={isGeneratingDescription}
+            aria-label={t("bookmarkForm.descriptionSuggestAria")}
+          >
+            {t("bookmarkForm.suggest")}
+          </Button>
         </div>
-
-        <InputField
-          label={t("bookmarkForm.tagsLabel")}
-          type="text"
-          id="tags"
-          name="tags"
-          value={formData.tags}
+        <textarea
+          id="description"
+          name="description"
+          dir="auto"
+          rows={3}
+          value={formData.description}
           onChange={handleChange}
-          placeholder={t("bookmarkForm.tagsPlaceholder")}
-          trailing={
-            <Button
-              intent="tertiary"
-              onClick={generateTagsWithGemini}
-              disabled={isGeneratingTags || !formData.url || !formData.title}
-              loading={isGeneratingTags}
-              aria-label={t("bookmarkForm.tagsSuggestAria")}
-            >
-              {t("bookmarkForm.suggest")}
-            </Button>
-          }
+          placeholder={t("bookmarkForm.descriptionPlaceholder")}
+          className="ui-input py-2.5"
         />
-        {tagsError && suggestionError(tagsError, () => showTagsError(""))}
+        {descriptionError && suggestionError(descriptionError, () => showDescError(""))}
+      </div>
 
-        {/* #55: completing against the folders that exist, because a typo here
-            silently creates a folder rather than failing. */}
+      <InputField
+        label={t("bookmarkForm.tagsLabel")}
+        type="text"
+        id="tags"
+        name="tags"
+        value={formData.tags}
+        onChange={handleChange}
+        placeholder={t("bookmarkForm.tagsPlaceholder")}
+        trailing={
+          <Button
+            intent="tertiary"
+            onClick={generateTagsWithGemini}
+            disabled={isGeneratingTags || !formData.url || !formData.title}
+            loading={isGeneratingTags}
+            aria-label={t("bookmarkForm.tagsSuggestAria")}
+          >
+            {t("bookmarkForm.suggest")}
+          </Button>
+        }
+      />
+      {tagsError && suggestionError(tagsError, () => showTagsError(""))}
+      {/* #300: the sheet previews the parsed tags as the mockup's # chips.
+            aria-hidden — the input is what assistive tech reads; this is the
+            visual echo of what saving will store. */}
+      {!isDialogViewport && parsedTags.length > 0 && (
+        <div className="ui-tag-chips" aria-hidden="true">
+          {parsedTags.map((tag) => (
+            <span key={tag.toLowerCase()} className="ui-tag-chip">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* #55: completing against the folders that exist, because a typo here
+            silently creates a folder rather than failing. The dialog keeps the
+            free-text field; the sheet (#300) leads with the list — "No folder"
+            is the empty value, and Custom path hands spelling back to this
+            field, `/` syntax and datalist included. */}
+      {isDialogViewport ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <InputField
             label={t("bookmarkForm.folderLabel")}
@@ -561,12 +641,171 @@ const BookmarkForm = ({
             placeholder={t("bookmarkForm.faviconPlaceholder")}
           />
         </div>
+      ) : isCustomFolder ? (
+        <>
+          <InputField
+            label={t("bookmarkForm.folderLabel")}
+            type="text"
+            id="folderId"
+            name="folderId"
+            value={formData.folderId}
+            onChange={handleChange}
+            placeholder={t("bookmarkForm.folderPlaceholder")}
+            list="known-folders"
+            hint={t("bookmarkForm.folderHint")}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setIsCustomFolder(false)}
+                className="shrink-0 text-xs font-medium"
+                style={{ color: "var(--ui-primary)" }}
+                aria-label={t("bookmarkForm.folderListAria")}
+              >
+                {t("bookmarkForm.folderList")}
+              </button>
+            }
+          />
+          <datalist id="known-folders">
+            {folders.map((path) => (
+              <option key={path} value={path} />
+            ))}
+          </datalist>
+          <InputField
+            label={t("bookmarkForm.faviconLabel")}
+            type="url"
+            id="faviconUrl"
+            name="faviconUrl"
+            value={formData.faviconUrl}
+            onChange={handleChange}
+            mono
+            dir="ltr"
+            placeholder={t("bookmarkForm.faviconPlaceholder")}
+          />
+        </>
+      ) : (
+        <>
+          <div className="ui-field">
+            <label htmlFor="folderId" className="ui-type-label-md">
+              {t("bookmarkForm.folderLabel")}
+            </label>
+            <select
+              id="folderId"
+              name="folderId"
+              className="ui-input"
+              value={formData.folderId}
+              onChange={handleFolderSelect}
+            >
+              <option value="">{t("bookmarkForm.folderNone")}</option>
+              {folders.map((path) => (
+                <option key={path} value={path}>
+                  {path}
+                </option>
+              ))}
+              {formData.folderId && !folders.includes(formData.folderId) && (
+                <option value={formData.folderId}>{formData.folderId}</option>
+              )}
+              <option value={CUSTOM_FOLDER}>{t("bookmarkForm.folderCustom")}</option>
+            </select>
+          </div>
+          <InputField
+            label={t("bookmarkForm.faviconLabel")}
+            type="url"
+            id="faviconUrl"
+            name="faviconUrl"
+            value={formData.faviconUrl}
+            onChange={handleChange}
+            mono
+            dir="ltr"
+            placeholder={t("bookmarkForm.faviconPlaceholder")}
+          />
+        </>
+      )}
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="ui-type-label-md">{t("bookmarkForm.ratingLabel")}</legend>
-          <StarRating value={formData.rating} onChange={handleRatingChange} />
-        </fieldset>
-      </form>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="ui-type-label-md">{t("bookmarkForm.ratingLabel")}</legend>
+        <StarRating value={formData.rating} onChange={handleRatingChange} />
+      </fieldset>
+    </form>
+  );
+
+  // #300: the sheet — the mockup's full-page composition. A sticky app bar
+  // (back, the title over the bookmark's folder, delete), the same form, and
+  // a sticky footer of two equal-width actions. It is still a dialog to the
+  // keyboard: role, aria-modal, the focus trap and Escape all behave exactly
+  // as the Modal's do, with the close guard on every route out.
+  if (!isDialogViewport) {
+    return (
+      <div
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={sheetTitleId}
+        tabIndex={-1}
+        className="ui-bookmark-sheet"
+        onKeyDown={(event) => {
+          if (event.key !== "Escape") return;
+          // Like the dialog's panel: never let the app's shortcuts hear it.
+          event.stopPropagation();
+          closeGuarded();
+        }}
+      >
+        <header className="ui-bookmark-sheet-bar">
+          <button
+            type="button"
+            className="ui-icon-button"
+            aria-label={t("bookmarkForm.backAria")}
+            onClick={closeGuarded}
+          >
+            <BackIcon />
+          </button>
+          <div className="ui-bookmark-sheet-heading">
+            <h2 id={sheetTitleId}>
+              {t(bookmark ? "bookmarkForm.editTitle" : "bookmarkForm.addTitle")}
+            </h2>
+            <p className="ui-bookmark-sheet-subtitle">
+              {formData.folderId || t("bookmarkForm.folderNone")}
+            </p>
+          </div>
+          {bookmark && bookmark.id && (
+            <button
+              type="button"
+              className="ui-icon-button ui-bookmark-sheet-delete"
+              aria-label={t("bookmarkForm.sheetDeleteAria")}
+              onClick={() => guardedAction("delete", () => onDelete(bookmark.id))}
+            >
+              <DeleteIcon />
+            </button>
+          )}
+        </header>
+        <main className="ui-bookmark-sheet-body">{form}</main>
+        <footer className="ui-bookmark-sheet-footer">
+          {pendingAction ? (
+            pendingActions
+          ) : (
+            <>
+              <Button intent="secondary" onClick={closeGuarded}>
+                {t("common.cancel")}
+              </Button>
+              {/* Same id-joined submit as the dialog's footer. */}
+              <Button intent="primary" type="submit" form="bookmark-form">
+                {t("bookmarkForm.save")}
+              </Button>
+            </>
+          )}
+        </footer>
+      </div>
+    );
+  }
+
+  return (
+    <Modal
+      title={t(bookmark ? "bookmarkForm.editTitle" : "bookmarkForm.addTitle")}
+      description={t(bookmark ? "bookmarkForm.editDescription" : "bookmarkForm.addDescription")}
+      onClose={closeGuarded}
+      onScrimClick={closeGuarded}
+      footer={dialogFooter}
+    >
+      {form}
     </Modal>
   );
 };

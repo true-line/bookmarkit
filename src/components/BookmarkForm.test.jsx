@@ -31,13 +31,30 @@ const renderForm = (props) =>
     />
   );
 
+// #300 branches on the sidebar-viewport hook, which reads matchMedia. jsdom
+// has none — the hook would default to the sheet — so every suite pins the
+// composition it means to exercise.
+const installViewport = (isWide) => {
+  window.matchMedia = vi.fn().mockImplementation((query) => ({
+    query,
+    matches: isWide,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+};
+const clearViewport = () => {
+  delete window.matchMedia;
+};
+
 describe("BookmarkForm URL redirect follow (#28)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    installViewport(true);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    clearViewport();
   });
 
   it("rewrites the field to the redirect target", async () => {
@@ -107,6 +124,7 @@ const setup = (bookmark, overrides = {}) => {
 describe("BookmarkForm and what the page says (#48)", () => {
   beforeEach(() => {
     generate.mockClear();
+    installViewport(true);
     globalThis.chrome = {
       runtime: {
         id: "test",
@@ -120,6 +138,7 @@ describe("BookmarkForm and what the page says (#48)", () => {
 
   afterEach(() => {
     delete globalThis.chrome;
+    clearViewport();
   });
 
   it("titles an untitled bookmark from the page itself", async () => {
@@ -202,6 +221,14 @@ describe("BookmarkForm and what the page says (#48)", () => {
 
 // #55: a folder is created by spelling it, so the spellings that exist are offered.
 describe("BookmarkForm folder autocomplete (#55)", () => {
+  beforeEach(() => {
+    installViewport(true);
+  });
+
+  afterEach(() => {
+    clearViewport();
+  });
+
   it("completes against the folders already in use", () => {
     setup({ title: "One", url: "https://one.test" }, { folders: ["Personal", "Work/Project A"] });
 
@@ -226,10 +253,12 @@ describe("BookmarkForm folder autocomplete (#55)", () => {
 describe("BookmarkForm on the unified design system (#242)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    installViewport(true);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    clearViewport();
   });
 
   it("renders the canonical dialog shell", () => {
@@ -323,5 +352,136 @@ describe("BookmarkForm on the unified design system (#242)", () => {
     fireEvent.submit(document.querySelector("#bookmark-form"));
     fireEvent.click(screen.getByRole("button", { name: "Proceed" }));
     expect(onSave).toHaveBeenCalledTimes(1);
+  });
+});
+
+// #300: below `lg` the form is the mockup's full-page sheet — same form, same
+// guard, different chrome. These pin the chrome and the list-first folder
+// control; the suites above pin the dialog at `lg`.
+describe("BookmarkForm's sheet below `lg` (#300)", () => {
+  beforeEach(() => {
+    installViewport(false);
+  });
+
+  afterEach(() => {
+    clearViewport();
+  });
+
+  it("swaps the dialog chrome for the full-page composition", () => {
+    renderForm();
+
+    expect(document.querySelector(".ui-modal-panel")).toBeNull();
+    const sheet = document.querySelector(".ui-bookmark-sheet");
+    expect(sheet).not.toBeNull();
+    // Still a dialog to the keyboard — role and name survive the chrome swap.
+    expect(screen.getByRole("dialog", { name: "Edit Bookmark" })).toBe(sheet);
+    expect(screen.getByRole("button", { name: "Back to bookmarks" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Cancel" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Save Bookmark" })).not.toBeNull();
+    expect(
+      screen.queryByText("Update details, organize into folders, or generate AI suggestions.")
+    ).toBeNull();
+  });
+
+  it("names the bookmark's folder under the title and keeps Delete on the bar", () => {
+    const onDelete = vi.fn();
+    renderForm({
+      onDelete,
+      bookmark: { id: "1", title: "A", url: "https://a.test/", folderId: "Personal" },
+    });
+
+    expect(document.querySelector(".ui-bookmark-sheet-subtitle").textContent).toBe("Personal");
+    fireEvent.click(screen.getByRole("button", { name: "Delete bookmark" }));
+    expect(onDelete).toHaveBeenCalledWith("1");
+  });
+
+  it("picks the folder from the list, No folder emptying it", () => {
+    const onSave = vi.fn();
+    renderForm({
+      onSave,
+      folders: ["Personal", "Work/Project A"],
+      bookmark: { id: "1", title: "A", url: "https://a.test/", folderId: "Work/Project A" },
+    });
+
+    const select = screen.getByLabelText("Folder");
+    expect(select.tagName).toBe("SELECT");
+
+    fireEvent.change(select, { target: { value: "Personal" } });
+    expect(document.querySelector(".ui-bookmark-sheet-subtitle").textContent).toBe("Personal");
+
+    fireEvent.change(select, { target: { value: "" } });
+    expect(document.querySelector(".ui-bookmark-sheet-subtitle").textContent).toBe("No folder");
+
+    fireEvent.submit(document.querySelector("#bookmark-form"));
+    expect(onSave.mock.calls[0][0].folderId).toBe("");
+  });
+
+  it("hands a spelling the list doesn't know back to the text field", () => {
+    const onSave = vi.fn();
+    renderForm({ onSave, folders: ["Personal"] });
+
+    fireEvent.change(screen.getByLabelText("Folder"), { target: { value: "__custom__" } });
+
+    const field = screen.getByLabelText("Folder");
+    expect(field.tagName).toBe("INPUT");
+    expect(field).toHaveAttribute("list", "known-folders");
+    expect([...document.querySelectorAll("#known-folders option")].map((o) => o.value)).toEqual([
+      "Personal",
+    ]);
+
+    fireEvent.change(field, { target: { value: "Work/Deep/A" } });
+    fireEvent.submit(document.querySelector("#bookmark-form"));
+    expect(onSave.mock.calls[0][0].folderId).toBe("Work/Deep/A");
+
+    // And the list takes the field back, the typed path now offered as an
+    // option of its own.
+    fireEvent.click(screen.getByRole("button", { name: "Choose folder from list" }));
+    const select = screen.getByLabelText("Folder");
+    expect(select.tagName).toBe("SELECT");
+    expect(select).toHaveValue("Work/Deep/A");
+  });
+
+  it("previews the parsed tags as chips, hidden from the accessibility tree", () => {
+    renderForm({
+      bookmark: { id: "1", title: "A", url: "https://a.test/", tags: ["macos", "shell"] },
+    });
+
+    const chips = document.querySelector(".ui-tag-chips");
+    expect(chips).not.toBeNull();
+    expect(chips).toHaveAttribute("aria-hidden", "true");
+    expect([...chips.querySelectorAll(".ui-tag-chip")].map((c) => c.textContent)).toEqual([
+      "#macos",
+      "#shell",
+    ]);
+  });
+
+  it("saves from the sticky footer and backs out through Escape and the back button", () => {
+    const onSave = vi.fn();
+    const onClose = vi.fn();
+    renderForm({ onSave, onClose });
+
+    fireEvent.submit(document.querySelector("#bookmark-form"));
+    expect(onSave).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(document.querySelector(".ui-bookmark-sheet"), { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to bookmarks" }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("routes the sheet's Escape through the LLM guard, like the dialog does", () => {
+    generate.mockImplementationOnce(() => new Promise(() => {}));
+    const onClose = vi.fn();
+    setup({ id: null, title: "Ownership", url: "https://example.com/p/8812" }, { onClose });
+
+    fireEvent.click(screen.getByRole("button", { name: /Suggest description/i }));
+    fireEvent.keyDown(document.querySelector(".ui-bookmark-sheet"), { key: "Escape" });
+
+    expect(screen.getByText("An AI suggestion is still loading. Proceed anyway?")).not.toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Proceed" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
