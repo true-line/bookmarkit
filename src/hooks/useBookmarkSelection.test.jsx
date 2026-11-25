@@ -14,8 +14,8 @@ let selection;
 // Cards stop propagation on mousedown, which is how a click on one avoids the
 // click-outside handler that clears the selection. The harness has to do the same
 // or every click would immediately deselect.
-const Probe = ({ onOpen = () => {}, onEdit = () => {} }) => {
-  selection = useBookmarkSelection(onOpen, onEdit);
+const Probe = ({ onOpen = () => {}, onEdit = () => {}, selectMode = false }) => {
+  selection = useBookmarkSelection(onOpen, onEdit, selectMode);
   return (
     <div>
       <span data-testid="focused">{selection.selectedId || "none"}</span>
@@ -286,5 +286,77 @@ describe("useBookmarkSelection (#26)", () => {
 
     expect(removed).toHaveBeenCalledWith("mousedown", expect.any(Function));
     removed.mockRestore();
+  });
+
+  // #299: the shell's select mode. A touch has no modifier keys, so the mode
+  // turns the plain gesture into the set toggle Ctrl/Cmd+click is on the
+  // desktop. The desktop gestures keep their meanings.
+  describe("select mode", () => {
+    it("turns a plain click into the set toggle", () => {
+      render(<Probe selectMode />);
+
+      fireEvent.click(card("a"));
+      fireEvent.click(card("b"));
+
+      expect(screen.getByTestId("checked")).toHaveTextContent("a,b");
+      expect(screen.getByTestId("focused")).toHaveTextContent("none");
+
+      // The same gesture on a member takes it back out.
+      fireEvent.click(card("a"));
+
+      expect(screen.getByTestId("checked")).toHaveTextContent("b");
+    });
+
+    it("never opens, and Shift keeps its edit meaning", () => {
+      const onOpen = vi.fn();
+      const onEdit = vi.fn();
+      render(<Probe onOpen={onOpen} onEdit={onEdit} selectMode />);
+
+      fireEvent.click(card("a"));
+      fireEvent.click(card("a"));
+      fireEvent.keyDown(card("a"), { key: "Enter" });
+
+      expect(onOpen).not.toHaveBeenCalled();
+      expect(screen.getByTestId("checked")).toHaveTextContent("a");
+
+      fireEvent.click(card("a"), { shiftKey: true });
+      expect(onEdit).toHaveBeenCalledWith(BOOKMARKS[0]);
+    });
+
+    it("toggles the set from the keyboard as the click does", () => {
+      render(<Probe selectMode />);
+
+      fireEvent.keyDown(card("a"), { key: "Enter" });
+      expect(screen.getByTestId("checked")).toHaveTextContent("a");
+
+      fireEvent.keyDown(card("a"), { key: " " });
+      expect(screen.getByTestId("checked")).toHaveTextContent("none");
+    });
+
+    // The mode's promise covers the whole plain sequence: the first click
+    // toggled, the detail-2 click stayed out of the way, so the trailing
+    // dblclick must not open the bookmark and clear the set with it.
+    it("keeps a plain double-click from opening or clearing", () => {
+      const onOpen = vi.fn();
+      render(<Probe onOpen={onOpen} selectMode />);
+
+      fireEvent.click(card("a"));
+      fireEvent.click(card("a"), { detail: 2 });
+      fireEvent.doubleClick(card("a"));
+
+      expect(onOpen).not.toHaveBeenCalled();
+      expect(screen.getByTestId("checked")).toHaveTextContent("a");
+    });
+
+    it("still opens on the desktop's plain double-click without the mode", () => {
+      const onOpen = vi.fn();
+      render(<Probe onOpen={onOpen} />);
+
+      fireEvent.click(card("a"));
+      fireEvent.click(card("a"), { detail: 2 });
+      fireEvent.doubleClick(card("a"));
+
+      expect(onOpen).toHaveBeenCalledTimes(1);
+    });
   });
 });

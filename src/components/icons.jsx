@@ -35,6 +35,16 @@ export function ArrowIcon({ up = true, size = 16 }) {
   );
 }
 
+/** The shell's date quick sort (swap_vert): the two directions, one press apart. */
+export function SortIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M8 4v13M4.5 13.5L8 17l3.5-3.5" />
+      <path d="M16 20V7M12.5 10.5L16 7l3.5 3.5" />
+    </svg>
+  );
+}
+
 /** "Add Bookmark" (button-primary leading icon). */
 export function AddIcon({ size = 18 }) {
   return (
@@ -100,6 +110,26 @@ export function SelectionIcon({ size = 18 }) {
     <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
       <rect x="3" y="3" width="18" height="18" rx="3" />
       <path d="M8.5 12.5l2.5 2.5 4.5-5" />
+    </svg>
+  );
+}
+
+/** The selection bar's count marker (check_circle), on the inverse band. */
+export function CheckCircleIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5l2.5 2.5 4.5-5" />
+    </svg>
+  );
+}
+
+/** "Bulk Edit" (edit_note): the pencil over the lines it writes. */
+export function EditNoteIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M4 8h10M4 13h7M4 18h10" />
+      <path d="M17.5 3.5l3 3L12 15h-3v-3z" />
     </svg>
   );
 }

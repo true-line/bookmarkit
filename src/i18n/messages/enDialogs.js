@@ -152,13 +152,28 @@ export const dialogMessages = {
     viewsLabel: "Smart views",
   },
 
-  // MobileTopBar and NavDrawer — the shell below `lg` (#294). The title is the
-  // sidebar's own view label (sidebar.*); only the bar's controls are here.
+  // MobileTopBar, NavDrawer, MobileFilterRow and SelectionBar — the shell
+  // below `lg` (#294, #299). The title is the sidebar's own view label
+  // (sidebar.*); only the shell's own controls are here. The selection bar's
+  // count reuses bulkEdit.selectedCount, whose wording it shares.
   shell: {
     add: "Add",
+    bulkEdit: "Bulk Edit",
+    clear: "Clear",
     closeNav: "Close navigation menu",
+    // The date quick sort's two readings and what each press promises. The
+    // label shows the state while the date sort is on; off, the press is a
+    // switch to it, so the promise is the sentence.
+    newest: "Newest",
+    newestAria: "Sorted newest first. Activate to reverse.",
+    oldest: "Oldest",
+    oldestAria: "Sorted oldest first. Activate to reverse.",
     openNav: "Open navigation menu",
     saved: "{count} saved",
+    selectMode: "Select",
+    selectModeAria: "Selection mode. Activate to select bookmarks by tapping them.",
+    selectionActions: "Selection actions",
+    switchToDateAria: "Sort by date, newest first.",
   },
 
   // #307: messages raised by logic rather than rendered by a component. They

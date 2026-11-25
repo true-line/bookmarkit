@@ -48,6 +48,7 @@ import { useDebounce } from "../hooks/useDebounce.js";
 import { useSmartViews } from "../hooks/useSmartViews.js";
 import { useUndoHistory } from "../hooks/useUndoHistory.js";
 import MobileTopBar from "./MobileTopBar.jsx";
+import MobileFilterRow from "./MobileFilterRow.jsx";
 import NavDrawer from "./NavDrawer.jsx";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 
@@ -63,6 +64,7 @@ import OptionsModal from "./OptionsModal";
 import BookmarkList from "./BookmarkList.jsx";
 import ViewSelector from "./ViewSelector.jsx";
 import BulkEditBar from "./BulkEditBar.jsx";
+import SelectionBar from "./SelectionBar.jsx";
 import DigestModal from "./DigestModal.jsx";
 import { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
@@ -219,6 +221,13 @@ const BookmarkApp = () => {
   useEffect(() => {
     if (isSidebarViewport) setIsNavDrawerOpen(false);
   }, [isSidebarViewport]);
+  // #299: the shell's select mode — the touch path into the multi-selection.
+  // Past `lg` the gestures keep their modifiers again, so the mode is left
+  // behind with the rest of the shell chrome when the window grows.
+  const [selectMode, setSelectMode] = useState(false);
+  useEffect(() => {
+    if (isSidebarViewport) setSelectMode(false);
+  }, [isSidebarViewport]);
   const [bookmarksToDelete, setBookmarksToDelete] = useState([]);
   // #50: the digest being read, null when none is.
   const [digest, setDigest] = useState(null);
@@ -269,7 +278,39 @@ const BookmarkApp = () => {
     onBookmarkClick: handleBookmarkClick,
     onBookmarkDoubleClick: handleBookmarkDoubleClick,
     onBookmarkKeyDown: handleBookmarkKeyDown,
-  } = useBookmarkSelection(openBookmark, handleEditBookmark);
+  } = useBookmarkSelection(openBookmark, handleEditBookmark, selectMode);
+
+  // #299: below `lg` the selection's actions live in the bar at the bottom,
+  // and "Bulk Edit" raises the list's inline editor — the sheet (#301) will
+  // replace that handoff. Above `lg` the editor appears on its own, as it
+  // always has. Either way the editor is the selection's, and dies with it.
+  const [bulkEditorOpen, setBulkEditorOpen] = useState(false);
+  useEffect(() => {
+    if (multiSelectedBookmarkIds.length === 0) setBulkEditorOpen(false);
+  }, [multiSelectedBookmarkIds]);
+
+  // The bar floats over the list's bottom edge, so the list pays for it the
+  // way it pays for the fixed header: the measured height becomes the main
+  // area's bottom padding through --app-selectionbar-height.
+  const selectionBarRef = useRef(null);
+  const selectionBarShown = !isSidebarViewport && multiSelectedBookmarkIds.length > 0;
+  useEffect(() => {
+    const bar = selectionBarRef.current;
+    const root = document.documentElement;
+    if (!selectionBarShown || !bar) {
+      root.style.setProperty("--app-selectionbar-height", "0px");
+      return undefined;
+    }
+    const syncHeight = () =>
+      root.style.setProperty("--app-selectionbar-height", `${bar.offsetHeight}px`);
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(bar);
+    return () => {
+      observer.disconnect();
+      root.style.setProperty("--app-selectionbar-height", "0px");
+    };
+  }, [selectionBarShown]);
 
   // Read by an effect that must not resubscribe when the list changes.
   const bookmarksRef = useRef(bookmarks);
@@ -729,10 +770,12 @@ const BookmarkApp = () => {
   }, [resetSearch]);
 
   // ─── Keyboard shortcuts ──────────────────────────────────────────────────────
-  // Escape drops the selection and anything staged for deletion with it.
+  // Escape drops the selection, the select mode it was made in, and anything
+  // staged for deletion with it.
   const clearSelection = useCallback(() => {
     clearSelectedBookmarks();
     setBookmarksToDelete([]);
+    setSelectMode(false);
   }, [clearSelectedBookmarks]);
 
   const confirmDeleteSelection = useCallback(() => {
@@ -1216,6 +1259,18 @@ const BookmarkApp = () => {
                 />
               </div>
             </div>
+            {/* #299: the compact filter row — the shell owns rating and sort
+                below `lg`, and the select mode is the touch path into the
+                selection the bottom bar acts on. */}
+            {!isSidebarViewport && (
+              <MobileFilterRow
+                filters={manualFilters}
+                onChange={setManualFilters}
+                selectMode={selectMode}
+                selectedCount={multiSelectedBookmarkIds.length}
+                onToggleSelectMode={() => setSelectMode((on) => !on)}
+              />
+            )}
             {/* One horizontally scrollable strip: at phone widths the buttons
                 used to wrap into five rows and eat the viewport. #294: the
                 entries that used to sit here only below `lg` — Add New, the
@@ -1350,8 +1405,10 @@ const BookmarkApp = () => {
               </div>
             )}
 
-            {/* #54: Only for a real multi-selection — a single click is served by the form. */}
-            {multiSelectedBookmarkIds.length > 0 && (
+            {/* #54: Only for a real multi-selection — a single click is served
+                by the form. #299: below `lg` the selection's home is the bar
+                at the bottom, and "Bulk Edit" raises this editor. */}
+            {multiSelectedBookmarkIds.length > 0 && (isSidebarViewport || bulkEditorOpen) && (
               <BulkEditBar
                 selected={selectedBookmarks}
                 allBookmarks={bookmarks}
@@ -1388,6 +1445,7 @@ const BookmarkApp = () => {
                 effectsEnabled={effects}
                 viewMode={viewMode}
                 filters={manualFilters}
+                showSortControls={isSidebarViewport}
                 tagFacets={tagFacets}
                 onFilterChange={setManualFilters}
                 onCycleTag={handleCycleTag}
@@ -1414,6 +1472,21 @@ const BookmarkApp = () => {
           </div>
         </div>
       </main>
+
+      {/* #299: the selection's bar, pinned where a thumb reaches. It sits at
+          the root with the header, so no ancestor's transform can re-anchor
+          its fixed position, and it takes the drawer's inert like every other
+          surface behind the dialog. The ref lands on the band itself — a
+          fixed element gives a wrapper no height to measure. */}
+      {selectionBarShown && (
+        <SelectionBar
+          ref={selectionBarRef}
+          inert={navDrawerOpen || undefined}
+          count={multiSelectedBookmarkIds.length}
+          onClear={clearSelectedBookmarks}
+          onBulkEdit={() => setBulkEditorOpen(true)}
+        />
+      )}
 
       {/* ─── Modals ─── */}
       <ErrorBoundary fallbackMessage={t("app.modalFallbackMessage")}>

@@ -34,13 +34,26 @@ const installViewport = () => {
   };
 };
 
+let fakeStore;
+// Every observer the app builds while a test runs, with the element it was
+// given: the height plumbing fires them by hand, the way a browser does
+// after layout.
+let observers;
+
 beforeEach(() => {
-  installFakeChromeBookmarks();
+  fakeStore = installFakeChromeBookmarks();
+  observers = [];
   // The header reports its height through one; jsdom has none to report to.
   vi.stubGlobal(
     "ResizeObserver",
     class {
-      observe() {}
+      constructor(cb) {
+        this.cb = cb;
+        observers.push(this);
+      }
+      observe(el) {
+        this.observed = el;
+      }
       disconnect() {}
     }
   );
@@ -59,6 +72,32 @@ const renderShell = async () => {
 const openDrawer = async () => {
   fireEvent.click(screen.getByRole("button", { name: "Open navigation menu" }));
   return screen.findByRole("dialog", { name: "BookmarkIt navigation" });
+};
+
+// One card on the shelf, so the selection gestures have something to land on.
+// The store reads the collection out of its own `bookmarkit` folder.
+const seedBookmark = async () => {
+  const folder = await fakeStore.bookmarks.create({ parentId: "1", title: "bookmarkit" });
+  return fakeStore.bookmarks.create({
+    parentId: folder.id,
+    title: "Context7 — Up-to-date documentation for LLMs",
+    url: "https://context7.com/",
+  });
+};
+
+const card = () => screen.getByRole("button", { name: /Context7/ });
+
+// Select mode on, one tap: the shortest path from the shell to a set.
+const buildSelectionBelowLg = async () => {
+  await seedBookmark();
+  await renderShell();
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Selection mode. Activate to select bookmarks by tapping them.",
+    })
+  );
+  fireEvent.click(card());
+  return screen.findByRole("region", { name: "Selection actions" });
 };
 
 describe("BookmarkApp's shell below `lg` (#294)", () => {
@@ -119,5 +158,91 @@ describe("BookmarkApp's shell below `lg` (#294)", () => {
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("banner")).not.toHaveAttribute("inert");
+  });
+});
+
+describe("BookmarkApp's selection surfaces (#299)", () => {
+  it("lets select mode build a set by tapping, and pins the bar for it", async () => {
+    installViewport();
+    const bar = await buildSelectionBelowLg();
+
+    expect(bar).toHaveTextContent("1 selected");
+
+    // Bulk Edit raises the list's inline editor — the sheet (#301) will
+    // replace this handoff; today the bar and the editor are the pair.
+    fireEvent.click(screen.getByRole("button", { name: /Bulk Edit/ }));
+    expect(
+      screen.getByRole("group", { name: /Bulk edit 1 selected bookmark/ })
+    ).toBeInTheDocument();
+
+    // Clear takes the set, the editor and the bar away together.
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Selection actions" })).toBeNull()
+    );
+    expect(screen.queryByRole("group", { name: /Bulk edit/ })).toBeNull();
+  });
+
+  it("keeps the inline editor alone past `lg`, and mounts no bar", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await seedBookmark();
+    await renderShell();
+
+    fireEvent.click(card(), { ctrlKey: true });
+
+    expect(
+      screen.getByRole("group", { name: /Bulk edit 1 selected bookmark/ })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Selection actions" })).toBeNull();
+  });
+
+  it("leaves select mode behind past `lg`, with the rest of the shell", async () => {
+    const viewport = installViewport();
+    await buildSelectionBelowLg();
+
+    act(() => viewport.resizeTo(true));
+
+    // Growing the window does not clear the set — the bar would only hide —
+    // but the editor is back on its own and the mode is off.
+    expect(
+      screen.getByRole("group", { name: /Bulk edit 1 selected bookmark/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Selection mode. Activate to select bookmarks by tapping them.",
+      })
+    ).toBeNull();
+    expect(screen.queryByRole("region", { name: "Selection actions" })).toBeNull();
+
+    // And a plain click is a plain click again: it selects, not toggles.
+    fireEvent.click(card());
+    expect(screen.queryByRole("group", { name: /Bulk edit/ })).toBeNull();
+  });
+
+  it("goes inert behind the drawer with every other surface", async () => {
+    installViewport();
+    const bar = await buildSelectionBelowLg();
+    await openDrawer();
+
+    expect(bar).toHaveAttribute("inert");
+  });
+
+  // #311 review: the band is the fixed element, so it is the one to measure —
+  // a wrapper around it has no layout height to read, and the padding would
+  // stay 0px with the last row still under the band.
+  it("measures the fixed band itself into the main area's padding", async () => {
+    installViewport();
+    const bar = await buildSelectionBelowLg();
+
+    const observer = observers.find((candidate) => candidate.observed === bar);
+    expect(observer).toBeDefined();
+
+    Object.defineProperty(bar, "offsetHeight", { configurable: true, value: 68 });
+    observer.cb();
+
+    expect(document.documentElement.style.getPropertyValue("--app-selectionbar-height")).toBe(
+      "68px"
+    );
   });
 });

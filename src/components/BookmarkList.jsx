@@ -50,6 +50,7 @@ function FilterRow({ style, data }) {
           onCycleTag={data.onCycleTag}
           onClear={data.onClearFilters}
           summary={data.filterSummary}
+          showSortControls={data.showSortControls}
           style={{ marginBottom: 0 }}
         />
       </div>
@@ -173,6 +174,8 @@ const BookmarkList = React.memo(function BookmarkList({
   onCycleTag,
   onClearFilters,
   filterSummary,
+  // #299: below `lg` the shell's compact row owns rating and sort.
+  showSortControls,
   remoteFavicons,
   effectsEnabled,
   viewMode = "flow",
@@ -244,6 +247,7 @@ const BookmarkList = React.memo(function BookmarkList({
       onCycleTag,
       onClearFilters,
       filterSummary,
+      showSortControls,
       remoteFavicons,
       onFilterHeightChange: handleFilterHeightChange,
       onRowHeightChange: handleRowHeightChange,
@@ -264,6 +268,7 @@ const BookmarkList = React.memo(function BookmarkList({
       onCycleTag,
       onClearFilters,
       filterSummary,
+      showSortControls,
       remoteFavicons,
       handleFilterHeightChange,
       handleRowHeightChange,
@@ -280,6 +285,7 @@ const BookmarkList = React.memo(function BookmarkList({
           onCycleTag={onCycleTag}
           onClear={onClearFilters}
           summary={filterSummary}
+          showSortControls={showSortControls}
         />
         <EmptyShelfStates
           isLoading={isLoading}

@@ -234,3 +234,29 @@ describe("FilterBar narrow-viewport structure (#151)", () => {
     expect(onClear).toHaveBeenCalled();
   });
 });
+
+// #299: below `lg` the shell's compact row owns rating and sort, so the bar
+// hides its own rather than offering the same control twice on screen.
+describe("FilterBar with sort controls in the shell's row", () => {
+  it("hides the rating filter, the sort select and the direction button", () => {
+    setup({ showSortControls: false, filters: { ...EMPTY_FILTERS, sortBy: "title" } });
+
+    expect(screen.queryByLabelText("Minimum rating")).toBeNull();
+    expect(screen.queryByLabelText("Sort by")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Sort direction/ })).toBeNull();
+  });
+
+  it("keeps the observed-state toggles and the clear action", () => {
+    const { onClear } = setup({
+      showSortControls: false,
+      filters: { ...EMPTY_FILTERS, brokenOnly: true },
+    });
+
+    expect(screen.getByRole("button", { name: "Broken only" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Never opened" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Untagged" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
+    expect(onClear).toHaveBeenCalled();
+  });
+});
