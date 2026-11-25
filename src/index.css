@@ -134,6 +134,7 @@
   --search-max: 28rem;
   --favicon-size: 2.5rem;
   --app-header-height: 9rem;
+  --app-selectionbar-height: 0px;
   --app-sidebar-width: 18rem;
   --duration-normal: 200ms;
   --duration-slow: 300ms;
@@ -192,6 +193,14 @@ body {
 
 .bookmarkit-main--header-hidden {
   padding-top: var(--space-4);
+}
+
+/* #299: the selection bar floats over the list's bottom edge, so the main
+   area pays for it the way it pays for the fixed header — the app measures
+   the band and writes --app-selectionbar-height. The value on :root is the
+   0px of a bar that is not mounted. */
+.bookmarkit-main {
+  padding-bottom: var(--app-selectionbar-height);
 }
 
 /* #210, kept intact by the migration: the strip's children refuse to shrink,
@@ -612,6 +621,90 @@ body {
 
 .ui-shell-select-mode-count {
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── Selection bar (#299) ────────────────────────────────────────────────
+   The mobile manager's bottom band (design/mockups
+   /bookmarkit_mobile_manager 373–388): the selection count, Clear and Bulk
+   Edit on the inverse surface, where a thumb reaches them. Fixed, so it
+   floats over the list; the app measures it and writes
+   --app-selectionbar-height, which the main area's bottom padding follows —
+   the same trade the fixed header makes through --app-header-height, so the
+   last row is never under the band. Z-order: above the page, under the
+   drawer, the dialogs and the toast dock. */
+.ui-selection-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-gutter-sm);
+  padding: var(--ui-space-gutter-sm) var(--ui-space-gutter-md);
+  background: var(--ui-inverse-surface);
+  color: var(--ui-inverse-on-surface);
+  border-top: 1px solid var(--ui-outline-variant);
+  box-shadow: var(--ui-shadow-card-hover);
+}
+
+.ui-selection-bar-count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+  min-width: 0;
+  font: var(--ui-type-label-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-selection-bar-count svg {
+  flex: none;
+  color: var(--ui-inverse-primary);
+}
+
+.ui-selection-bar-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+}
+
+/* The band's own control readings: the design system's buttons would bring
+   their light-surface fills back onto the inverse surface. 44px targets
+   always — the band is touch-first by construction, not pointer-conditional. */
+.ui-selection-bar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-gutter-xs);
+  min-height: 44px;
+  padding: 0 var(--ui-space-gutter-md);
+  color: inherit;
+  background: color-mix(in srgb, var(--ui-inverse-on-surface) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ui-outline-variant) 40%, transparent);
+  border-radius: var(--ui-radius-sm);
+  font: var(--ui-type-label-md);
+  transition: background var(--duration-normal) var(--ease-standard);
+}
+
+.ui-selection-bar-button:hover {
+  background: color-mix(in srgb, var(--ui-inverse-on-surface) 18%, transparent);
+}
+
+.ui-selection-bar-button:focus-visible {
+  outline: 2px solid var(--ui-inverse-primary);
+  outline-offset: 2px;
+}
+
+/* The mockup's primary step: rest on the container role, hover on the base. */
+.ui-selection-bar-button--primary {
+  color: var(--ui-on-primary);
+  background: var(--ui-primary-container);
+  border-color: transparent;
+}
+
+.ui-selection-bar-button--primary:hover {
+  background: var(--ui-primary);
 }
 
 .ui-sidebar-brand {

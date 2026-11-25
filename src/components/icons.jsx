@@ -114,6 +114,26 @@ export function SelectionIcon({ size = 18 }) {
   );
 }
 
+/** The selection bar's count marker (check_circle), on the inverse band. */
+export function CheckCircleIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5l2.5 2.5 4.5-5" />
+    </svg>
+  );
+}
+
+/** "Bulk Edit" (edit_note): the pencil over the lines it writes. */
+export function EditNoteIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M4 8h10M4 13h7M4 18h10" />
+      <path d="M17.5 3.5l3 3L12 15h-3v-3z" />
+    </svg>
+  );
+}
+
 /** The card's rating reading (mockup: one filled star beside the count). */
 export function StarIcon({ size = 14 }) {
   // Filled by design — the mockup's star reads solid (`FILL 1`), unlike the
