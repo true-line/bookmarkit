@@ -2,9 +2,8 @@
 // /bookmarkit_mobile_manager/code.html 373–388): what is selected, Clear, and
 // Bulk Edit on an inverse band pinned to the viewport's bottom, where a thumb
 // reaches them. Below `lg` it is the selection's only home — "Bulk Edit"
-// raises the list's inline editor until the sheet (#301) replaces it. Above
-// `lg` it is not mounted, and the inline editor appears on its own, as it
-// always has.
+// opens the bulk-edit sheet (#301). Above `lg` it is not mounted, and the
+// inline editor appears on its own, as it always has.
 //
 // Its controls are not the design system's Button: the button recipes would
 // bring their light-surface fills back onto the inverse surface, so the band

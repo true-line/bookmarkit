@@ -747,7 +747,7 @@ const BookmarkForm = ({
         aria-modal="true"
         aria-labelledby={sheetTitleId}
         tabIndex={-1}
-        className="ui-bookmark-sheet"
+        className="ui-sheet ui-sheet--form"
         onKeyDown={(event) => {
           if (event.key !== "Escape") return;
           // Like the dialog's panel: never let the app's shortcuts hear it.
@@ -755,7 +755,7 @@ const BookmarkForm = ({
           closeGuarded();
         }}
       >
-        <header className="ui-bookmark-sheet-bar">
+        <header className="ui-sheet-bar">
           <button
             type="button"
             className="ui-icon-button"
@@ -764,18 +764,16 @@ const BookmarkForm = ({
           >
             <BackIcon />
           </button>
-          <div className="ui-bookmark-sheet-heading">
+          <div className="ui-sheet-heading">
             <h2 id={sheetTitleId}>
               {t(bookmark ? "bookmarkForm.editTitle" : "bookmarkForm.addTitle")}
             </h2>
-            <p className="ui-bookmark-sheet-subtitle">
-              {formData.folderId || t("bookmarkForm.folderNone")}
-            </p>
+            <p className="ui-sheet-subtitle">{formData.folderId || t("bookmarkForm.folderNone")}</p>
           </div>
           {bookmark && bookmark.id && (
             <button
               type="button"
-              className="ui-icon-button ui-bookmark-sheet-delete"
+              className="ui-icon-button ui-sheet-delete"
               aria-label={t("bookmarkForm.sheetDeleteAria")}
               onClick={() => guardedAction("delete", () => onDelete(bookmark.id))}
             >
@@ -783,8 +781,8 @@ const BookmarkForm = ({
             </button>
           )}
         </header>
-        <main className="ui-bookmark-sheet-body">{form}</main>
-        <footer className="ui-bookmark-sheet-footer">
+        <main className="ui-sheet-body">{form}</main>
+        <footer className="ui-sheet-footer">
           {pendingAction ? (
             pendingActions
           ) : (

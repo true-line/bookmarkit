@@ -121,12 +121,17 @@ export const listMessages = {
 
   // BulkEditBar
   bulkEdit: {
-    addTagsAria: "Tags to add, comma separated",
+    addTagsLabel: "Add tags",
     addTagsPlaceholder: "Add tags…",
     allMatch: "Nothing to change — all {count} already match.",
     alreadyMatch: "({count} already match)",
     apply: "Apply",
+    applyChanges: "Apply Changes",
     applyTo: "Apply to {count}?",
+    autoTag: "Auto-Tag",
+    autoTagAria: "Suggest tags for the selection using AI",
+    autoTagFailed: "Could not suggest tags. Check your LLM settings.",
+    backAria: "Back to bookmarks",
     clearRating: "Clear rating",
     clearSelection: "Clear selection",
     // describeBulkEdit's sentence: one phrase per change, then the summary
@@ -142,8 +147,19 @@ export const listMessages = {
         other: "{changes} — {count} bookmarks",
       },
     },
-    folderAria: "Folder to move the selection into",
+    dangerNote: {
+      one: "Permanently delete 1 selected bookmark from this browser.",
+      other: "Permanently delete all {count} selected bookmarks from this browser.",
+    },
+    dangerTitle: "Danger Zone",
+    deleteBookmarks: {
+      one: "Delete 1 Bookmark",
+      other: "Delete {count} Bookmarks",
+    },
+    deleteCount: "Delete {count}",
+    folderLabel: "Move to folder",
     folderPathPlaceholder: "Folder path…",
+    folderSectionTitle: "Folder",
     groupAria: {
       one: "Bulk edit {count} selected bookmark",
       other: "Bulk edit {count} selected bookmarks",
@@ -152,12 +168,21 @@ export const listMessages = {
     keepFolders: "Keep folders",
     keepRatings: "Keep ratings",
     newFolder: "New folder…",
-    newFolderAria: "New folder path",
+    newFolderLabel: "New folder path",
     noFolder: "No folder",
-    ratingAria: "Rating to set",
-    removeTagsAria: "Tags to remove, comma separated",
+    previewMore: "+{count} more",
+    previewOf: "{selected} of {total}",
+    previewTitle: "Selected items",
+    ratingLabel: "Set rating",
+    removeTagsLabel: "Remove tags",
     removeTagsPlaceholder: "Remove tags…",
     selectedCount: "{count} selected",
+    stars: {
+      one: "{count} star",
+      other: "{count} stars",
+    },
+    tagsSectionTitle: "Tags",
+    undoNote: "Reverts in one undo.",
   },
 
   // EmptyShelf

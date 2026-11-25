@@ -371,7 +371,7 @@ describe("BookmarkForm's sheet below `lg` (#300)", () => {
     renderForm();
 
     expect(document.querySelector(".ui-modal-panel")).toBeNull();
-    const sheet = document.querySelector(".ui-bookmark-sheet");
+    const sheet = document.querySelector(".ui-sheet");
     expect(sheet).not.toBeNull();
     // Still a dialog to the keyboard — role and name survive the chrome swap.
     expect(screen.getByRole("dialog", { name: "Edit Bookmark" })).toBe(sheet);
@@ -390,7 +390,7 @@ describe("BookmarkForm's sheet below `lg` (#300)", () => {
       bookmark: { id: "1", title: "A", url: "https://a.test/", folderId: "Personal" },
     });
 
-    expect(document.querySelector(".ui-bookmark-sheet-subtitle").textContent).toBe("Personal");
+    expect(document.querySelector(".ui-sheet-subtitle").textContent).toBe("Personal");
     fireEvent.click(screen.getByRole("button", { name: "Delete bookmark" }));
     expect(onDelete).toHaveBeenCalledWith("1");
   });
@@ -407,10 +407,10 @@ describe("BookmarkForm's sheet below `lg` (#300)", () => {
     expect(select.tagName).toBe("SELECT");
 
     fireEvent.change(select, { target: { value: "Personal" } });
-    expect(document.querySelector(".ui-bookmark-sheet-subtitle").textContent).toBe("Personal");
+    expect(document.querySelector(".ui-sheet-subtitle").textContent).toBe("Personal");
 
     fireEvent.change(select, { target: { value: "" } });
-    expect(document.querySelector(".ui-bookmark-sheet-subtitle").textContent).toBe("No folder");
+    expect(document.querySelector(".ui-sheet-subtitle").textContent).toBe("No folder");
 
     fireEvent.submit(document.querySelector("#bookmark-form"));
     expect(onSave.mock.calls[0][0].folderId).toBe("");
@@ -476,7 +476,7 @@ describe("BookmarkForm's sheet below `lg` (#300)", () => {
     fireEvent.submit(document.querySelector("#bookmark-form"));
     expect(onSave).toHaveBeenCalledTimes(1);
 
-    fireEvent.keyDown(document.querySelector(".ui-bookmark-sheet"), { key: "Escape" });
+    fireEvent.keyDown(document.querySelector(".ui-sheet"), { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Back to bookmarks" }));
@@ -489,7 +489,7 @@ describe("BookmarkForm's sheet below `lg` (#300)", () => {
     setup({ id: null, title: "Ownership", url: "https://example.com/p/8812" }, { onClose });
 
     fireEvent.click(screen.getByRole("button", { name: /Suggest description/i }));
-    fireEvent.keyDown(document.querySelector(".ui-bookmark-sheet"), { key: "Escape" });
+    fireEvent.keyDown(document.querySelector(".ui-sheet"), { key: "Escape" });
 
     expect(screen.getByText("An AI suggestion is still loading. Proceed anyway?")).not.toBeNull();
     expect(onClose).not.toHaveBeenCalled();

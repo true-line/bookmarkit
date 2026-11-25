@@ -55,8 +55,12 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Detect and remove duplicates by the page they point at, with an optional
     second opinion from your LLM on the same article saved under two URLs
   - Bulk edit a multi-selection: add or remove tags, move to a folder, set or
-    clear ratings — on narrow windows the selection sits in a bar pinned to
-    the bottom of the screen (**N selected**, **Clear**, **Bulk Edit**)
+    clear ratings, and **Auto-Tag** the selection with your LLM (one
+    suggestion, landed in the Add-tags field and reviewed before applying) —
+    one write, one undo. On narrow windows the selection sits in a bar pinned
+    to the bottom of the screen (**N selected**, **Clear**, **Bulk Edit**),
+    and **Bulk Edit** opens a full-page sheet — the selection's preview, the
+    same fields, and a Danger Zone
   - Undo the last ten changes with Cmd/Ctrl+Z — edits, adds, deletes, imports,
     de‑duplication, sorts, and “replace all”
 - URL status

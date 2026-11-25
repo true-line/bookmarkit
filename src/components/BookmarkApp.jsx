@@ -281,9 +281,9 @@ const BookmarkApp = () => {
   } = useBookmarkSelection(openBookmark, handleEditBookmark, selectMode);
 
   // #299: below `lg` the selection's actions live in the bar at the bottom,
-  // and "Bulk Edit" raises the list's inline editor — the sheet (#301) will
-  // replace that handoff. Above `lg` the editor appears on its own, as it
-  // always has. Either way the editor is the selection's, and dies with it.
+  // and "Bulk Edit" opens the bulk-edit sheet (#301). Above `lg` the inline
+  // editor appears on its own, as it always has. Either way the editor is the
+  // selection's, and dies with it.
   const [bulkEditorOpen, setBulkEditorOpen] = useState(false);
   useEffect(() => {
     if (multiSelectedBookmarkIds.length === 0) setBulkEditorOpen(false);
@@ -802,7 +802,10 @@ const BookmarkApp = () => {
     Boolean(digest) ||
     // #294: the navigation drawer. It handles its own Escape, as every dialog
     // does; this keeps the list shortcuts from firing behind it.
-    navDrawerOpen;
+    navDrawerOpen ||
+    // #301: the bulk-edit sheet below `lg` — a dialog to the keyboard like
+    // the rest, so `d` cannot stage a deletion behind it while it is open.
+    bulkEditorOpen;
 
   useKeyboardShortcuts(
     {
@@ -972,6 +975,10 @@ const BookmarkApp = () => {
   // dedupe and embedding paths apply (#86). A locked key keeps the box open:
   // submitting a query is how the user reaches the engine's unlock prompt.
   const isAgentConfigured = isSearchEnabled(runtimeProvider, providerOptions, encryption.locked);
+  // #301: Auto-Tag asks the provider directly and has no unlock prompt to
+  // offer, so its gate is the same readiness without the locked pass-through
+  // search uses to reach the unlock flow — locked settings mean it is off.
+  const canAutoTag = isSearchEnabled(runtimeProvider, providerOptions, false);
 
   const { isProcessing, run: runAgent } = useAgentEngine({
     provider: runtimeProvider,
@@ -1407,7 +1414,8 @@ const BookmarkApp = () => {
 
             {/* #54: Only for a real multi-selection — a single click is served
                 by the form. #299: below `lg` the selection's home is the bar
-                at the bottom, and "Bulk Edit" raises this editor. */}
+                at the bottom, and "Bulk Edit" opens this editor as the sheet
+                (#301); the bar itself becomes that sheet below `lg`. */}
             {multiSelectedBookmarkIds.length > 0 && (isSidebarViewport || bulkEditorOpen) && (
               <BulkEditBar
                 selected={selectedBookmarks}
@@ -1415,6 +1423,10 @@ const BookmarkApp = () => {
                 onApply={handleBulkEdit}
                 onClearSelection={clearSelectedBookmarks}
                 onDelete={confirmDeleteSelection}
+                onClose={() => setBulkEditorOpen(false)}
+                canAutoTag={canAutoTag}
+                provider={runtimeProvider}
+                providerOptions={providerOptions}
               />
             )}
 

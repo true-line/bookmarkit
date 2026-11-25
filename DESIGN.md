@@ -172,10 +172,10 @@ Two boundaries are worth keeping straight:
   desktop. The mode leaves with the shell past `lg`, and Escape drops it with
   the selection. A multi-selection below `lg` pins the selection bar
   (`SelectionBar`) to the viewport's bottom edge — count, Clear, Bulk Edit on
-  the inverse surface — and "Bulk Edit" raises the list's inline `BulkEditBar`
-  until the mobile sheet (#301) replaces that handoff. The app measures the
-  band into `--app-selectionbar-height`, which `.bookmarkit-main` pays as
-  bottom padding, so the last row is never under it.
+  the inverse surface — and "Bulk Edit" opens the bulk-edit sheet (#301). The
+  app measures the band into `--app-selectionbar-height`, which
+  `.bookmarkit-main` pays as bottom padding, so the last row is never under
+  it.
 - **The bookmark form below `lg` (#300).** Editing or adding a bookmark is the
   edit mockup's full-page sheet instead of the centered dialog: a sticky app
   bar (back to bookmarks, the title over the bookmark's folder, delete), the
@@ -189,6 +189,21 @@ Two boundaries are worth keeping straight:
   datalist for spellings the list doesn't know. Parsed tags preview as `#`
   chips under the field (aria-hidden; the input stays the accessible control),
   and the rating's targets are 44px.
+- **Bulk edit on the selection (#301).** From `lg` up the selection's editor
+  stays the inline `BulkEditBar` — its fields grow visible labels, "Delete"
+  says the count it would hit, the rating options read "5 stars", and a
+  change that would land also says it reverts in one undo. "Auto-Tag" asks
+  the configured provider (the same readiness rule as the other AI actions)
+  for tags across the selection and writes them into the Add-tags field,
+  where the live summary describes them — a suggestion is always reviewed
+  before Apply, which stays the only write and the one undo entry. Below
+  `lg` the same engine wears the mobile mockup's sheet (`BulkEditSheet`, the
+  `#301` mockup's composition): the selected items' preview ("N of M" over a
+  truncated list), move-to-folder, the tag fields, a Danger Zone whose
+  delete still goes through the app's confirm modal, and a sticky Cancel /
+  Apply Changes footer. Escape, the back arrow and Cancel return to the
+  selection bar with the selection intact, and a suggestion in flight holds
+  the sheet still.
 
 ## UI message catalogue
 
