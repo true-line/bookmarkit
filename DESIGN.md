@@ -211,9 +211,9 @@ The copy of the manager's components and the popup lives in the English
 message catalogue under `src/i18n/messages/` (#284). `en.js` merges three
 files split only by the 400-line lint limit (`enList.js`, `enDialogs.js`,
 `enModals.js`); a locale adds a `<locale>.js` beside them and an entry in the
-registry (`src/i18n/locales.js`) — the selector, the direction stamping and
-the message lookup all derive from that entry, so a catalogue is the only
-thing a new locale ships.
+registry (`src/i18n/locales.js`) that imports it — the selector, the
+direction stamping and the message lookup all derive from that entry, so a
+new locale ships a catalogue and one line.
 
 The interface language has a selector in Options → Appearance (#298):
 "System default" resolves against the browser's own preferences (exact tag,

@@ -1,10 +1,13 @@
 // The interface-language registry (#298) — what the UI can speak, what each
 // language calls itself, and the direction its script writes in. The Options
 // selector reads the list; LocaleProvider resolves the stored choice against
-// it and stamps dir/lang from it. Adding a locale is: add its catalogue as
-// src/i18n/messages/<code>.js beside the English one and an entry here — the
-// selector, the direction stamping and the message lookup all pick it up with
-// no other change.
+// it, stamps dir/lang from it, and mounts the catalogue the entry carries.
+// Adding a locale is: add its catalogue as src/i18n/messages/<code>.js beside
+// the English one and one entry here that imports it — the selector, the
+// direction stamping and the message lookup all pick it up with no other
+// change.
+
+import en from "./messages/en.js";
 
 export const DEFAULT_LOCALE = "en";
 
@@ -14,8 +17,10 @@ export const SYSTEM_LOCALE = "system";
 
 export const LOCALES = [
   // The catalogue ships English only today; the mockup's Arabic, Hebrew and
-  // Japanese rows land with their message files.
-  { code: "en", label: "English (LTR)" },
+  // Japanese rows land with their message files. The messages ride the entry
+  // (codex P2 on #317): a registry detached from its catalogues would render
+  // English while presenting the language as selectable.
+  { code: "en", label: "English (LTR)", messages: en },
 ];
 
 // The languages whose script runs right-to-left, by language subtag. Anything
@@ -51,14 +56,20 @@ export const dirFor = (code) => {
 // code for a locale that no longer ships — reads English rather than
 // breaking the select or the copy.
 export function resolveLocale(choice, available = LOCALES, systemLanguages = []) {
-  const codes = available.map((locale) => locale.code);
-  if (choice && choice !== SYSTEM_LOCALE && codes.includes(choice)) return choice;
+  // Comparison is case-insensitive on both sides; the returned code is always
+  // the registered one, so a pt-PT preference lands on pt-PT rather than the
+  // first pt-* entry (codex P2 on #317).
+  const registered = new Map(available.map((locale) => [locale.code.toLowerCase(), locale.code]));
+  const choiceKey = String(choice || "").toLowerCase();
+  if (choice && choice !== SYSTEM_LOCALE && registered.has(choiceKey)) {
+    return registered.get(choiceKey);
+  }
   for (const tag of systemLanguages) {
     const normalized = String(tag || "").toLowerCase();
-    if (codes.includes(normalized)) return normalized;
+    if (registered.has(normalized)) return registered.get(normalized);
     const language = normalized.split("-")[0];
-    const base = codes.find((code) => code.split("-")[0] === language);
-    if (base) return base;
+    const base = [...registered.keys()].find((code) => code.split("-")[0] === language);
+    if (base) return registered.get(base);
   }
   return DEFAULT_LOCALE;
 }

@@ -6,16 +6,10 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { DEFAULT_LOCALE, LOCALES, SYSTEM_LOCALE, dirFor, resolveLocale } from "./locales.js";
 import { MessageProvider } from "./index.js";
-import en from "./messages/en.js";
 
 // The same dual path as the theme (useTheme): chrome.storage.local in the
 // extension, localStorage on the web.
 const STORAGE_KEY = "bm_locale";
-
-// Catalogues keyed by locale code. A registry entry without an entry here
-// renders the English messages in its own number and date formats until its
-// catalogue lands.
-const CATALOGUES = { en };
 
 async function readStoredChoice() {
   try {
@@ -102,12 +96,18 @@ export function LocaleProvider({ children, locales = LOCALES }) {
     [choice, locale, locales]
   );
 
+  // The catalogue rides the registry entry (locales.js), so a shipped locale
+  // renders its own messages by construction; a synthetic or not-yet-
+  // translated entry has none and falls back to the English lookup inside
+  // the translator, in the locale's own number and date formats.
+  const catalogue = locales.find((entry) => entry.code === locale)?.messages;
+
   // createElement rather than JSX: this module keeps a .js extension (no
   // JSX transform), like the provider it wraps.
   return React.createElement(
     LocaleContext.Provider,
     { value },
-    React.createElement(MessageProvider, { locale, messages: CATALOGUES[locale] }, children)
+    React.createElement(MessageProvider, { locale, messages: catalogue }, children)
   );
 }
 

@@ -66,4 +66,29 @@ describe("resolveLocale", () => {
     expect(resolveLocale("tlh", LOCALES, [])).toBe(DEFAULT_LOCALE);
     expect(resolveLocale("zz", LOCALES, ["en"])).toBe(DEFAULT_LOCALE);
   });
+
+  it("preserves an exact regional match over the first entry of the same language", () => {
+    // Codex P2 on #317: lowercasing only the preference made an exact
+    // pt-PT match miss mixed-case registry codes and land on pt-BR.
+    const available = [
+      { code: "en", label: "English (LTR)" },
+      { code: "pt-BR", label: "Português do Brasil (LTR)" },
+      { code: "pt-PT", label: "Português (LTR)" },
+    ];
+    expect(resolveLocale(SYSTEM_LOCALE, available, ["pt-PT"])).toBe("pt-PT");
+    expect(resolveLocale("pt-PT", available, [])).toBe("pt-PT");
+    expect(resolveLocale("pt-pt", available, [])).toBe("pt-PT");
+    expect(resolveLocale(SYSTEM_LOCALE, available, ["pt-PT", "pt"])).toBe("pt-PT");
+  });
+});
+
+describe("LOCALES registry", () => {
+  it("wires every shipped entry to its catalogue", () => {
+    // Codex P2 on #317: an entry whose catalogue is not imported renders
+    // English while presenting the language as selectable.
+    for (const locale of LOCALES) {
+      expect(locale.messages).toBeDefined();
+    }
+    expect(LOCALES.find((locale) => locale.code === DEFAULT_LOCALE).messages).toBeDefined();
+  });
 });
