@@ -89,6 +89,11 @@ const baseArgs = {
   onMoveFolder: noop,
   onRenameFolder: noop,
   onDeleteFolder: noop,
+  // #297: the maintenance footer, wired to no-ops like the rest of the rail.
+  onCheckLinks: noop,
+  onRemoveDuplicates: noop,
+  onImportExport: noop,
+  onOptions: noop,
 };
 
 export const Default = {

@@ -37,6 +37,10 @@ const setup = (props = {}) => {
     onMoveFolder: vi.fn(),
     onRenameFolder: vi.fn(),
     onDeleteFolder: vi.fn(),
+    onCheckLinks: vi.fn(),
+    onRemoveDuplicates: vi.fn(),
+    onImportExport: vi.fn(),
+    onOptions: vi.fn(),
   };
   render(<SidebarNav bookmarks={bookmarks} brokenCount={3} {...handlers} {...props} />);
   return handlers;
@@ -213,5 +217,50 @@ describe("SidebarNav (#283)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Work" }));
     expect(onSelectFolder).toHaveBeenCalledWith("Work");
+  });
+});
+
+describe("maintenance footer (#297)", () => {
+  it("wires the four rows to the handlers the header strip uses", () => {
+    const { onCheckLinks, onRemoveDuplicates, onImportExport, onOptions } = setup();
+
+    fireEvent.click(screen.getByRole("button", { name: "Check Links" }));
+    expect(onCheckLinks).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Remove Duplicates" }));
+    expect(onRemoveDuplicates).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Import / Export" }));
+    expect(onImportExport).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Options" }));
+    expect(onOptions).toHaveBeenCalledOnce();
+  });
+
+  it("promises the stop while the link sweep runs", () => {
+    const { onCheckLinks } = setup({ checkLinksRunning: true });
+
+    const row = screen.getByRole("button", { name: "Stop Check" });
+    expect(screen.queryByRole("button", { name: "Check Links" })).not.toBeInTheDocument();
+    fireEvent.click(row);
+    expect(onCheckLinks).toHaveBeenCalledOnce();
+  });
+
+  it("holds Remove Duplicates while the semantic pass asks the provider", () => {
+    const { onRemoveDuplicates } = setup({ duplicatesBusy: true });
+
+    const row = screen.getByRole("button", { name: "Remove Duplicates" });
+    expect(row).toBeDisabled();
+    expect(row).toHaveAttribute("aria-busy", "true");
+    fireEvent.click(row);
+    expect(onRemoveDuplicates).not.toHaveBeenCalled();
+  });
+
+  it("sits below the folder tree as the rail's last block", () => {
+    setup();
+    const rail = screen.getByRole("complementary", { name: "BookmarkIt navigation" });
+    const folders = within(rail).getByRole("navigation", { name: "Folders" });
+    const checkLinks = within(rail).getByRole("button", { name: "Check Links" });
+
+    expect(
+      folders.compareDocumentPosition(checkLinks) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });
