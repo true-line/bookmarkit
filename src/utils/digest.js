@@ -13,7 +13,9 @@ import { getMessages } from "../i18n/index.js";
 import { extractJsonArray } from "../llm/jsonArray.js";
 import { addedAt, findNeverOpened } from "./openHistory.js";
 
-export const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+export const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const WEEK_MS = 7 * DAY_MS;
 
 /** Per section, and per prompt. Enough to be a digest; few enough to be read. */
 export const MAX_ITEMS = 30;
@@ -148,4 +150,36 @@ export function withRemainder(themes = [], added = []) {
 export function themeItems(theme, bookmarks = []) {
   const byId = new Map(bookmarks.map((bookmark) => [bookmark?.id, bookmark]));
   return (theme?.ids || []).map((id) => byId.get(id)).filter(Boolean);
+}
+
+/**
+ * The mobile digest's "Needs Review" queue (#302): the untagged and the never
+ * opened, one card each. The two sections can name the same bookmark, so the
+ * union dedupes by id and keeps both reasons; newest save first, because the
+ * queue is read top-down. The sets arrive already chosen and capped by
+ * `digestSets`, so this only decides the card's shape and order.
+ *
+ * @param {{untagged?: object[], neverOpened?: object[]}} sets
+ * @param {number} [now]
+ * @returns {{bookmark: object, days: number, untagged: boolean, neverOpened: boolean}[]}
+ */
+export function triageQueue({ untagged = [], neverOpened = [] } = {}, now = Date.now()) {
+  const cards = new Map();
+  for (const [set, flag] of [
+    [untagged, "untagged"],
+    [neverOpened, "neverOpened"],
+  ]) {
+    for (const bookmark of set) {
+      if (!bookmark?.id) continue;
+      const card = cards.get(bookmark.id) ?? {
+        bookmark,
+        days: Math.max(1, Math.floor((now - addedAt(bookmark)) / DAY_MS)),
+        untagged: false,
+        neverOpened: false,
+      };
+      card[flag] = true;
+      cards.set(bookmark.id, card);
+    }
+  }
+  return [...cards.values()].sort((a, b) => addedAt(b.bookmark) - addedAt(a.bookmark));
 }

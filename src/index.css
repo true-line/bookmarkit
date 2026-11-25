@@ -1231,6 +1231,46 @@ body {
   padding-block-end: 2px;
 }
 
+/* #302: the digest sheet's own pieces — the summary's count tiles, the queue
+   card's glyph bubble and action row — and the mockup's 44px targets across
+   every control the sheet shows. */
+.ui-digest-tile {
+  padding: var(--ui-space-gutter-sm);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-low);
+  text-align: center;
+}
+
+.ui-digest-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--ui-surface-container-high);
+  color: var(--ui-outline);
+}
+
+.ui-digest-actions {
+  display: flex;
+  gap: var(--ui-space-gutter-sm);
+  padding-block-start: var(--ui-space-gutter-sm);
+  border-top: 1px solid var(--ui-outline-variant);
+}
+
+.ui-sheet--digest .ui-icon-button,
+.ui-sheet--digest .ui-sheet-bar .ui-button,
+.ui-digest-actions .ui-button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.ui-digest-actions .ui-button {
+  flex: 1 1 0;
+}
+
 /* ─── Empty shelf (#254) ──────────────────────────────────────────────────
    The manager mockup's empty-shelf centerpiece: a centered column — the
    card-stack mark, the copy block, the actions — on headline/body type with

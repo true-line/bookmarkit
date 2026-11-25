@@ -686,6 +686,17 @@ const BookmarkApp = () => {
     setDigest(null);
   }, []);
 
+  // #302: the digest sheet's per-card "Tag & File" — the ordinary edit form
+  // for that bookmark, with the digest closed first so the two sheets never
+  // stack. The form's Save is the same write path an edit from the list uses.
+  const editFromDigest = useCallback(
+    (bookmark) => {
+      setDigest(null);
+      handleEditBookmark(bookmark);
+    },
+    [handleEditBookmark]
+  );
+
   // #283: a smart view chosen from the navigation sidebar. It is one manual
   // filter flag — the same write as the filter strip's toggle — so the agent
   // plan is untouched and the filtering order holds. The sidebar's views are
@@ -1576,6 +1587,7 @@ const BookmarkApp = () => {
             onOpen={openBookmark}
             onShowNeverOpened={showNeverOpened}
             onTriage={triageUntagged}
+            onEdit={editFromDigest}
             onClose={() => setDigest(null)}
           />
         )}
