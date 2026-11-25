@@ -1,5 +1,19 @@
 # bookmarkit
 
+## 0.14.0
+
+### Minor Changes
+
+- ea463b9: Bulk edit gains polish and its mobile sheet. The desktop bar's fields have visible labels, **Delete** says how many it would hit, the rating options read "**5 stars**", a change that would land says it reverts in one undo, and **Auto-Tag** suggests tags for the selection with your LLM — only when a provider is configured, landed in the Add-tags field so it is reviewed before Apply, which stays the only write. On windows narrower than `lg`, the selection bar's **Bulk Edit** opens a full-page sheet: the selected items' preview, move-to-folder, add/remove tags, and a Danger Zone with the count, with **Cancel** and **Apply Changes** pinned to the bottom. Applying is still one write and one undo.
+- 4b9a287: On windows narrower than `lg`, editing or adding a bookmark uses the mobile mockup's full-page composition instead of the centered dialog: a sticky app bar (back to bookmarks, the title over the bookmark's folder, delete) and a sticky footer with equal-width **Cancel** and **Save Bookmark** actions. The folder becomes a select over the folders that exist with a **No folder** entry — **Custom path…** hands the field back to the `/` syntax for spellings the list doesn't know. Parsed tags preview as `#` chips under the field, and the rating's targets are 44px. From `lg` up the dialog is unchanged.
+- 1e2261a: On windows narrower than `lg`, the app now has a mobile manager shell. The header's top bar holds a menu button, the view on screen with its saved count, and **Add**; the menu button opens the navigation drawer, which holds the same smart views, saved views and folder tree as the wide-window sidebar. The drawer is a dialog: it takes focus, closes on Escape, the scrim or its close button, and returns focus to the menu button. The separate **Folders** toggle, the saved-view row above the list, and the **Add New**, **Digest** and **Help** buttons that used to sit in the header on narrower windows are gone, since the drawer carries all of them. Under 40rem every control is a 44px target and the list is a single column in every view mode.
+- ee348a8: On windows narrower than `lg`, the manager has the mobile mockup's selection surfaces. The header's compact filter row holds the rating filter, a **Newest**/**Oldest** quick sort for the date ordering, and a **Select** toggle that turns taps into multi-select — no modifier keys needed on a touch screen. A multi-selection pins a bar to the bottom of the screen: **N selected**, **Clear**, and **Bulk Edit**, which opens the bulk edit controls. The list pays the bar's height as bottom padding, so the last bookmark is never under it. From `lg` up nothing changes: the filter bar keeps its rating and sort controls, and the bulk edit band appears as before.
+
+### Patch Changes
+
+- 798dac2: Messages raised in the background (link checks, archive lookups, imports, theme upload and undo) now follow the same locale-aware formatting as the rest of the interface, so counts of 1,000 and above are grouped, for example "Undo delete (1,200)". The wording is otherwise unchanged and the app still ships in English only.
+- b347f99: Interface text now comes from a message catalogue, and counts of 1,000 and above are grouped for your locale (for example "2,089 bookmarks"). The app still ships in English only; this is the groundwork for choosing an interface language.
+
 ## 0.13.0
 
 ### Minor Changes
