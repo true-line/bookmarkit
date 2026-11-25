@@ -7,6 +7,7 @@ import {
   hasDigest,
   parseDigestThemes,
   themeItems,
+  triageQueue,
   withRemainder,
 } from "./digest.js";
 
@@ -15,6 +16,23 @@ const ago = (ms) => new Date(NOW - ms).toISOString();
 const DAY = 24 * 60 * 60 * 1000;
 
 const bookmark = (id, props = {}) => ({ id, title: id, createdAt: ago(30 * DAY), ...props });
+
+describe("digestSets totals", () => {
+  it("reports the uncapped sizes of the three sets beside the capped ones", () => {
+    const seen = bookmark("old", { tags: ["x"], lastOpenedAt: ago(5 * DAY) });
+    const sets = digestSets(
+      [
+        seen,
+        bookmark("in1", { createdAt: ago(DAY) }),
+        bookmark("in2", { createdAt: ago(2 * DAY) }),
+      ],
+      NOW,
+      { limit: 1 }
+    );
+    expect(sets.added).toHaveLength(1);
+    expect(sets.totals).toEqual({ added: 2, neverOpened: 0, untagged: 0 });
+  });
+});
 
 describe("digestSets", () => {
   it("reports what arrived inside the window, newest first", () => {
@@ -152,5 +170,45 @@ describe("themeItems", () => {
   it("resolves a theme to bookmarks in the order it named them", () => {
     const shown = [bookmark("a"), bookmark("b")];
     expect(themeItems({ ids: ["b", "a", "gone"] }, shown).map((b) => b.id)).toEqual(["b", "a"]);
+  });
+});
+
+describe("triageQueue", () => {
+  it("gives no age to a bookmark that does not say when it was saved", () => {
+    const queue = triageQueue({ untagged: [{ id: "no-date", title: "No date" }] }, NOW);
+    expect(queue[0].days).toBeNull();
+  });
+
+  it("unions the untagged and never-opened sets, one card per bookmark", () => {
+    const both = bookmark("both");
+    const queue = triageQueue(
+      { untagged: [bookmark("u"), both], neverOpened: [bookmark("n"), both] },
+      NOW
+    );
+    expect(queue).toHaveLength(3);
+    const card = queue.find((entry) => entry.bookmark.id === "both");
+    expect(card.untagged).toBe(true);
+    expect(card.neverOpened).toBe(true);
+  });
+
+  it("reads newest save first", () => {
+    const queue = triageQueue(
+      {
+        untagged: [bookmark("older", { createdAt: ago(12 * DAY) })],
+        neverOpened: [bookmark("newer", { createdAt: ago(8 * DAY) })],
+      },
+      NOW
+    );
+    expect(queue.map((entry) => entry.bookmark.id)).toEqual(["newer", "older"]);
+  });
+
+  it("says how many days ago the bookmark was saved", () => {
+    const queue = triageQueue({ untagged: [bookmark("d", { createdAt: ago(3 * DAY) })] }, NOW);
+    expect(queue[0].days).toBe(3);
+  });
+
+  it("never rounds a save down to zero days", () => {
+    const queue = triageQueue({ untagged: [bookmark("fresh", { createdAt: ago(DAY / 2) })] }, NOW);
+    expect(queue[0].days).toBe(1);
   });
 });

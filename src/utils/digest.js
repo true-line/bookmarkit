@@ -13,7 +13,9 @@ import { getMessages } from "../i18n/index.js";
 import { extractJsonArray } from "../llm/jsonArray.js";
 import { addedAt, findNeverOpened } from "./openHistory.js";
 
-export const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+export const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const WEEK_MS = 7 * DAY_MS;
 
 /** Per section, and per prompt. Enough to be a digest; few enough to be read. */
 export const MAX_ITEMS = 30;
@@ -34,23 +36,31 @@ const newestFirst = (a, b) => addedAt(b) - addedAt(a);
  * @param {object[]} bookmarks
  * @param {number} [now]
  * @param {{windowMs?: number, limit?: number}} [options]
- * @returns {{added: object[], neverOpened: object[], untagged: object[]}}
+ * @returns {{added: object[], neverOpened: object[], untagged: object[],
+ *   totals: {added: number, neverOpened: number, untagged: number}}}
  */
 export function digestSets(bookmarks = [], now = Date.now(), options = {}) {
   const { windowMs = WEEK_MS, limit = MAX_ITEMS } = options;
   const cutoff = now - windowMs;
   const settled = bookmarks.filter((bookmark) => addedAt(bookmark) < cutoff);
 
+  const added = bookmarks.filter((bookmark) => addedAt(bookmark) >= cutoff).sort(newestFirst);
+  const neverOpened = findNeverOpened(settled);
+  const untagged = settled
+    .filter((bookmark) => !(Array.isArray(bookmark.tags) ? bookmark.tags : []).length)
+    .sort((a, b) => addedAt(a) - addedAt(b));
+
   return {
-    added: bookmarks
-      .filter((bookmark) => addedAt(bookmark) >= cutoff)
-      .sort(newestFirst)
-      .slice(0, limit),
-    neverOpened: findNeverOpened(settled).slice(0, limit),
-    untagged: settled
-      .filter((bookmark) => !(Array.isArray(bookmark.tags) ? bookmark.tags : []).length)
-      .sort((a, b) => addedAt(a) - addedAt(b))
-      .slice(0, limit),
+    added: added.slice(0, limit),
+    neverOpened: neverOpened.slice(0, limit),
+    untagged: untagged.slice(0, limit),
+    // The uncapped sizes: the sections are capped for reading, but the mobile
+    // digest's summary (#302) reports the week, not the reading cap.
+    totals: {
+      added: added.length,
+      neverOpened: neverOpened.length,
+      untagged: untagged.length,
+    },
   };
 }
 
@@ -148,4 +158,39 @@ export function withRemainder(themes = [], added = []) {
 export function themeItems(theme, bookmarks = []) {
   const byId = new Map(bookmarks.map((bookmark) => [bookmark?.id, bookmark]));
   return (theme?.ids || []).map((id) => byId.get(id)).filter(Boolean);
+}
+
+/**
+ * The mobile digest's "Needs Review" queue (#302): the untagged and the never
+ * opened, one card each. The two sections can name the same bookmark, so the
+ * union dedupes by id and keeps both reasons; newest save first, because the
+ * queue is read top-down. The sets arrive already chosen and capped by
+ * `digestSets`, so this only decides the card's shape and order.
+ *
+ * @param {{untagged?: object[], neverOpened?: object[]}} sets
+ * @param {number} [now]
+ * @returns {{bookmark: object, days: number | null, untagged: boolean,
+ *   neverOpened: boolean}[]} `days` is null when the bookmark does not say
+ *   when it was saved.
+ */
+export function triageQueue({ untagged = [], neverOpened = [] } = {}, now = Date.now()) {
+  const cards = new Map();
+  for (const [set, flag] of [
+    [untagged, "untagged"],
+    [neverOpened, "neverOpened"],
+  ]) {
+    for (const bookmark of set) {
+      if (!bookmark?.id) continue;
+      const saved = addedAt(bookmark);
+      const card = cards.get(bookmark.id) ?? {
+        bookmark,
+        days: saved ? Math.max(1, Math.floor((now - saved) / DAY_MS)) : null,
+        untagged: false,
+        neverOpened: false,
+      };
+      card[flag] = true;
+      cards.set(bookmark.id, card);
+    }
+  }
+  return [...cards.values()].sort((a, b) => addedAt(b.bookmark) - addedAt(a.bookmark));
 }

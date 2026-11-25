@@ -80,21 +80,46 @@ export const surfaceMessages = {
       "<strong>Import/Export</strong> lets you back up or restore bookmarks from JSON/HTML.",
   },
 
-  // DigestModal, and the two group titles no model chose (utils/digest.js, #307)
+  // DigestModal, and the two group titles no model chose (utils/digest.js,
+  // #307). The sheet keys are DigestSheet's, below `lg` (#302).
   digest: {
     alsoSaved: "Also saved",
+    autoTag: "Auto-Tag",
+    autoTagAria: "Suggest tags for the untagged with AI",
+    backAria: "Back to bookmarks",
     bookmarkCount: {
       one: "{count} bookmark",
       other: "{count} bookmarks",
     },
+    daysAgo: {
+      one: "Saved 1 day ago",
+      other: "Saved {count} days ago",
+    },
     description: "Local summary with optional AI topic grouping.",
     done: "Done",
     everythingElse: "Everything else",
+    flagNeverOpened: "Never opened",
+    flagUntagged: "Untagged",
     groupedByTheme: "Grouped by theme.",
+    needsReviewTitle: "Needs Review",
     neverOpenedHint: "Saved a while ago and not opened since — oldest first.",
     neverOpenedTitle: "Never opened",
+    openCard: "Open",
+    queueCount: {
+      one: "1 item",
+      other: "{count} items",
+    },
+    rangeSaved: {
+      one: "{range} · 1 saved",
+      other: "{range} · {count} saved",
+    },
     savedTitle: "Saved this week",
     showNeverOpened: "Show never opened",
+    summaryAria: "Digest summary",
+    summarySaved: "Saved",
+    summaryUnopened: "Unopened",
+    summaryUntagged: "Untagged",
+    tagAndFile: "Tag & File",
     title: "Weekly Digest",
     triage: "Triage untagged",
     untaggedHint: "Filed in a hurry. The organizer can suggest tags for these.",

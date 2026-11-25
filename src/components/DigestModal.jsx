@@ -17,13 +17,19 @@
 // never-opened set, primary closes. The digest mockup's rounded-md card radius
 // loses to the spec text per the recorded divergence in DESIGN.md — the design
 // system keeps its canonical radius. Digest generation is untouched — presentation
-// only.
+// only. Below `lg` (#302) the same digest wears the weekly digest mockup's
+// full-page sheet (`DigestSheet`): the summary's three counts, the Auto-Tag
+// strip, and the Needs Review queue, with the same actions — the surface
+// renders what it is given and decides nothing, either way.
 
-import React from "react";
+import React, { useId, useMemo, useRef } from "react";
 
-import { themeItems } from "../utils/digest.js";
+import { WEEK_MS, themeItems, triageQueue } from "../utils/digest.js";
+import { useFocusTrap } from "../hooks/useFocusTrap.js";
+import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 import { Button, Card, Modal, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
+import DigestSheet from "./DigestSheet.jsx";
 
 // The triage action's leading glyph, per the mockup's auto_awesome sparkles.
 // The visible icon is aria-hidden; the button's label carries the name.
@@ -43,6 +49,12 @@ function SparkIcon() {
 }
 
 const mutedStyle = { color: "var(--ui-on-surface-variant)" };
+
+// The week the digest reports, as the mockup's "Nov 14 – Nov 21" range.
+const weekRange = (now) => {
+  const day = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+  return `${day.format(now - WEEK_MS)} – ${day.format(now)}`;
+};
 
 // One digest item, in the mockup's reading: the title is the control that
 // opens the bookmark, with the URL under it in the mono type the mockup gives
@@ -102,9 +114,57 @@ const SectionCard = ({ title, count, hint, children }) => {
   );
 };
 
-const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onClose }) => {
+const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onEdit, onClose }) => {
   const t = useMessages();
   const { added = [], neverOpened = [], untagged = [], themes = [] } = digest || {};
+  // The sets are capped for reading (MAX_ITEMS); the sheet's summary reports
+  // the week, so it wants the uncapped sizes the digest carries alongside.
+  const totals = digest?.totals ?? {
+    added: added.length,
+    neverOpened: neverOpened.length,
+    untagged: untagged.length,
+  };
+
+  // #302: below `lg` the digest is the mobile mockup's full-page sheet — same
+  // data, same actions, different chrome. The trap arms only for the sheet;
+  // the modal arms its own.
+  const isDialogViewport = useSidebarViewport();
+  const sheetRef = useRef(null);
+  useFocusTrap(sheetRef, !isDialogViewport);
+  const sheetTitleId = useId();
+  const queue = useMemo(() => triageQueue({ untagged, neverOpened }), [untagged, neverOpened]);
+
+  // The mockup's Auto-Tag strip: the digest's triage handoff — the untagged
+  // set to the organizer — wearing the AI-assist accent, as on the modal.
+  const autoTagButton = untagged.length > 0 && (
+    <Button
+      type="button"
+      intent="tertiary"
+      leadingIcon={<SparkIcon />}
+      aria-label={t("digest.autoTagAria")}
+      onClick={() => onTriage(untagged)}
+    >
+      {t("digest.autoTag")}
+    </Button>
+  );
+
+  if (!isDialogViewport) {
+    return (
+      <DigestSheet
+        sheetRef={sheetRef}
+        sheetTitleId={sheetTitleId}
+        count={totals.added}
+        untaggedCount={totals.untagged}
+        neverOpenedCount={totals.neverOpened}
+        queue={queue}
+        range={weekRange(Date.now())}
+        autoTagButton={autoTagButton}
+        onOpen={onOpen}
+        onEdit={onEdit}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <Modal
