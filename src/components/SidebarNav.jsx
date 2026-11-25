@@ -14,7 +14,12 @@
 // - the saved views (#49), stacked; and the folder tree (#55), which keeps its
 //   own selection, drop and rename behavior and gains a caption, a "Manage
 //   folders" switch for its per-row actions and no root row — the All Bookmarks
-//   view above is that row here.
+//   view above is that row here;
+// - the maintenance and options footer (#297): Check Links, Remove Duplicates,
+//   Import / Export and Options, the mockup's 267–288 rows, wired to the same
+//   handlers the header strip uses. The rail owns none of that state — the
+//   sweep's running flag and the dedupe's asking flag come down as props, the
+//   way digestBusy does, so the actions behave exactly as today.
 //
 // The rail exists from `lg` up (index.css, `.ui-sidebar`) and BookmarkApp mounts
 // it only there. Its copy is the catalogue's `sidebar` surface (#284). Below
@@ -32,9 +37,13 @@ import {
   BookmarksIcon,
   CalendarIcon,
   CloseIcon,
+  CopiesIcon,
   EyeOffIcon,
+  HealthIcon,
   HelpIcon,
   LinkOffIcon,
+  SettingsIcon,
+  SwapIcon,
   TagOffIcon,
 } from "./icons.jsx";
 
@@ -77,6 +86,16 @@ const SidebarNav = React.memo(function SidebarNav({
   onMoveFolder,
   onRenameFolder,
   onDeleteFolder,
+  // #297: the maintenance footer's handlers and the two busy flags it reads.
+  // onCheckLinks is the header strip's own toggle — start when idle, stop when
+  // running — so the row flips its label with the sweep instead of promising
+  // "check" while the press would stop it.
+  onCheckLinks,
+  checkLinksRunning = false,
+  onRemoveDuplicates,
+  duplicatesBusy = false,
+  onImportExport,
+  onOptions,
   className = "",
 }) {
   const t = useMessages();
@@ -179,6 +198,49 @@ const SidebarNav = React.memo(function SidebarNav({
           </div>
         }
       />
+
+      {/* #297: the mockup's maintenance & options footer — the rail's last
+          block, parted from the tree by a hairline (index.css). The rows reuse
+          the smart-view recipe; Remove Duplicates holds while the semantic
+          pass asks the provider, exactly as the header's button does. */}
+      <div className="ui-sidebar-footer">
+        <button type="button" className="ui-sidebar-row" onClick={onCheckLinks}>
+          <span className="ui-sidebar-row-icon">
+            <HealthIcon size={18} />
+          </span>
+          <span className="ui-sidebar-row-label">
+            {checkLinksRunning ? t("sidebar.stopCheck") : t("sidebar.checkLinks")}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="ui-sidebar-row"
+          disabled={duplicatesBusy}
+          aria-busy={duplicatesBusy || undefined}
+          onClick={onRemoveDuplicates}
+        >
+          <span className="ui-sidebar-row-icon">
+            <CopiesIcon size={18} />
+          </span>
+          <span className="ui-sidebar-row-label">{t("sidebar.removeDuplicates")}</span>
+        </button>
+        <button type="button" className="ui-sidebar-row" onClick={onImportExport}>
+          <span className="ui-sidebar-row-icon">
+            <SwapIcon size={18} />
+          </span>
+          <span className="ui-sidebar-row-label">{t("sidebar.importExport")}</span>
+        </button>
+        <button
+          type="button"
+          className="ui-sidebar-row ui-sidebar-row--options"
+          onClick={onOptions}
+        >
+          <span className="ui-sidebar-row-icon">
+            <SettingsIcon size={18} />
+          </span>
+          <span className="ui-sidebar-row-label">{t("sidebar.options")}</span>
+        </button>
+      </div>
     </aside>
   );
 });

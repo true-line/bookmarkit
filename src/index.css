@@ -1057,6 +1057,30 @@ body {
   gap: var(--ui-space-gutter-xs);
 }
 
+/* #297: the maintenance & options footer — the rail's last block, pushed to
+   the bottom and parted from the tree by a hairline, as the mockup draws it
+   (design/mockups/bookmarkit_manager/code.html 267–288). Its rows reuse the
+   smart-view recipe; Options alone rests a step above the maintenance rows'
+   variant color, and a held row keeps the pointer honest while it is busy. */
+.ui-sidebar-footer {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-xs);
+  margin-block-start: auto;
+  padding-block-start: var(--ui-space-gutter-md);
+  border-block-start: 1px solid var(--ui-outline-variant);
+  text-align: start;
+}
+
+.ui-sidebar-row--options {
+  color: var(--ui-on-surface);
+}
+
+.ui-sidebar-row:disabled {
+  cursor: default;
+}
+
 /* ─── Bookmark card (#251) ────────────────────────────────────────────────
    The card surface renders the design system's card-interactive recipe
    (components.css owns the resting card, hover raise and the selected 2px

@@ -135,8 +135,14 @@ ring), the spec text wins and the divergence is noted in comments.
 
 `SidebarNav` is the mockup's persistent navigation sidebar: a fixed rail from
 `lg` up, holding the brand and the help entry point, Add Bookmark, the smart
-views, the saved views (`SmartViewBar`, `layout="stack"`) and the folder tree
-(`FolderTree`, with no root row and its row actions behind **Manage folders**).
+views, the saved views (`SmartViewBar`, `layout="stack"`), the folder tree
+(`FolderTree`, with no root row and its row actions behind **Manage folders**)
+and, last, the maintenance footer (#297): Check Links, Remove Duplicates,
+Import / Export and Options. Its rows are the header strip's own handlers, so
+an action has one behavior at every width — the rail owns none of the state
+and reads it from props (`checkLinksRunning`, `duplicatesBusy`) the way it
+reads `digestBusy`. In the drawer the rows act in place: Options and
+Import / Export open their dialogs over the drawer, as its help entry does.
 Two boundaries are worth keeping straight:
 
 - **A smart view is a manual filter, not a route.** `applySmartView` writes one

@@ -27,6 +27,9 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
     **Never Opened**, **Untagged**, **Broken Links** — beside the saved views and
     the folder tree. Choosing a view shows the whole collection that way and
     leaves any folder; the filter strip's toggles can still combine the two
+  - A maintenance footer with **Check Links**, **Remove Duplicates**,
+    **Import / Export** and **Options** — the same actions and dialogs as the
+    header's buttons, in the rail and in the drawer alike
 - Semantic search
   - Finds “that article about vector databases” even when none of those words are
     in the bookmark, and keeps the exact matches at the top

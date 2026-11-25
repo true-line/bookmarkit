@@ -85,6 +85,7 @@ import {
   CopiesIcon,
   HealthIcon,
   SearchIcon,
+  SettingsIcon,
   SparkIcon,
   SwapIcon,
 } from "./icons.jsx";
@@ -1177,6 +1178,16 @@ const BookmarkApp = () => {
           onMoveFolder={handleRenameFolder}
           onRenameFolder={handleRenameFolder}
           onDeleteFolder={handleDeleteFolder}
+          // #297: the maintenance footer rides both mounts of the rail — the
+          // same handlers the header strip uses, so the actions behave exactly
+          // as today. In the drawer the rows operate in place, the way its
+          // help entry opens HelpModal over the drawer rather than closing it.
+          onCheckLinks={sweep.running ? sweep.stop : sweep.start}
+          checkLinksRunning={sweep.running}
+          onRemoveDuplicates={handleRemoveDuplicates}
+          duplicatesBusy={isAskingAboutDuplicates}
+          onImportExport={handleImportExportOpen}
+          onOptions={() => setIsOptionsOpen(true)}
         />
       )}
       {!isSidebarViewport && navDrawerOpen && (
@@ -1213,6 +1224,12 @@ const BookmarkApp = () => {
           onMoveFolder={handleRenameFolder}
           onRenameFolder={handleRenameFolder}
           onDeleteFolder={handleDeleteFolder}
+          onCheckLinks={sweep.running ? sweep.stop : sweep.start}
+          checkLinksRunning={sweep.running}
+          onRemoveDuplicates={handleRemoveDuplicates}
+          duplicatesBusy={isAskingAboutDuplicates}
+          onImportExport={handleImportExportOpen}
+          onOptions={() => setIsOptionsOpen(true)}
         />
       )}
 
@@ -1350,21 +1367,7 @@ const BookmarkApp = () => {
                 }}
               />
               <IconButton label={t("app.options")} onClick={() => setIsOptionsOpen(true)}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-                </svg>
+                <SettingsIcon />
               </IconButton>
             </div>
             {/* One sentence with the two key caps inside it: the template is
