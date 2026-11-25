@@ -66,6 +66,7 @@ import ViewSelector from "./ViewSelector.jsx";
 import BulkEditBar from "./BulkEditBar.jsx";
 import SelectionBar from "./SelectionBar.jsx";
 import WeeklyDigestView from "./WeeklyDigestView.jsx";
+import LinkHealthView from "./LinkHealthView.jsx";
 import { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
@@ -231,11 +232,18 @@ const BookmarkApp = () => {
   const [bookmarksToDelete, setBookmarksToDelete] = useState([]);
   // #50: the digest being read, null when none is.
   const [digest, setDigest] = useState(null);
-  // #296: ending the digest is one decision, made wherever navigation
-  // happens. The digest view is the week, not a filter over the list, so
-  // every destination — another smart view, a saved view, a folder, a
-  // search — names a list the digest is not, and the view yields to it.
-  const closeDigest = useCallback(() => setDigest(null), []);
+  // #295: the link-health workspace view — the Broken Links row's destination
+  // from `lg` up. Like the digest, it is a page and not a lens: it yields to
+  // navigation through the same choke point below.
+  const [linkHealthOpen, setLinkHealthOpen] = useState(false);
+  // #296/#295: ending a workspace view is one decision, made wherever
+  // navigation happens. Neither view is a filter over the list, so every
+  // destination — another smart view, a saved view, a folder, a search — names
+  // a page neither view is, and both yield to it.
+  const closeWorkspaceViews = useCallback(() => {
+    setDigest(null);
+    setLinkHealthOpen(false);
+  }, []);
   // #44/#102: the change set waiting to be reviewed — `{title, rows}` — and whether
   // it is being written. One at a time, whoever proposed it.
   const [review, setReview] = useState(null);
@@ -425,12 +433,12 @@ const BookmarkApp = () => {
 
   const applyView = useCallback(
     (view) => {
-      closeDigest();
+      closeWorkspaceViews();
       setLastAction(view.plan.length > 0 ? view.plan : null);
       setManualFilters(view.filters);
       setSearchQuery("");
     },
-    [closeDigest]
+    [closeWorkspaceViews]
   );
 
   const handleSaveView = useCallback(
@@ -546,13 +554,13 @@ const BookmarkApp = () => {
   const selectFolder = useCallback(
     (folder) => {
       clearSelectedBookmarks();
-      closeDigest();
+      closeWorkspaceViews();
       setManualFilters((prev) => ({ ...prev, folder }));
       // #294: the drawer covers the list it just filtered, so picking a
       // folder is also done with it.
       setIsNavDrawerOpen(false);
     },
-    [clearSelectedBookmarks, closeDigest]
+    [clearSelectedBookmarks, closeWorkspaceViews]
   );
 
   // A dragged card carries the selection it belongs to, and only itself otherwise.
@@ -655,6 +663,12 @@ const BookmarkApp = () => {
     [organizer, t]
   );
 
+  // #295: the archive's answers held for the link-health view — the same
+  // reviewable rows the dialog flow stages (utils/changeReview.js). Kept here
+  // rather than in the view so leaving the page and coming back does not ask
+  // the archive again about links already looked up this session.
+  const [recoveryRows, setRecoveryRows] = useState([]);
+
   // #102: a dead link is the one thing the sweep found and deliberately would not
   // fix. Asking the archive is a separate, asked-for step, and it proposes rather
   // than writes: the same review and the same one-undo write as a tidy-up.
@@ -663,23 +677,70 @@ const BookmarkApp = () => {
     if (rows.length > 0) setReview({ title: t("changeReview.archivedTitle"), rows });
   }, [archive, bookmarksInReach, t]);
 
-  const handleApplyReviewed = useCallback(
-    async (acceptedIds) => {
-      const patches = acceptedPatches(review?.rows, acceptedIds);
-      if (patches.length === 0) return;
+  // #295: the view's lookup — the whole collection's dead links, not the
+  // selection or the screen the header button works from. The same paced run
+  // and the same proposal-not-write shape; rows already staged are replaced,
+  // so a second look refreshes rather than duplicates.
+  const handleLinkHealthLookup = useCallback(async () => {
+    const rows = await archive.run(bookmarks);
+    if (rows.length === 0) return;
+    const fresh = new Set(rows.map((row) => row.id));
+    setRecoveryRows((prev) => [...prev.filter((row) => !fresh.has(row.id)), ...rows]);
+  }, [archive, bookmarks]);
+
+  // #295: the view's proposal map — row id to the snapshot it proposes. The
+  // view reads the dead links and their stored failure reasons off the
+  // bookmarks themselves, so a stale row (its link recovered another way)
+  // simply stops matching and disappears.
+  const proposalUrls = useMemo(
+    () => Object.fromEntries(recoveryRows.map((row) => [row.id, row.after.url])),
+    [recoveryRows]
+  );
+
+  const recoverableBroken = useMemo(() => recoverable(bookmarks), [bookmarks]);
+
+  // The reviewed rows' write: acceptedPatches onto the bulk-edit path, so a
+  // reviewed set is one store write and one undo entry however many rows it
+  // held. Answers whether it wrote, so a caller can clear what it staged.
+  const applyReviewedRows = useCallback(
+    async (rows, acceptedIds) => {
+      const patches = acceptedPatches(rows, acceptedIds);
+      if (patches.length === 0) return false;
       setIsApplyingChanges(true);
       try {
         await applyBulkEdit(patches);
-        setReview(null);
         showCustomMessage(t("app.updatedCount", { count: patches.length }), "success");
+        return true;
       } catch (e) {
         console.error("Applying reviewed changes failed:", e);
         showCustomMessage(t("app.applyFailed"), "error");
+        return false;
       } finally {
         setIsApplyingChanges(false);
       }
     },
-    [applyBulkEdit, review, t]
+    [applyBulkEdit, t]
+  );
+
+  const handleApplyReviewed = useCallback(
+    async (acceptedIds) => {
+      const applied = await applyReviewedRows(review?.rows, acceptedIds);
+      if (applied) setReview(null);
+    },
+    [applyReviewedRows, review]
+  );
+
+  // #295: the view's Apply Selected — the dialog's write, with the applied
+  // rows dropped afterwards so the staged set is honest about what remains.
+  const handleApplyLinkHealth = useCallback(
+    async (acceptedIds) => {
+      const applied = await applyReviewedRows(recoveryRows, acceptedIds);
+      if (applied) {
+        const done = new Set(acceptedIds);
+        setRecoveryRows((prev) => prev.filter((row) => !done.has(row.id)));
+      }
+    },
+    [applyReviewedRows, recoveryRows]
   );
 
   const showDigest = useCallback(async () => {
@@ -716,24 +777,35 @@ const BookmarkApp = () => {
   const applySmartView = useCallback(
     (view) => {
       if (view === "digest") {
+        setLinkHealthOpen(false);
         showDigest();
         return;
       }
-      // #296: the digest view yields to any other destination — its row
-      // would otherwise stay highlighted over a list that moved on, and a
+      // #295: from `lg` the Broken Links row opens the link-health view — the
+      // broken-links mockup's main, a page of its own rather than a lens.
+      // Below `lg` the row keeps setting the brokenOnly filter: the list with
+      // its sweep bar and the review dialog are that composition today, and
+      // their dedicated mobile reading is #303's.
+      if (view === "brokenLinks" && isSidebarViewport) {
+        closeWorkspaceViews();
+        setLinkHealthOpen(true);
+        return;
+      }
+      // #296: a workspace view yields to any other destination — its row
+      // would otherwise stay highlighted over a page that moved on, and a
       // digest of additions alone would have no exit.
-      closeDigest();
+      closeWorkspaceViews();
       setManualFilters((prev) => smartViewFilters(prev, view));
     },
-    [closeDigest, showDigest]
+    [closeWorkspaceViews, isSidebarViewport, showDigest]
   );
 
   // Which sidebar row is the one on screen. Decided beside the other saved
   // view rules in utils/smartViews.js, where it is tested: no view claims the
   // page while a folder narrows the list.
   const currentView = useMemo(
-    () => currentSmartView(manualFilters, { digestOpen: Boolean(digest) }),
-    [digest, manualFilters]
+    () => currentSmartView(manualFilters, { digestOpen: Boolean(digest), linkHealthOpen }),
+    [digest, linkHealthOpen, manualFilters]
   );
   // #294: the top bar's title is the view on screen: the smart view, or the
   // folder narrowing the list, and otherwise the whole collection.
@@ -825,6 +897,10 @@ const BookmarkApp = () => {
     isMessageModalOpen ||
     Boolean(review) ||
     Boolean(digest) ||
+    // #295: the link-health view unmounts the list like the digest does, so
+    // the shortcuts stay suspended in both compositions instead of acting on
+    // a shelf that is not there.
+    linkHealthOpen ||
     // #294: the navigation drawer. It handles its own Escape, as every dialog
     // does; this keeps the list shortcuts from firing behind it.
     navDrawerOpen ||
@@ -1025,11 +1101,11 @@ const BookmarkApp = () => {
         return;
       }
       setBookmarksToDelete([]);
-      // #296: a query names the list it wants; the digest view yields to it.
-      closeDigest();
+      // #296/#295: a query names the list it wants; a workspace view yields to it.
+      closeWorkspaceViews();
       runAgent(searchQuery);
     },
-    [closeDigest, searchQuery, runAgent]
+    [closeWorkspaceViews, searchQuery, runAgent]
   );
 
   // ─── Import handlers ─────────────────────────────────────────────────────────
@@ -1408,6 +1484,10 @@ const BookmarkApp = () => {
                 while the week is on screen; leaving is navigation, the way
                 it is between any two views. Below `lg` the digest stays the
                 sheet, and the list column stays mounted behind it. */}
+            {/* #295: the link-health view is the same kind of page — the
+                Broken Links row's destination from `lg`, where the mockup
+                puts it. Below `lg` the row keeps the filtered list, whose
+                dedicated mobile reading is #303's. */}
             {digest && isSidebarViewport ? (
               <WeeklyDigestView
                 digest={digest}
@@ -1415,6 +1495,25 @@ const BookmarkApp = () => {
                 onOpen={openBookmark}
                 onShowNeverOpened={showNeverOpened}
                 onTriage={triageUntagged}
+              />
+            ) : linkHealthOpen && isSidebarViewport ? (
+              <LinkHealthView
+                checkedTotal={sweep.checkedTotal}
+                unreachableCount={brokenCount}
+                broken={recoverableBroken}
+                proposalUrls={proposalUrls}
+                sweepRunning={sweep.running}
+                sweepChecked={sweep.checked}
+                sweepTotal={sweep.total}
+                archiveRunning={archive.running}
+                archiveDone={archive.done}
+                archiveTotal={archive.total}
+                applying={isApplyingChanges}
+                onRecheck={sweep.start}
+                onStopSweep={sweep.stop}
+                onFindSnapshots={handleLinkHealthLookup}
+                onStopArchive={archive.stop}
+                onApply={handleApplyLinkHealth}
               />
             ) : (
               <>
