@@ -332,5 +332,31 @@ describe("useBookmarkSelection (#26)", () => {
       fireEvent.keyDown(card("a"), { key: " " });
       expect(screen.getByTestId("checked")).toHaveTextContent("none");
     });
+
+    // The mode's promise covers the whole plain sequence: the first click
+    // toggled, the detail-2 click stayed out of the way, so the trailing
+    // dblclick must not open the bookmark and clear the set with it.
+    it("keeps a plain double-click from opening or clearing", () => {
+      const onOpen = vi.fn();
+      render(<Probe onOpen={onOpen} selectMode />);
+
+      fireEvent.click(card("a"));
+      fireEvent.click(card("a"), { detail: 2 });
+      fireEvent.doubleClick(card("a"));
+
+      expect(onOpen).not.toHaveBeenCalled();
+      expect(screen.getByTestId("checked")).toHaveTextContent("a");
+    });
+
+    it("still opens on the desktop's plain double-click without the mode", () => {
+      const onOpen = vi.fn();
+      render(<Probe onOpen={onOpen} />);
+
+      fireEvent.click(card("a"));
+      fireEvent.click(card("a"), { detail: 2 });
+      fireEvent.doubleClick(card("a"));
+
+      expect(onOpen).toHaveBeenCalledTimes(1);
+    });
   });
 });

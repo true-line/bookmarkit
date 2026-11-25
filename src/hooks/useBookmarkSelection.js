@@ -131,13 +131,17 @@ export function useBookmarkSelection(onOpen, onEdit, selectMode = false) {
       }
       // Multi-select stays a per-click gesture; the sequence's clicks did it.
       if (event?.metaKey || event?.ctrlKey) return;
+      // #299: in the select mode the sequence's clicks already spoke — the
+      // first toggled the set and the second was its trailing click — so a
+      // plain double-tap stays a toggle and must not open or clear.
+      if (selectMode) return;
       // Click 1 of this sequence already opened a selected bookmark. Only a
       // sequence that merely selected — click 1 on an unselected bookmark —
       // opens here, so a double-click always opens exactly one tab.
       if (openedIdRef.current === bookmark.id) return;
       open(bookmark);
     },
-    [edit, open]
+    [edit, open, selectMode]
   );
 
   const onBookmarkKeyDown = useCallback(
