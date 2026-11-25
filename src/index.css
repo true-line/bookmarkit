@@ -712,7 +712,7 @@ body {
   background: var(--ui-primary);
 }
 
-/* ─── Bookmark form sheet (#300) ────────────────────────────────────────
+/* ─── Bookmark form sheet (#300) ──────────────────────────────────────────
    Below `lg` the bookmark form leaves the centered dialog for the edit
    mockup's full-page composition: a sticky app bar (back, the title over the
    bookmark's folder, delete), the form, and a sticky footer of two
