@@ -17,20 +17,41 @@
 
 import { isPublicHttpUrl } from "./url.js";
 
-const UNREACHABLE = { status: "invalid", redirectUrl: null };
+const UNREACHABLE = { status: "invalid", redirectUrl: null, reason: null };
+
+/**
+ * #295: why an invalid answer was invalid, as the sweep stores it.
+ *
+ * Only the three shapes a check can honestly distinguish survive: the host
+ * answered with an error status ("http:404"), the probe gave up ("timeout"), or
+ * the network refused the attempt ("unreachable" — a DNS failure and a refused
+ * connection surface as the same TypeError). Anything else — an older worker's
+ * answer, a hand-crafted message — reads as "no detail", which is what the chip
+ * says.
+ *
+ * @param {unknown} reason
+ * @returns {string|null}
+ */
+export const normalizeStatusReason = (reason) => {
+  if (reason === "timeout" || reason === "unreachable") return reason;
+  if (typeof reason === "string" && /^http:\d{3}$/.test(reason)) return reason;
+  return null;
+};
 
 /**
  * @param {string} url
- * @returns {Promise<{status: "idle"|"valid"|"invalid", redirectUrl: string|null}>}
+ * @returns {Promise<{status: "idle"|"valid"|"invalid", redirectUrl: string|null, reason: string|null}>}
  */
 export function fetchUrlStatus(url) {
-  if (!url) return Promise.resolve({ status: "idle", redirectUrl: null });
+  if (!url) return Promise.resolve({ status: "idle", redirectUrl: null, reason: null });
   if (!isPublicHttpUrl(url)) return Promise.resolve({ ...UNREACHABLE });
 
   if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
     return new Promise((resolve) => {
       chrome.runtime.sendMessage({ type: "CHECK_URL", url }, (result) => {
-        resolve(result ?? { ...UNREACHABLE });
+        resolve(
+          result ? { ...result, reason: normalizeStatusReason(result.reason) } : { ...UNREACHABLE }
+        );
       });
     });
   }
@@ -39,8 +60,13 @@ export function fetchUrlStatus(url) {
     .then((res) => {
       // A redirect is "reachable, but we do not chase or expose the target" —
       // the same answer the worker gives, for the same reason.
-      if (res.type === "opaqueredirect") return { status: "valid", redirectUrl: null };
-      return { status: res.ok ? "valid" : "invalid", redirectUrl: null };
+      if (res.type === "opaqueredirect")
+        return { status: "valid", redirectUrl: null, reason: null };
+      if (res.ok) return { status: "valid", redirectUrl: null, reason: null };
+      return { status: "invalid", redirectUrl: null, reason: `http:${res.status}` };
     })
-    .catch(() => ({ ...UNREACHABLE }));
+    .catch((error) => ({
+      ...UNREACHABLE,
+      reason: error?.name === "AbortError" ? "timeout" : "unreachable",
+    }));
 }
