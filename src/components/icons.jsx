@@ -134,6 +134,18 @@ export function EditNoteIcon({ size = 18 }) {
   );
 }
 
+/** A row's per-card "Wayback" action (archive: the lidded box) in the
+    link-health view (#303). */
+export function ArchiveIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <path d="M5 8v11a1 1 0 001 1h12a1 1 0 001-1V8" />
+      <path d="M10 12h4" />
+    </svg>
+  );
+}
+
 /** The card's rating reading (mockup: one filled star beside the count). */
 export function StarIcon({ size = 14 }) {
   // Filled by design — the mockup's star reads solid (`FILL 1`), unlike the
