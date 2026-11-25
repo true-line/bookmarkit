@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, act } from "@testing-library/react";
+import { render, act, waitFor } from "@testing-library/react";
 
 import { useLinkSweep } from "./useLinkSweep.js";
 
@@ -61,7 +61,9 @@ describe("useLinkSweep (#47)", () => {
     });
 
     expect(store.updateMany).toHaveBeenCalledTimes(1);
-    expect(store.updateMany).toHaveBeenCalledWith([{ id: "dead", urlStatus: "invalid" }]);
+    expect(store.updateMany).toHaveBeenCalledWith([
+      { id: "dead", urlStatus: "invalid", urlStatusReason: null },
+    ]);
   });
 
   it("checks in batches until the collection is done", async () => {
@@ -191,7 +193,10 @@ describe("useLinkSweep (#47)", () => {
     });
 
     expect(store.update).toHaveBeenCalledTimes(2);
-    expect(store.update).toHaveBeenCalledWith("a", { urlStatus: "invalid" });
+    expect(store.update).toHaveBeenCalledWith("a", {
+      urlStatus: "invalid",
+      urlStatusReason: null,
+    });
   });
 
   it("reports a failure instead of leaving the bar spinning", async () => {
@@ -209,5 +214,27 @@ describe("useLinkSweep (#47)", () => {
 
     expect(showMessage).toHaveBeenCalledWith(expect.stringMatching(/stopped early/i), "error");
     expect(sweep.running).toBe(false);
+  });
+
+  // #295: the summary's "N checked" is the record of past checks, loaded when
+  // the hook mounts rather than when the first sweep runs.
+  it("counts the links the record says were checked", async () => {
+    localStorage.setItem(CHECKED_AT_KEY, JSON.stringify({ a: 1, b: 2 }));
+    render(<Probe bookmarks={[bookmark("a"), bookmark("b"), bookmark("c")]} />);
+
+    await waitFor(() => expect(sweep.checkedTotal).toBe(2));
+    expect(sweep.running).toBe(false);
+  });
+
+  it("grows the count as a sweep records checks", async () => {
+    answerWith(() => "valid");
+    render(<Probe bookmarks={[bookmark("a"), bookmark("b")]} />);
+    await waitFor(() => expect(sweep.checkedTotal).toBe(0));
+
+    await act(async () => {
+      await sweep.start();
+    });
+
+    expect(sweep.checkedTotal).toBe(2);
   });
 });

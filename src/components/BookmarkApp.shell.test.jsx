@@ -319,3 +319,114 @@ describe("BookmarkApp's weekly digest view (#296)", () => {
     );
   });
 });
+
+// #295: link health is a workspace view too, from the same mockup family and
+// under the same navigation rules — the Broken Links row opens it from `lg`,
+// and navigation owns leaving it. The same two paths a stuck view would
+// strand are pinned here, beside the row's below-`lg` reading, which stays
+// the brokenOnly filter until #303 re-homes it.
+describe("BookmarkApp's link health view (#295)", () => {
+  const seedFolderFixture = async () => {
+    // The composite store adopts a bar folder titled "bookmarkit" as its root,
+    // and a tree row only exists for a folder that holds something.
+    const root = await fakeStore.bookmarks.create({ parentId: "1", title: "bookmarkit" });
+    const folder = await fakeStore.bookmarks.create({ parentId: root.id, title: "Deep reads" });
+    await fakeStore.bookmarks.create({
+      parentId: folder.id,
+      title: "Fresh read",
+      url: "https://example.com/fresh",
+    });
+    return folder;
+  };
+
+  const openLinkHealthView = async () => {
+    fireEvent.click(screen.getByRole("button", { name: /Broken Links/ }));
+    return screen.findByRole("heading", { name: "Link Health & Archive Recovery" });
+  };
+
+  it("opens from the rail, and yields when another smart view is chosen", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await seedFolderFixture();
+    await renderShell();
+
+    const heading = await openLinkHealthView();
+    expect(heading).toBeInTheDocument();
+    // The rail marks broken links as the page while the list column is the view.
+    expect(screen.getByRole("button", { name: /Broken Links/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /All Bookmarks/ }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull()
+    );
+    expect(screen.getByRole("button", { name: /All Bookmarks/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("yields when a folder is chosen from the rail's tree", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    const folder = await seedFolderFixture();
+    await renderShell();
+
+    await openLinkHealthView();
+
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(folder.title) }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull()
+    );
+  });
+
+  it("hands the filtered list back when the window shrinks below `lg`", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await seedFolderFixture();
+    await renderShell();
+
+    await openLinkHealthView();
+
+    act(() => viewport.resizeTo(false));
+
+    // The view has no composition below `lg` (#303 owns one), so shrinking
+    // gives way to the list wearing the brokenOnly filter — what pressing the
+    // row down here does — rather than an unfiltered list behind a rail that
+    // still claims the view with the shortcuts suspended.
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull()
+    );
+    const drawer = await openDrawer();
+    expect(within(drawer).getByRole("button", { name: /Broken Links/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("stays a filter below `lg`, where the list is still the broken view", async () => {
+    installViewport();
+    await seedFolderFixture();
+    await renderShell();
+
+    const drawer = await openDrawer();
+    fireEvent.click(within(drawer).getByRole("button", { name: /Broken Links/ }));
+
+    // Picking a destination is the end of the trip: the drawer closes on it,
+    // and no page opens — the list column, its sweep bar and the review
+    // dialog are that composition today (#303 re-homes it).
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "BookmarkIt navigation" })).toBeNull()
+    );
+    expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull();
+
+    // The filter claims the row: reopening the drawer marks it as the screen.
+    const reopened = await openDrawer();
+    expect(within(reopened).getByRole("button", { name: /Broken Links/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+});

@@ -9,6 +9,7 @@ import {
   nextSweepBatch,
   readCheckedAt,
   recordChecked,
+  statusReasonLabel,
   sweepPatch,
 } from "./linkHealth.js";
 
@@ -92,11 +93,44 @@ describe("sweepPatch", () => {
     expect(sweepPatch(bookmark("a"), { status: "invalid" })).toEqual({
       id: "a",
       urlStatus: BROKEN,
+      urlStatusReason: null,
     });
     expect(sweepPatch(bookmark("a", { urlStatus: BROKEN }), { status: "valid" })).toEqual({
       id: "a",
       urlStatus: "valid",
+      urlStatusReason: null,
     });
+  });
+
+  // #295: the check's failure detail rides with the verdict, and a failure
+  // that fails differently than last time is a change worth writing even
+  // though the verdict did not move.
+  it("keeps what the check learned about a failure", () => {
+    expect(
+      sweepPatch(bookmark("a", { urlStatus: BROKEN }), { status: "invalid", reason: "http:404" })
+    ).toEqual({ id: "a", urlStatus: BROKEN, urlStatusReason: "http:404" });
+
+    // A pass clears the detail; a different failure replaces it.
+    expect(
+      sweepPatch(bookmark("a", { urlStatus: BROKEN, urlStatusReason: "http:404" }), {
+        status: "invalid",
+      })
+    ).toEqual({ id: "a", urlStatus: BROKEN, urlStatusReason: null });
+
+    expect(
+      sweepPatch(bookmark("a", { urlStatus: BROKEN, urlStatusReason: "http:404" }), {
+        status: "invalid",
+        reason: "timeout",
+      })
+    ).toEqual({ id: "a", urlStatus: BROKEN, urlStatusReason: "timeout" });
+
+    // Same verdict, same detail: nothing to write.
+    expect(
+      sweepPatch(bookmark("a", { urlStatus: BROKEN, urlStatusReason: "timeout" }), {
+        status: "invalid",
+        reason: "timeout",
+      })
+    ).toBeNull();
   });
 
   // #10: a redirect target from a privileged fetch is not something to trust,
@@ -107,12 +141,20 @@ describe("sweepPatch", () => {
       redirectUrl: "http://169.254.169.254/latest/meta-data",
     });
 
-    expect(patch).toEqual({ id: "a", urlStatus: "valid" });
+    expect(patch).toEqual({ id: "a", urlStatus: "valid", urlStatusReason: null });
   });
 
   it("treats anything that is not a clean pass as broken", () => {
-    expect(sweepPatch(bookmark("a"), {})).toEqual({ id: "a", urlStatus: BROKEN });
-    expect(sweepPatch(bookmark("a"), { status: "idle" })).toEqual({ id: "a", urlStatus: BROKEN });
+    expect(sweepPatch(bookmark("a"), {})).toEqual({
+      id: "a",
+      urlStatus: BROKEN,
+      urlStatusReason: null,
+    });
+    expect(sweepPatch(bookmark("a"), { status: "idle" })).toEqual({
+      id: "a",
+      urlStatus: BROKEN,
+      urlStatusReason: null,
+    });
   });
 });
 
@@ -134,5 +176,30 @@ describe("the record of past checks", () => {
     const before = { gone: 1, kept: 1 };
 
     expect(recordChecked(before, ["kept"], 2, new Set(["kept"]))).toEqual({ kept: 2 });
+  });
+});
+
+describe("statusReasonLabel (#295)", () => {
+  const t = (key, params) => {
+    const catalogue = {
+      "linkHealth.reasonHttp": `HTTP ${params?.code}`,
+      "linkHealth.reasonDns": "DNS Unreachable",
+      "linkHealth.reasonTimeout": "Timeout",
+      "linkHealth.reasonGeneric": "Unreachable",
+    };
+    return catalogue[key];
+  };
+
+  it("names the three shapes a check distinguishes", () => {
+    expect(statusReasonLabel("http:404", t)).toBe("HTTP 404");
+    expect(statusReasonLabel("http:503", t)).toBe("HTTP 503");
+    expect(statusReasonLabel("unreachable", t)).toBe("DNS Unreachable");
+    expect(statusReasonLabel("timeout", t)).toBe("Timeout");
+  });
+
+  it("still has words for a failure no detail survived for", () => {
+    expect(statusReasonLabel(null, t)).toBe("Unreachable");
+    expect(statusReasonLabel(undefined, t)).toBe("Unreachable");
+    expect(statusReasonLabel("junk", t)).toBe("Unreachable");
   });
 });

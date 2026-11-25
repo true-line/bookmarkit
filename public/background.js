@@ -138,7 +138,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // URL validation — runs in the service worker context which bypasses CORS restrictions.
-// Returns { status: 'valid'|'invalid', redirectUrl: string|null }
+// Returns { status: 'valid'|'invalid', redirectUrl: string|null, reason: string|null }
+// `reason` (#295) says why an invalid answer was invalid — "http:404" when the
+// host answered with an error status, "timeout" when the probe gave up,
+// "unreachable" when the network refused the attempt. A DNS failure and a refused
+// connection surface as the same TypeError, so they share the one honest name.
+// The boundary itself is untouched: still public http(s) only, still redirect: "manual".
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type !== "CHECK_URL") return false;
   // #10: only accept requests from our own extension pages (not other extensions
@@ -146,7 +151,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;
   const url = message.url;
   if (!isPublicHttpUrl(url)) {
-    sendResponse({ status: "invalid", redirectUrl: null });
+    sendResponse({ status: "invalid", redirectUrl: null, reason: null });
     return false;
   }
   // #10 (Codex): do NOT let fetch follow redirects from the privileged worker —
@@ -157,12 +162,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   fetch(url, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(5000) })
     .then((res) => {
       if (res.type === "opaqueredirect") {
-        sendResponse({ status: "valid", redirectUrl: null });
+        sendResponse({ status: "valid", redirectUrl: null, reason: null });
         return;
       }
-      sendResponse({ status: res.ok ? "valid" : "invalid", redirectUrl: null });
+      sendResponse({
+        status: res.ok ? "valid" : "invalid",
+        redirectUrl: null,
+        reason: res.ok ? null : `http:${res.status}`,
+      });
     })
-    .catch(() => sendResponse({ status: "invalid", redirectUrl: null }));
+    .catch((error) =>
+      sendResponse({
+        status: "invalid",
+        redirectUrl: null,
+        // AbortSignal.timeout() rejects with TimeoutError; some engines
+        // surfaced the same expiry as AbortError. Either name means the probe
+        // gave up — anything else is the network refusing the attempt.
+        reason:
+          error?.name === "TimeoutError" || error?.name === "AbortError"
+            ? "timeout"
+            : "unreachable",
+      })
+    );
   return true; // keep message channel open for async response
 });
 

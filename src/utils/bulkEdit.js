@@ -16,12 +16,22 @@ import { normalizeTag } from "./bookmarkFilters.js";
  * to put back. Deliberately not title.
  *
  * The bar offers only the first three. `description` is here because the organizer
- * (#44) proposes them one at a time through this path, and `url`, `urlStatus` and
- * the legacy `unreachable` flag because archive recovery (#102) re-points a dead
- * link through it — an undo that restored the address but left the bookmark no
- * longer counted as broken would be worse than no undo at all.
+ * (#44) proposes them one at a time through this path, and `url`, `urlStatus`,
+ * `urlStatusReason` and the legacy `unreachable` flag because archive recovery
+ * (#102) re-points a dead link through it — an undo that restored the address but
+ * left the bookmark no longer counted as broken, or no longer saying why it broke
+ * (#295), would be worse than no undo at all.
  */
-const FIELDS = ["tags", "folderId", "rating", "description", "url", "urlStatus", "unreachable"];
+const FIELDS = [
+  "tags",
+  "folderId",
+  "rating",
+  "description",
+  "url",
+  "urlStatus",
+  "urlStatusReason",
+  "unreachable",
+];
 
 /** What "absent" looks like per field, for restoring one. */
 const EMPTY = Object.freeze({
@@ -31,6 +41,7 @@ const EMPTY = Object.freeze({
   description: "",
   url: "",
   urlStatus: "idle",
+  urlStatusReason: null,
   unreachable: false,
 });
 

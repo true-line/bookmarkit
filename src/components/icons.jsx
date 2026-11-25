@@ -229,6 +229,39 @@ export function LinkOffIcon({ size = 18 }) {
   );
 }
 
+/** Re-check Links (refresh — a circular arrow) in the link-health view (#295). */
+export function RefreshIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M21 12a9 9 0 11-2.64-6.36" />
+      <path d="M21 3v6h-6" />
+    </svg>
+  );
+}
+
+/** DNS Unreachable chip (dns — two stacked hosts) in the link-health view (#295). */
+export function DnsIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3" y="4" width="18" height="6" rx="2" />
+      <rect x="3" y="14" width="18" height="6" rx="2" />
+      <line x1="7" y1="7" x2="7" y2="7.01" />
+      <line x1="7" y1="17" x2="7" y2="17.01" />
+    </svg>
+  );
+}
+
+/** Timeout chip (timer — a dial and its button) in the link-health view (#295). */
+export function TimerIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <circle cx="12" cy="13" r="8" />
+      <line x1="12" y1="13" x2="12" y2="9" />
+      <line x1="10" y1="2" x2="14" y2="2" />
+    </svg>
+  );
+}
+
 /** "Open navigation menu" (button-icon leading icon — menu). */
 export function MenuIcon({ size = 22 }) {
   return (

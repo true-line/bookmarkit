@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 
 import { Button, Card, Modal, Tag, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
+import { statusReasonLabel } from "../utils/linkHealth.js";
 
 // The diff a proposed change is reviewed through, on the unified design
 // system (#249). The dialog's mockup family — the duplicate-review and
@@ -31,6 +32,7 @@ const FIELD_LABEL_KEYS = {
   description: "changeReview.fieldDescription",
   url: "changeReview.fieldAddress",
   urlStatus: "changeReview.fieldLinkCheck",
+  urlStatusReason: "changeReview.fieldStatusReason",
   unreachable: "changeReview.fieldOldBrokenFlag",
 };
 
@@ -98,6 +100,15 @@ const FieldDiff = ({ field, before, after }) => {
       />
     );
   }
+  if (field === "urlStatusReason")
+    // #295: the failure the last check explained, going away with the verdict
+    // it belongs to. The same words the link-health view's chip uses.
+    return (
+      <Replaced
+        from={statusReasonLabel(before.urlStatusReason, t)}
+        to={t("changeReview.clearedFlag")}
+      />
+    );
   return <span style={{ color: "var(--ui-on-surface)" }}>{after.description}</span>;
 };
 

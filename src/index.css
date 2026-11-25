@@ -1362,6 +1362,80 @@ body {
   height: 20px;
 }
 
+/* #295: the link-health workspace view — the broken-links mockup's main
+   (283–354) beside the sidebar. Its proposal rows are the mockup's card with
+   the checkbox-and-title line and the status chip on the end, over the two
+   boxes: the dead address struck through in the mono type, the proposed
+   snapshot beside it with the success edge the mockup gives it. The mockup's
+   rounded-md radius loses to the spec per the recorded divergence (DESIGN.md),
+   as it did on the digest's cards. */
+.ui-health-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-sm);
+  padding: var(--ui-space-gutter-md);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-lowest);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.ui-health-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ui-space-gutter-sm);
+}
+
+@media (min-width: 768px) {
+  .ui-health-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ui-health-box {
+  padding: var(--ui-space-gutter-sm) 10px;
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-container);
+  min-width: 0;
+}
+
+.ui-health-box--proposal {
+  background: var(--ui-surface-container-low);
+  border-color: var(--ui-success);
+}
+
+/* The proposal's label reads in the success tone the mockup colors the box
+   with; the chip's text keeps the label reading so status never rides on
+   color alone. */
+.ui-health-box-label {
+  color: var(--ui-success);
+}
+
+.ui-health-url {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ui-on-surface);
+}
+
+.ui-health-url--dead {
+  text-decoration: line-through;
+  color: var(--ui-on-surface-variant);
+}
+
+/* The failure chip: the mockup's error-container tonal reading, carrying its
+   icon and its words with it. */
+.ui-health-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--ui-error-container);
+  color: var(--ui-on-error-container);
+  flex: none;
+}
+
 /* ─── Empty shelf (#254) ──────────────────────────────────────────────────
    The manager mockup's empty-shelf centerpiece: a centered column — the
    card-stack mark, the copy block, the actions — on headline/body type with

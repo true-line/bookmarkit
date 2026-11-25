@@ -26,7 +26,9 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Smart views with a count on each — **All Bookmarks**, **Weekly Digest**,
     **Never Opened**, **Untagged**, **Broken Links** — beside the saved views and
     the folder tree. Choosing a view shows the whole collection that way and
-    leaves any folder; the filter strip's toggles can still combine the two
+    leaves any folder; the filter strip's toggles can still combine the two.
+    **Broken Links** is a page of its own on wide windows: the Link Health &
+    Archive Recovery view (below)
   - A maintenance footer with **Check Links**, **Remove Duplicates**,
     **Import / Export** and **Options** — the same actions and dialogs as the
     header's buttons, in the rail and in the drawer alike
@@ -565,6 +567,32 @@ until you accept it, one row at a time or all at once.
   remote server's claim like any other.
 - Accepting is one undo, however many links were re-pointed, and each recovered
   bookmark is marked for re-checking rather than assumed good.
+
+### The Link Health & Archive Recovery view
+
+On wide windows (`lg` and up), **Broken Links** in the sidebar opens link health
+as a full workspace view beside the navigation rail, the way Weekly Digest does:
+
+- The header carries the sweep's summary — how many links have been checked and
+  how many are unreachable — with **Re-check Links**, and **Apply Selected (n)**
+  once there are proposals to review.
+- Each unreachable link is a row: its failure named in words on a chip —
+  "HTTP 404", "DNS Unreachable", "Timeout", what the check actually learned —
+  the dead address struck through, and the archive's proposed snapshot beside
+  it. A link the archive could not help keeps its row with "No archived copy
+  found" and a checkbox there is nothing to apply.
+- The proposals are the same review as the dialog: every snapshot starts
+  selected, untick the ones you disagree with, and nothing is written until
+  **Apply Selected** — one undo, however many links were re-pointed.
+- **Find Archive Snapshots** is the view's own way to ask the archive, about
+  the whole collection's dead links rather than a selection. It contacts
+  `archive.org` only when you press it, paced and capped like the header
+  button's run.
+- Leaving is navigation, as between any two views: another smart view, a
+  folder, or a search. Proposals you have looked up stay staged while the app
+  is open, so coming back does not re-ask the archive.
+- On narrow windows the row keeps the **Broken only** filter over the list,
+  with the review dialog as the recovery path.
 
 ## The weekly digest
 

@@ -194,14 +194,22 @@ export function matchingViewId(views, plan, filters) {
  * ("all"). A folder changes the answer: the folder is where the reader stands,
  * so no view claims the page while one narrows the list, even with a flag set
  * (the filter strip's toggles still combine the two). Two flags at once is no
- * single view either. The digest claims its row while it is open.
+ * single view either. The digest claims its row while it is open, and so does
+ * the link-health view (#295) — the workspace composition of the broken view.
  *
  * @param {object} filters The manual filters.
- * @param {{digestOpen?: boolean}} [options]
+ * @param {{digestOpen?: boolean, linkHealthOpen?: boolean}} [options]
  * @returns {"all"|"digest"|"neverOpened"|"untagged"|"brokenLinks"|null}
  */
-export function currentSmartView(filters, { digestOpen = false } = {}) {
+export function currentSmartView(filters, { digestOpen = false, linkHealthOpen = false } = {}) {
+  // A workspace view is the page while it shows, ahead of any filter reading.
   if (digestOpen) return "digest";
+  if (linkHealthOpen) return "brokenLinks";
+  return filterSmartView(filters);
+}
+
+/** The view the filter reading alone names, without a workspace open. */
+function filterSmartView(filters) {
   if (filters?.folder) return null;
   const views = [
     filters?.neverOpened && "neverOpened",

@@ -345,9 +345,12 @@ Two decisions in the sweep are load-bearing:
   Checking every link contacts every host in the collection — the same privacy
   question site icons answered with an opt-in — and a redirect target is the
   remote server's claim, which is precisely what `redirect: "manual"` exists to
-  refuse. The sweep writes `urlStatus` and nothing else; what to do about a dead
-  link is left to the user, through the ordinary edit, bulk-edit and delete
-  paths.
+  refuse. The sweep writes `urlStatus` plus the one field of detail a check
+  honestly learns, `urlStatusReason` — `http:404`, `timeout`, or `unreachable`
+  (#295; a refused connection and a dead DNS name are indistinguishable to the
+  fetch, so they share the one name) — and nothing else; what to do about a
+  dead link is left to the user, through the ordinary edit, bulk-edit and
+  delete paths.
 
 Its writes deliberately skip the undo recorder: a sweep reports what the web
 already did, and an undo would mean writing back a status known to be wrong.
@@ -372,25 +375,23 @@ the organizer's: two features now propose rather than write, and both are only
 tolerable because disagreeing with them is cheap. The modal renders rows and owns
 which are accepted; it knows nothing about where they came from.
 
-Recovery (#102) is the sweep's deliberate omission, added back as its own step.
-`utils/archiveRecovery.js` asks one hard-coded host — the archive's availability
-API — with the bookmark's URL only ever as a query parameter, so nothing here
-fetches a bookmark and there is no redirect to refuse. The two guards that matter
-are on either end: a URL is asked about only if it passes the same public-http(s)
-gate the checks use, and the address that comes back is validated as a public https
-URL on the archive's own host before it can reach a bookmark. It is a remote
-server's claim, which is what `redirect: "manual"` exists to distrust.
-
-Recovery proposes; it never writes. A snapshot becomes a reviewable change
-(`utils/changeReview.js`) carrying the new address and the stale verdict about the
-old one, and the user's acceptance goes through `applyBulkEdit` — so re-pointing
-thirty links is one undo, and `bulkEdit`'s field list had to grow to include `url`
-so that undo can put the original address back.
-
-That shared row shape is why the review modal is `ChangeReviewModal` rather than
-the organizer's: two features now propose rather than write, and both are only
-tolerable because disagreeing with them is cheap. The modal renders rows and owns
-which are accepted; it knows nothing about where they came from.
+From `lg` up the review has a page of its own (#295): the sidebar's Broken Links
+row opens the broken-links mockup's main (`LinkHealthView`) instead of narrowing
+the list — the sweep's summary ("N checked · M unreachable", the checked figure
+read from the record of past checks), "Re-check Links", and the archive's
+proposals as rows with the stored failure chip — text and icon, never color
+alone — over the dead address and the proposed snapshot. The review contract is
+the dialog's: every snapshot starts accepted, unticking is the disagreement, and
+"Apply Selected" lands on the same one-undo bulk-edit write. The lookup stays an
+asked-for step — the view offers "Find Archive Snapshots" and contacts the
+archive only then, about the collection's dead links, with the same paced run
+the header's button uses. Staged rows survive leaving the page and coming back,
+so a second look does not re-ask the archive about links already looked up; a
+row whose link recovered some other way stops matching and disappears. Below
+`lg` the row keeps the brokenOnly filter — the list with its sweep bar and the
+review dialog are that composition today, and their dedicated mobile reading is
+#303's. Both workspace views yield to navigation through one choke point
+(`closeWorkspaceViews`), the way the digest has since its review fix.
 
 ## The week
 

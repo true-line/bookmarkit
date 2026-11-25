@@ -1,6 +1,6 @@
 // English messages for the dialog and popup surfaces of the second migration
-// wave (#284): the bookmark form, help, weekly digest, import/export, options,
-// key encryption and the quick-add popup. Merged into the catalogue by en.js.
+// wave (#284): the bookmark form, help, weekly digest, link health, import/export,
+// options, key encryption and the quick-add popup. Merged into the catalogue by en.js.
 
 export const surfaceMessages = {
   // BookmarkForm
@@ -136,6 +136,30 @@ export const surfaceMessages = {
     triage: "Triage untagged",
     untaggedHint: "Filed in a hurry. The organizer can suggest tags for these.",
     untaggedTitle: "Untagged",
+  },
+
+  // LinkHealthView (#295) — the broken-links mockup's workspace view from `lg`.
+  // The reason labels are shared with ChangeReviewModal's diff, through
+  // statusReasonLabel (utils/linkHealth.js).
+  linkHealth: {
+    applySelected: "Apply Selected ({count})",
+    findSnapshots: "Find Archive Snapshots",
+    findingSnapshots: "Asking the archive… {done} of {total}",
+    noBroken: "Nothing unreachable — every link the sweep could reach answered.",
+    noSnapshot: "No archived copy found",
+    originalLabel: "Original URL",
+    proposalNote: "Recovery proposes snapshot URLs without overwriting automatically.",
+    reasonDns: "DNS Unreachable",
+    reasonGeneric: "Unreachable",
+    reasonHttp: "HTTP {code}",
+    reasonTimeout: "Timeout",
+    recheck: "Re-check Links",
+    rowsLabel: "Recovery proposals",
+    snapshotLabel: "Proposed Archive Snapshot",
+    // Digit-led, so the counts ride the sentence with unicodeBidi: plaintext —
+    // plaintext lets each phrase's own content set its direction in RTL locales.
+    summary: "{checked} checked · {unreachable} unreachable",
+    title: "Link Health & Archive Recovery",
   },
 
   // ImportExportContent and ImportPanel

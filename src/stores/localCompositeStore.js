@@ -3,6 +3,7 @@
 // in localStorage keyed by bookmark id. This allows non-destructive metadata alongside native Chrome bookmarks.
 
 import { createChromeBookmarksStore } from "./chromeBookmarksStore.js";
+import { normalizeStatusReason } from "../utils/urlStatus.js";
 
 const META_KEY_PREFIX = "bm_meta:"; // localStorage key prefix
 
@@ -65,6 +66,9 @@ function mergeNodeWithMeta(node, meta) {
     rating: m.rating ?? node.rating ?? 0,
     faviconUrl: m.faviconUrl ?? node.faviconUrl ?? "",
     urlStatus: m.urlStatus ?? node.urlStatus ?? "valid",
+    // #295: why the last check failed — "http:404", "timeout", "unreachable" —
+    // or absent when the verdict is valid, stale, or was never explained.
+    urlStatusReason: m.urlStatusReason ?? null,
     // #50: written by opening a bookmark, not by editing one. Absent means never.
     lastOpenedAt: m.lastOpenedAt ?? node.lastOpenedAt ?? "",
     createdAt: m.createdAt ?? node.createdAt ?? "",
@@ -96,6 +100,12 @@ async function writePatch(chromeStore, id, patch) {
     rating: patch.rating ?? meta.rating ?? 0,
     faviconUrl: patch.faviconUrl ?? meta.faviconUrl ?? "",
     urlStatus: patch.urlStatus ?? meta.urlStatus ?? "valid",
+    // #295: unlike the fields above, this one is cleared as well as set — a
+    // recovery or a passing re-check writes an explicit null, and `??` would
+    // read that as "keep the old failure". Absent means "not part of this patch".
+    urlStatusReason: Object.prototype.hasOwnProperty.call(patch, "urlStatusReason")
+      ? normalizeStatusReason(patch.urlStatusReason)
+      : (meta.urlStatusReason ?? null),
     lastOpenedAt: patch.lastOpenedAt ?? meta.lastOpenedAt ?? "",
     folderId: patch.folderId ?? meta.folderId ?? "",
     createdAt: meta.createdAt ?? "",
