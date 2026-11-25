@@ -574,6 +574,10 @@ things.
   can work through them with sorting, bulk editing and the rest.
 - **Untagged** — filed in a hurry. **Triage the untagged** hands exactly those to
   the organizer for tag suggestions, with the same diff to review.
+- On narrow windows the digest is a full-page sheet: the three counts as a
+  summary, and a **Needs Review** queue of the untagged and never-opened with
+  **Open** and **Tag & File** on every card — the edit form and the organizer
+  doing the writing, as everywhere else.
 
 Opening a bookmark from anywhere in the app records when — this is the only thing
 BookmarkIt observes about a bookmark rather than being told, it stays on your

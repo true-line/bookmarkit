@@ -396,6 +396,13 @@ Two smaller decisions follow from that split:
   manual filter — so it composes with sort, folder and bulk editing, and a saved
   view can hold it — and "Triage the untagged" is the organizer (#44) pointed at
   that set with `fields: ["tags"]`, reviewed through the same diff.
+- Below `lg` the digest is the weekly-digest mockup's full-page sheet (#302,
+  `DigestSheet`, the shared sheet chrome): the three counts as the summary's
+  tiles, the untagged set behind the Auto-Tag strip — the same triage handoff
+  to the same organizer — and a "Needs Review" queue (`triageQueue`) that
+  reads the never-opened and untagged sets as one deduplicated list of cards,
+  newest save first, each with Open and a "Tag & File" that closes the sheet
+  and opens the ordinary edit form. No new write path anywhere.
 
 `findNeverOpened` is also an agent action, for the same reason `findBrokenLinks`
 is: it reads a field the app wrote itself, so it needs no model and no network.
