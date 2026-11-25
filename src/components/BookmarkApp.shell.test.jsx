@@ -382,6 +382,30 @@ describe("BookmarkApp's link health view (#295)", () => {
     );
   });
 
+  it("hands the filtered list back when the window shrinks below `lg`", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await seedFolderFixture();
+    await renderShell();
+
+    await openLinkHealthView();
+
+    act(() => viewport.resizeTo(false));
+
+    // The view has no composition below `lg` (#303 owns one), so shrinking
+    // gives way to the list wearing the brokenOnly filter — what pressing the
+    // row down here does — rather than an unfiltered list behind a rail that
+    // still claims the view with the shortcuts suspended.
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull()
+    );
+    const drawer = await openDrawer();
+    expect(within(drawer).getByRole("button", { name: /Broken Links/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
   it("stays a filter below `lg`, where the list is still the broken view", async () => {
     installViewport();
     await seedFolderFixture();

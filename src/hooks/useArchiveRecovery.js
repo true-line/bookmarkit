@@ -29,8 +29,11 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * @param {object} [params]
  * @param {(message: string, type?: string) => void} [params.showMessage]
  * @param {{gapMs?: number, limit?: number}} [params.pacing] Overridable, for tests.
- * @returns {{running: boolean, done: number, total: number, run: (list: object[]) => Promise<object[]>, stop: Function}}
- *   `run` answers with reviewable rows, one per link an archived copy was found for.
+ * @returns {{running: boolean, done: number, total: number, run: (list: object[]) => Promise<{rows: object[], asked: string[]}>, stop: Function}}
+ *   `run` answers with the reviewable rows it found — one per link an archived
+ *   copy exists for — and the ids it actually put a question about, hits and
+ *   misses (#295: a caller tracking attempts needs to know which misses were
+ *   really asked; a run cut short by `stop` answers with only the ones reached).
  */
 export function useArchiveRecovery({ showMessage, pacing } = {}) {
   const [progress, setProgress] = useState(IDLE);
@@ -51,33 +54,38 @@ export function useArchiveRecovery({ showMessage, pacing } = {}) {
   }, []);
 
   const run = useCallback(async (list = []) => {
-    if (runningRef.current) return [];
+    const answered = { rows: [], asked: [] };
+    if (runningRef.current) return answered;
     const { showMessage, pacing } = latest.current;
     const dead = recoverable(list).slice(0, pacing.limit);
     if (dead.length === 0) {
       showMessage?.(getMessages()("archiveRecovery.noDeadLinks"), "info");
-      return [];
+      return answered;
     }
 
     runningRef.current = true;
     setProgress({ running: true, done: 0, total: dead.length });
-    const rows = [];
     try {
       for (const bookmark of dead) {
         if (!runningRef.current) break;
         const row = archiveRow(bookmark, await findSnapshot(bookmark.url));
-        if (row) rows.push(row);
+        // Asked whether or not a copy came back: a miss is an answer too, and
+        // the caller recording attempts has to know it was really made.
+        answered.asked.push(bookmark.id);
+        if (row) answered.rows.push(row);
         setProgress((prev) => ({ ...prev, done: prev.done + 1 }));
         if (pacing.gapMs) await sleep(pacing.gapMs);
       }
       // A lookup that finds nothing is the common case for a link that died young,
       // so it is reported as an outcome rather than as a failure.
-      if (rows.length === 0) showMessage?.(getMessages()("archiveRecovery.noneFound"), "info");
-      return rows;
+      if (answered.rows.length === 0) {
+        showMessage?.(getMessages()("archiveRecovery.noneFound"), "info");
+      }
+      return answered;
     } catch (error) {
       console.error("Archive lookup failed:", error);
       showMessage?.(getMessages()("archiveRecovery.stoppedEarly"), "error");
-      return rows;
+      return answered;
     } finally {
       runningRef.current = false;
       setProgress(IDLE);

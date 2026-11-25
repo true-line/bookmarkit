@@ -172,6 +172,10 @@ const LinkHealthView = ({
   unreachableCount,
   broken = [],
   proposalUrls = {},
+  // Whether a lookup is still owed, decided by the app: it knows which links
+  // this session has already asked the archive about, misses included — a
+  // dead link without a snapshot is not by itself a link worth re-asking.
+  needsLookup = false,
   sweepRunning = false,
   sweepChecked = 0,
   sweepTotal = 0,
@@ -208,8 +212,6 @@ const LinkHealthView = ({
     () => proposals.filter((b) => !rejected.has(b.id)),
     [proposals, rejected]
   );
-  // A lookup is owed while any dead link has no snapshot to show yet.
-  const needsLookup = !archiveRunning && broken.length > proposals.length;
   const toggle = (id) =>
     setRejected((current) => {
       const next = new Set(current);

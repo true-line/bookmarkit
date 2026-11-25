@@ -28,7 +28,7 @@ describe("useArchiveRecovery", () => {
 
     let rows;
     await act(async () => {
-      rows = await result.current.run([dead("a"), dead("b")]);
+      ({ rows } = await result.current.run([dead("a"), dead("b")]));
     });
 
     expect(rows).toHaveLength(1);
@@ -36,16 +36,39 @@ describe("useArchiveRecovery", () => {
     expect(result.current.running).toBe(false);
   });
 
+  // #295 (codex): a miss is an answer too. A caller that re-asks on the next
+  // press needs to know which dead links a run really put a question about —
+  // the archive was contacted about them once this session either way.
+  it("answers with the ids it asked about, misses included", async () => {
+    findSnapshot.mockImplementation((url) =>
+      Promise.resolve(url.includes("a") ? snapshotFor("a") : null)
+    );
+    const { result } = renderHook(() => useArchiveRecovery({ pacing: noPacing }));
+
+    let rows;
+    let asked;
+    await act(async () => {
+      ({ rows, asked } = await result.current.run([dead("a"), dead("b"), dead("c")]));
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(asked).toEqual(["a", "b", "c"]);
+  });
+
   it("asks about nothing that is not a dead link", async () => {
     const showMessage = vi.fn();
     const { result } = renderHook(() => useArchiveRecovery({ showMessage, pacing: noPacing }));
 
     let rows;
+    let asked;
     await act(async () => {
-      rows = await result.current.run([{ id: "x", url: "https://fine.test", urlStatus: "valid" }]);
+      ({ rows, asked } = await result.current.run([
+        { id: "x", url: "https://fine.test", urlStatus: "valid" },
+      ]));
     });
 
     expect(rows).toEqual([]);
+    expect(asked).toEqual([]);
     expect(findSnapshot).not.toHaveBeenCalled();
     expect(showMessage).toHaveBeenCalledWith(expect.stringContaining("No dead links"), "info");
   });
@@ -82,13 +105,37 @@ describe("useArchiveRecovery", () => {
     const { result } = renderHook(() => useArchiveRecovery({ showMessage, pacing: noPacing }));
 
     let rows;
+    let asked;
     await act(async () => {
-      rows = await result.current.run([dead("a"), dead("b")]);
+      ({ rows, asked } = await result.current.run([dead("a"), dead("b")]));
     });
 
     expect(rows).toHaveLength(1);
+    expect(asked).toEqual(["a"]);
     expect(showMessage).toHaveBeenCalledWith(expect.stringContaining("stopped early"), "error");
     error.mockRestore();
+  });
+
+  // #295 (codex): a run the user stops has only reached the links it asked
+  // about — the tail must stay owed, not be recorded as answered misses.
+  it("answers a stopped run with only the ids it reached", async () => {
+    const { result } = renderHook(() => useArchiveRecovery({ pacing: noPacing }));
+    findSnapshot.mockImplementation(async (url) => {
+      if (url.includes("a")) {
+        act(() => result.current.stop());
+        return snapshotFor("a");
+      }
+      return null;
+    });
+
+    let rows;
+    let asked;
+    await act(async () => {
+      ({ rows, asked } = await result.current.run([dead("a"), dead("b"), dead("c")]));
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(asked).toEqual(["a"]);
   });
 
   it("refuses to run twice at once", async () => {
@@ -100,8 +147,10 @@ describe("useArchiveRecovery", () => {
         result.current.run([dead("a")]),
         result.current.run([dead("b")]),
       ]);
-      expect(second).toEqual([]);
-      expect(first).toEqual([]);
+      // The refused run answers with nothing asked; the one that ran still
+      // reports the miss it really put a question about.
+      expect(second).toEqual({ rows: [], asked: [] });
+      expect(first).toEqual({ rows: [], asked: ["a"] });
     });
 
     expect(findSnapshot).toHaveBeenCalledTimes(1);

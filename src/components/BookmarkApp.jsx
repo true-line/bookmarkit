@@ -673,20 +673,46 @@ const BookmarkApp = () => {
   // fix. Asking the archive is a separate, asked-for step, and it proposes rather
   // than writes: the same review and the same one-undo write as a tidy-up.
   const handleRecoverDeadLinks = useCallback(async () => {
-    const rows = await archive.run(bookmarksInReach);
+    const { rows } = await archive.run(bookmarksInReach);
     if (rows.length > 0) setReview({ title: t("changeReview.archivedTitle"), rows });
   }, [archive, bookmarksInReach, t]);
+
+  const recoverableBroken = useMemo(() => recoverable(bookmarks), [bookmarks]);
+
+  // #295 (codex): every link this session has already asked the archive about —
+  // hits, which stay staged in recoveryRows, and misses, which stage nothing —
+  // so pressing Find again asks only about links a run has not reached. The run
+  // itself caps at its first fifty; without this, a collection with more dead
+  // links than that could never get past them, and misses would be re-asked on
+  // every press.
+  const [askedArchive, setAskedArchive] = useState(() => new Set());
 
   // #295: the view's lookup — the whole collection's dead links, not the
   // selection or the screen the header button works from. The same paced run
   // and the same proposal-not-write shape; rows already staged are replaced,
   // so a second look refreshes rather than duplicates.
   const handleLinkHealthLookup = useCallback(async () => {
-    const rows = await archive.run(bookmarks);
+    const outstanding = recoverableBroken.filter((b) => !askedArchive.has(b.id));
+    if (outstanding.length === 0) return;
+    const { rows, asked } = await archive.run(outstanding);
+    // The run answers with the ids it really put a question about, so a run
+    // stopped mid-pace leaves its unasked tail owed for the next press.
+    setAskedArchive((prev) => {
+      const next = new Set(prev);
+      for (const id of asked) next.add(id);
+      return next;
+    });
     if (rows.length === 0) return;
     const fresh = new Set(rows.map((row) => row.id));
     setRecoveryRows((prev) => [...prev.filter((row) => !fresh.has(row.id)), ...rows]);
-  }, [archive, bookmarks]);
+  }, [archive, askedArchive, recoverableBroken]);
+
+  // A lookup is still owed while a dead link the session has not asked about
+  // remains — misses included, which is why this is not proposals versus rows.
+  const lookupOwed = useMemo(
+    () => recoverableBroken.some((b) => !askedArchive.has(b.id)),
+    [askedArchive, recoverableBroken]
+  );
 
   // #295: the view's proposal map — row id to the snapshot it proposes. The
   // view reads the dead links and their stored failure reasons off the
@@ -696,8 +722,6 @@ const BookmarkApp = () => {
     () => Object.fromEntries(recoveryRows.map((row) => [row.id, row.after.url])),
     [recoveryRows]
   );
-
-  const recoverableBroken = useMemo(() => recoverable(bookmarks), [bookmarks]);
 
   // The reviewed rows' write: acceptedPatches onto the bulk-edit path, so a
   // reviewed set is one store write and one undo entry however many rows it
@@ -807,6 +831,21 @@ const BookmarkApp = () => {
     () => currentSmartView(manualFilters, { digestOpen: Boolean(digest), linkHealthOpen }),
     [digest, linkHealthOpen, manualFilters]
   );
+
+  // #295 (codex): below `lg` the link-health view has no composition — its
+  // dedicated mobile reading is #303's. If the window shrinks while it is open,
+  // it gives way to the list with the brokenOnly filter, exactly what pressing
+  // the row below `lg` does, rather than rendering an unfiltered list while the
+  // rail still claims the view and the shortcuts stay suspended.
+  const wasSidebarViewport = useRef(isSidebarViewport);
+  useEffect(() => {
+    if (wasSidebarViewport.current && !isSidebarViewport && linkHealthOpen) {
+      setLinkHealthOpen(false);
+      setManualFilters((prev) => smartViewFilters(prev, "brokenLinks"));
+    }
+    wasSidebarViewport.current = isSidebarViewport;
+  }, [isSidebarViewport, linkHealthOpen]);
+
   // #294: the top bar's title is the view on screen: the smart view, or the
   // folder narrowing the list, and otherwise the whole collection.
   const shellTitle = useMemo(() => {
@@ -1502,6 +1541,7 @@ const BookmarkApp = () => {
                 unreachableCount={brokenCount}
                 broken={recoverableBroken}
                 proposalUrls={proposalUrls}
+                needsLookup={lookupOwed}
                 sweepRunning={sweep.running}
                 sweepChecked={sweep.checked}
                 sweepTotal={sweep.total}

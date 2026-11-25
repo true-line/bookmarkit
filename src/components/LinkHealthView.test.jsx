@@ -42,6 +42,9 @@ const setup = (over = {}) => {
       unreachableCount={broken.length}
       broken={broken}
       proposalUrls={snapshots}
+      // The app decides whether a lookup is owed (which links it has already
+      // asked about, misses included); the fixtures start with one owed.
+      needsLookup
       {...handlers}
       {...over}
     />
@@ -98,12 +101,12 @@ describe("LinkHealthView's summary and actions (#295)", () => {
     expect(onFindSnapshots).toHaveBeenCalledTimes(1);
   });
 
-  it("offers nothing to ask about once every dead link has a snapshot", () => {
+  it("offers nothing once the app says every dead link has been asked about", () => {
+    // The offer is the app's call now (codex, #295): a link asked about and
+    // missed stages no snapshot, but it is not a link worth asking again.
     setup({
-      proposalUrls: {
-        1: "https://web.archive.org/web/20240512/https://gone.test/1",
-        2: "https://web.archive.org/web/20240201/https://gone.test/2",
-      },
+      proposalUrls: {},
+      needsLookup: false,
     });
 
     expect(screen.queryByRole("button", { name: "Find Archive Snapshots" })).toBeNull();
