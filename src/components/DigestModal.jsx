@@ -117,6 +117,13 @@ const SectionCard = ({ title, count, hint, children }) => {
 const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onEdit, onClose }) => {
   const t = useMessages();
   const { added = [], neverOpened = [], untagged = [], themes = [] } = digest || {};
+  // The sets are capped for reading (MAX_ITEMS); the sheet's summary reports
+  // the week, so it wants the uncapped sizes the digest carries alongside.
+  const totals = digest?.totals ?? {
+    added: added.length,
+    neverOpened: neverOpened.length,
+    untagged: untagged.length,
+  };
 
   // #302: below `lg` the digest is the mobile mockup's full-page sheet — same
   // data, same actions, different chrome. The trap arms only for the sheet;
@@ -146,9 +153,9 @@ const DigestModal = ({ digest, onOpen, onShowNeverOpened, onTriage, onEdit, onCl
       <DigestSheet
         sheetRef={sheetRef}
         sheetTitleId={sheetTitleId}
-        count={added.length}
-        untaggedCount={untagged.length}
-        neverOpenedCount={neverOpened.length}
+        count={totals.added}
+        untaggedCount={totals.untagged}
+        neverOpenedCount={totals.neverOpened}
         queue={queue}
         range={weekRange(Date.now())}
         autoTagButton={autoTagButton}

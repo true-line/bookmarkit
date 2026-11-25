@@ -265,6 +265,35 @@ describe("DigestModal's sheet below `lg` (#302)", () => {
     expect(screen.getByRole("region", { name: "Digest summary" })).toBeInTheDocument();
   });
 
+  it("reports the uncapped totals the digest carries, not the reading cap", () => {
+    renderSheet({
+      ...SHEET_DIGEST,
+      totals: { added: 14, neverOpened: 6, untagged: 4 },
+    });
+
+    const summary = screen.getByRole("region", { name: "Digest summary" });
+    expect(within(summary).getByText("14")).toBeInTheDocument();
+    expect(within(summary).getByText("6")).toBeInTheDocument();
+    expect(within(summary).getByText("4")).toBeInTheDocument();
+    expect(screen.getByText(/· 14 saved/)).toBeInTheDocument();
+    // the queue still reads the capped sets
+    expect(screen.getByText("3 items")).toBeInTheDocument();
+  });
+
+  it("drops the age a bookmark without a saved date cannot have", () => {
+    renderSheet({
+      ...SHEET_DIGEST,
+      untagged: [
+        ...SHEET_DIGEST.untagged,
+        { id: "no-date", title: "No date", url: "https://example.com/no-date" },
+      ],
+    });
+
+    const card = screen.getByText("No date").closest("article");
+    expect(within(card).getByText("Untagged")).toBeInTheDocument();
+    expect(within(card).queryByText(/Saved \d+ days ago/)).toBeNull();
+  });
+
   it("backs out through Escape and the back button", () => {
     const props = renderSheet();
 

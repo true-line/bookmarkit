@@ -36,23 +36,31 @@ const newestFirst = (a, b) => addedAt(b) - addedAt(a);
  * @param {object[]} bookmarks
  * @param {number} [now]
  * @param {{windowMs?: number, limit?: number}} [options]
- * @returns {{added: object[], neverOpened: object[], untagged: object[]}}
+ * @returns {{added: object[], neverOpened: object[], untagged: object[],
+ *   totals: {added: number, neverOpened: number, untagged: number}}}
  */
 export function digestSets(bookmarks = [], now = Date.now(), options = {}) {
   const { windowMs = WEEK_MS, limit = MAX_ITEMS } = options;
   const cutoff = now - windowMs;
   const settled = bookmarks.filter((bookmark) => addedAt(bookmark) < cutoff);
 
+  const added = bookmarks.filter((bookmark) => addedAt(bookmark) >= cutoff).sort(newestFirst);
+  const neverOpened = findNeverOpened(settled);
+  const untagged = settled
+    .filter((bookmark) => !(Array.isArray(bookmark.tags) ? bookmark.tags : []).length)
+    .sort((a, b) => addedAt(a) - addedAt(b));
+
   return {
-    added: bookmarks
-      .filter((bookmark) => addedAt(bookmark) >= cutoff)
-      .sort(newestFirst)
-      .slice(0, limit),
-    neverOpened: findNeverOpened(settled).slice(0, limit),
-    untagged: settled
-      .filter((bookmark) => !(Array.isArray(bookmark.tags) ? bookmark.tags : []).length)
-      .sort((a, b) => addedAt(a) - addedAt(b))
-      .slice(0, limit),
+    added: added.slice(0, limit),
+    neverOpened: neverOpened.slice(0, limit),
+    untagged: untagged.slice(0, limit),
+    // The uncapped sizes: the sections are capped for reading, but the mobile
+    // digest's summary (#302) reports the week, not the reading cap.
+    totals: {
+      added: added.length,
+      neverOpened: neverOpened.length,
+      untagged: untagged.length,
+    },
   };
 }
 
@@ -161,7 +169,9 @@ export function themeItems(theme, bookmarks = []) {
  *
  * @param {{untagged?: object[], neverOpened?: object[]}} sets
  * @param {number} [now]
- * @returns {{bookmark: object, days: number, untagged: boolean, neverOpened: boolean}[]}
+ * @returns {{bookmark: object, days: number | null, untagged: boolean,
+ *   neverOpened: boolean}[]} `days` is null when the bookmark does not say
+ *   when it was saved.
  */
 export function triageQueue({ untagged = [], neverOpened = [] } = {}, now = Date.now()) {
   const cards = new Map();
@@ -171,9 +181,10 @@ export function triageQueue({ untagged = [], neverOpened = [] } = {}, now = Date
   ]) {
     for (const bookmark of set) {
       if (!bookmark?.id) continue;
+      const saved = addedAt(bookmark);
       const card = cards.get(bookmark.id) ?? {
         bookmark,
-        days: Math.max(1, Math.floor((now - addedAt(bookmark)) / DAY_MS)),
+        days: saved ? Math.max(1, Math.floor((now - saved) / DAY_MS)) : null,
         untagged: false,
         neverOpened: false,
       };

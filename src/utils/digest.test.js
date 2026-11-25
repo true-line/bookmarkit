@@ -17,6 +17,23 @@ const DAY = 24 * 60 * 60 * 1000;
 
 const bookmark = (id, props = {}) => ({ id, title: id, createdAt: ago(30 * DAY), ...props });
 
+describe("digestSets totals", () => {
+  it("reports the uncapped sizes of the three sets beside the capped ones", () => {
+    const seen = bookmark("old", { tags: ["x"], lastOpenedAt: ago(5 * DAY) });
+    const sets = digestSets(
+      [
+        seen,
+        bookmark("in1", { createdAt: ago(DAY) }),
+        bookmark("in2", { createdAt: ago(2 * DAY) }),
+      ],
+      NOW,
+      { limit: 1 }
+    );
+    expect(sets.added).toHaveLength(1);
+    expect(sets.totals).toEqual({ added: 2, neverOpened: 0, untagged: 0 });
+  });
+});
+
 describe("digestSets", () => {
   it("reports what arrived inside the window, newest first", () => {
     const sets = digestSets(
@@ -157,6 +174,11 @@ describe("themeItems", () => {
 });
 
 describe("triageQueue", () => {
+  it("gives no age to a bookmark that does not say when it was saved", () => {
+    const queue = triageQueue({ untagged: [{ id: "no-date", title: "No date" }] }, NOW);
+    expect(queue[0].days).toBeNull();
+  });
+
   it("unions the untagged and never-opened sets, one card per bookmark", () => {
     const both = bookmark("both");
     const queue = triageQueue(

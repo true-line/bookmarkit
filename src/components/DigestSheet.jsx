@@ -164,6 +164,9 @@ const DigestSheet = ({
               </Typography>
             </div>
             {queue.map(({ bookmark, days, untagged, neverOpened: neverOpenedFlag }) => {
+              // A bookmark that does not say when it was saved has no age to
+              // show — the meta line then reads the reasons alone.
+              const age = days == null ? null : t("digest.daysAgo", { count: days });
               const reasons = [
                 untagged && t("digest.flagUntagged"),
                 neverOpenedFlag && t("digest.flagNeverOpened"),
@@ -188,9 +191,7 @@ const DigestSheet = ({
                         {bookmark.url}
                       </Typography>
                       <Typography variant="body-sm" as="p" style={muted}>
-                        {reasons.length > 0
-                          ? `${t("digest.daysAgo", { count: days })} · ${reasons.join(" · ")}`
-                          : t("digest.daysAgo", { count: days })}
+                        {[age, ...reasons].filter(Boolean).join(" · ")}
                       </Typography>
                     </div>
                   </div>
