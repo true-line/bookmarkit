@@ -25,8 +25,12 @@ export const keepsSelectionProps = Object.freeze({ [KEEPS_SELECTION]: "" });
  *   clears either way, since the user has moved on.
  * @param {(bookmark: object) => void} [onEdit] Opens the editing modal for a
  *   bookmark — where the Shift gestures land.
+ * @param {boolean} [selectMode] #299: the mobile shell's select mode. A touch
+ *   has no modifier keys to hold, so the mode turns the plain gesture into
+ *   the set toggle that Ctrl/Cmd+click is on the desktop. Shift keeps its
+ *   edit meaning in both modes.
  */
-export function useBookmarkSelection(onOpen, onEdit) {
+export function useBookmarkSelection(onOpen, onEdit, selectMode = false) {
   const [selectedId, setSelectedId] = useState(null);
   const [multiSelectedIds, setMultiSelectedIds] = useState([]);
   // The bookmark the most recent activation opened, if any. A double-click's
@@ -72,6 +76,25 @@ export function useBookmarkSelection(onOpen, onEdit) {
     [onEdit]
   );
 
+  // The set toggle behind Ctrl/Cmd+click and, since #299, the select mode's
+  // plain gesture. One body, so the two paths cannot disagree about carrying
+  // the focused bookmark in or about dropping the focus.
+  const toggleMulti = useCallback(
+    (bookmark) => {
+      setMultiSelectedIds((prev) => {
+        // A single click before the first Ctrl+click set `selectedId`; carry it
+        // in, so extending starts from what the user can see is selected.
+        const seeded = selectedId && !prev.includes(selectedId) ? [...prev, selectedId] : [...prev];
+        return seeded.includes(bookmark.id)
+          ? seeded.filter((id) => id !== bookmark.id)
+          : [...seeded, bookmark.id];
+      });
+      setSelectedId(null);
+      openedIdRef.current = null;
+    },
+    [selectedId]
+  );
+
   const onBookmarkClick = useCallback(
     (bookmark, event) => {
       // The second click of a double-click: the dblclick handler below decides
@@ -84,18 +107,8 @@ export function useBookmarkSelection(onOpen, onEdit) {
         edit(bookmark);
         return;
       }
-      if (event?.metaKey || event?.ctrlKey) {
-        setMultiSelectedIds((prev) => {
-          // A single click before the first Ctrl+click set `selectedId`; carry it
-          // in, so extending starts from what the user can see is selected.
-          const seeded =
-            selectedId && !prev.includes(selectedId) ? [...prev, selectedId] : [...prev];
-          return seeded.includes(bookmark.id)
-            ? seeded.filter((id) => id !== bookmark.id)
-            : [...seeded, bookmark.id];
-        });
-        setSelectedId(null);
-        openedIdRef.current = null;
+      if (event?.metaKey || event?.ctrlKey || selectMode) {
+        toggleMulti(bookmark);
         return;
       }
       // The gesture acts on the selected bookmark and selects an unselected one.
@@ -107,7 +120,7 @@ export function useBookmarkSelection(onOpen, onEdit) {
       setMultiSelectedIds([]);
       openedIdRef.current = null;
     },
-    [selectedId, open, edit]
+    [selectedId, open, edit, selectMode, toggleMulti]
   );
 
   const onBookmarkDoubleClick = useCallback(
@@ -140,8 +153,13 @@ export function useBookmarkSelection(onOpen, onEdit) {
         edit(bookmark);
         return;
       }
-      // Mirrors the click: activation selects, and repeats on the selected
-      // bookmark open it.
+      // Mirrors the click: in the select mode the activation toggles the set,
+      // otherwise activation selects, and repeats on the selected bookmark
+      // open it.
+      if (selectMode) {
+        toggleMulti(bookmark);
+        return;
+      }
       if (selectedId === bookmark.id) {
         open(bookmark);
         return;
@@ -150,7 +168,7 @@ export function useBookmarkSelection(onOpen, onEdit) {
       setMultiSelectedIds([]);
       openedIdRef.current = null;
     },
-    [selectedId, open, edit]
+    [selectedId, open, edit, selectMode, toggleMulti]
   );
 
   /** Whichever selection the user made: the focused bookmark, or the checked set. */
