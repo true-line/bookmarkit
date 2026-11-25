@@ -281,9 +281,9 @@ const BookmarkApp = () => {
   } = useBookmarkSelection(openBookmark, handleEditBookmark, selectMode);
 
   // #299: below `lg` the selection's actions live in the bar at the bottom,
-  // and "Bulk Edit" raises the list's inline editor — the sheet (#301) will
-  // replace that handoff. Above `lg` the editor appears on its own, as it
-  // always has. Either way the editor is the selection's, and dies with it.
+  // and "Bulk Edit" opens the bulk-edit sheet (#301). Above `lg` the inline
+  // editor appears on its own, as it always has. Either way the editor is the
+  // selection's, and dies with it.
   const [bulkEditorOpen, setBulkEditorOpen] = useState(false);
   useEffect(() => {
     if (multiSelectedBookmarkIds.length === 0) setBulkEditorOpen(false);
@@ -1407,7 +1407,8 @@ const BookmarkApp = () => {
 
             {/* #54: Only for a real multi-selection — a single click is served
                 by the form. #299: below `lg` the selection's home is the bar
-                at the bottom, and "Bulk Edit" raises this editor. */}
+                at the bottom, and "Bulk Edit" opens this editor as the sheet
+                (#301); the bar itself becomes that sheet below `lg`. */}
             {multiSelectedBookmarkIds.length > 0 && (isSidebarViewport || bulkEditorOpen) && (
               <BulkEditBar
                 selected={selectedBookmarks}
@@ -1415,6 +1416,10 @@ const BookmarkApp = () => {
                 onApply={handleBulkEdit}
                 onClearSelection={clearSelectedBookmarks}
                 onDelete={confirmDeleteSelection}
+                onClose={() => setBulkEditorOpen(false)}
+                canAutoTag={isAgentConfigured}
+                provider={runtimeProvider}
+                providerOptions={providerOptions}
               />
             )}
 

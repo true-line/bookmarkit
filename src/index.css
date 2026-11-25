@@ -712,14 +712,14 @@ body {
   background: var(--ui-primary);
 }
 
-/* ─── Bookmark form sheet (#300) ──────────────────────────────────────────
-   Below `lg` the bookmark form leaves the centered dialog for the edit
-   mockup's full-page composition: a sticky app bar (back, the title over the
-   bookmark's folder, delete), the form, and a sticky footer of two
-   equal-width actions. The keyboard contract is the dialog's — role,
-   aria-modal, the shared focus trap, Escape through the close guard — only
-   the chrome changes. */
-.ui-bookmark-sheet {
+/* ─── Sheet chrome (#300, #301) ───────────────────────────────────────────
+   Below `lg` a full-page editing task leaves the inline flow for the mobile
+   mockup's composition: a sticky app bar (back, title over a context line),
+   the task's body, and a sticky footer of two equal-width actions. The
+   bookmark form (#300) and the bulk edit (#301) are the two so far. The
+   keyboard contract is the dialog's — role, aria-modal, the shared focus
+   trap, Escape through the close guard — only the chrome changes. */
+.ui-sheet {
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -729,7 +729,7 @@ body {
   color: var(--ui-on-surface);
 }
 
-.ui-bookmark-sheet-bar {
+.ui-sheet-bar {
   display: flex;
   flex: none;
   align-items: center;
@@ -739,20 +739,20 @@ body {
   border-bottom: 1px solid var(--ui-outline-variant);
 }
 
-.ui-bookmark-sheet-heading {
+.ui-sheet-heading {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.ui-bookmark-sheet-heading h2 {
+.ui-sheet-heading h2 {
   margin: 0;
   font: var(--ui-type-headline-sm);
   color: var(--ui-on-surface);
 }
 
-/* The folder line under the title. A path can be long; it truncates rather
-   than pushing the bar's buttons around. */
-.ui-bookmark-sheet-subtitle {
+/* The context line under the title. A path or count can be long; it truncates
+   rather than pushing the bar's buttons around. */
+.ui-sheet-subtitle {
   margin: 2px 0 0;
   font: var(--ui-type-label-sm);
   color: var(--ui-on-surface-variant);
@@ -763,17 +763,17 @@ body {
 
 /* The destructive icon on the bar: the icon-button recipe with the danger
    tint on the glyph. */
-.ui-bookmark-sheet-delete {
+.ui-sheet-delete {
   color: var(--ui-danger);
 }
 
-.ui-bookmark-sheet-body {
+.ui-sheet-body {
   flex: 1 1 auto;
   overflow-y: auto;
   padding: var(--ui-space-gutter-md);
 }
 
-.ui-bookmark-sheet-footer {
+.ui-sheet-footer {
   display: flex;
   flex: none;
   align-items: center;
@@ -785,16 +785,68 @@ body {
 }
 
 /* The mockup's footer: two equal-width actions. */
-.ui-bookmark-sheet-footer .ui-button {
+.ui-sheet-footer .ui-button {
   flex: 1 1 0;
 }
 
-/* Touch targets: the sheet is the phone composition, so the rating gets the
-   mockup's 44px targets — scoped here; the dialog keeps the radiogroup's
-   natural size. */
-.ui-bookmark-sheet .ui-star-rating button {
+/* Touch targets: the sheets are the phone composition, so a form's controls
+   get the mockup's 44px targets — scoped to the form sheet; the dialog keeps
+   the radiogroup's natural size. */
+.ui-sheet--form .ui-star-rating button {
   min-width: 44px;
   min-height: 44px;
+}
+
+/* The sheet's carded sections (mobile bulk-edit mockup): bordered, lowest
+   surface, a headline-sm heading, or a label row when the section is a
+   reading aid rather than a task. */
+.ui-sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-sm);
+  padding: var(--ui-space-gutter-md);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-lowest);
+}
+
+.ui-sheet-section h2 {
+  margin: 0;
+  font: var(--ui-type-headline-sm);
+  color: var(--ui-on-surface);
+}
+
+/* The Danger Zone's action takes the section's full width, as drawn. */
+.ui-sheet-section--danger .ui-button {
+  width: 100%;
+}
+
+/* The Selected-items preview: bulleted, truncated titles — a reading of what
+   is about to change, not a list of links. */
+.ui-sheet-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-gutter-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--ui-type-body-sm);
+  color: var(--ui-on-surface-variant);
+}
+
+.ui-sheet-preview li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-sheet-preview li::before {
+  content: "• ";
+  white-space: pre;
+}
+
+.ui-sheet-preview-more {
+  font: var(--ui-type-label-sm);
 }
 
 /* The tags field's parsed preview (#300): what saving will store, as the
@@ -1155,6 +1207,28 @@ body {
 .ui-bulk-summary {
   color: var(--ui-on-surface-variant);
   font: var(--ui-type-body-sm);
+}
+
+/* #301: the bar's fields grow visible labels (they were placeholder-only).
+   Each control is a column — label over input — and the action buttons
+   bottom-align with the inputs, so the row reads as one form line. */
+.ui-bulk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-bulk-field > label {
+  font: var(--ui-type-label-md);
+  color: var(--ui-on-surface);
+}
+
+.ui-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+  padding-block-end: 2px;
 }
 
 /* ─── Empty shelf (#254) ──────────────────────────────────────────────────

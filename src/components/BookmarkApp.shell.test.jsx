@@ -168,19 +168,22 @@ describe("BookmarkApp's selection surfaces (#299)", () => {
 
     expect(bar).toHaveTextContent("1 selected");
 
-    // Bulk Edit raises the list's inline editor — the sheet (#301) will
-    // replace this handoff; today the bar and the editor are the pair.
+    // Bulk Edit opens the full-page sheet (#301) — the selection stays
+    // behind it, the bar hidden under it.
     fireEvent.click(screen.getByRole("button", { name: /Bulk Edit/ }));
-    expect(
-      screen.getByRole("group", { name: /Bulk edit 1 selected bookmark/ })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Bulk Edit" })).toBeInTheDocument();
 
-    // Clear takes the set, the editor and the bar away together.
+    // Backing out returns to the bar with the selection intact.
+    fireEvent.click(screen.getByRole("button", { name: "Back to bookmarks" }));
+    expect(screen.queryByRole("dialog", { name: "Bulk Edit" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Selection actions" })).toBeInTheDocument();
+
+    // Clear takes the set, the sheet's door and the bar away together.
     fireEvent.click(screen.getByRole("button", { name: "Clear" }));
     await waitFor(() =>
       expect(screen.queryByRole("region", { name: "Selection actions" })).toBeNull()
     );
-    expect(screen.queryByRole("group", { name: /Bulk edit/ })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Bulk Edit" })).toBeNull();
   });
 
   it("keeps the inline editor alone past `lg`, and mounts no bar", async () => {
