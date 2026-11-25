@@ -4,6 +4,8 @@ import { useDebounce } from "../hooks/useDebounce.js";
 import KeyEncryptionSection from "./KeyEncryptionSection.jsx";
 import { Button, IconButton, InputField, Modal, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
+import { useLocale } from "../i18n/LocaleProvider.js";
+import { SYSTEM_LOCALE } from "../i18n/locales.js";
 
 // Migrated to the unified design system (#246): the options-settings screen's
 // modal-standard shell at its max-w-2xl reading (size="2xl"), headline-sm
@@ -208,6 +210,7 @@ const OptionsModal = ({
   onClose,
 }) => {
   const t = useMessages();
+  const { choice: localeChoice, setLocale, locales } = useLocale();
   const [models, setModels] = useState([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState("");
@@ -568,6 +571,22 @@ const OptionsModal = ({
               onChange={(e) => onThemeChange?.(e.target.value)}
               options={Object.keys(themes)}
               hint={t("options.themeHint")}
+            />
+            {/* #298: the interface language, the mockup's Appearance & i18n
+                row. "System default" defers to the browser's own preference;
+                the other entries are the locales the catalogue ships. The
+                provider applies the choice at the document root — copy,
+                number formats and the dir the layout mirrors by. */}
+            <TokenSelect
+              label={t("options.languageLabel")}
+              id="language-select"
+              value={localeChoice}
+              onChange={(e) => setLocale(e.target.value)}
+              options={[
+                { value: SYSTEM_LOCALE, label: t("options.languageSystemDefault") },
+                ...locales.map((locale) => ({ value: locale.code, label: locale.label })),
+              ]}
+              hint={t("options.languageHint")}
             />
             <div className="ui-field">
               <div className="flex items-center justify-between gap-2">
