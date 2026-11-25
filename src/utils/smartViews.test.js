@@ -317,4 +317,20 @@ describe("currentSmartView (#283)", () => {
       "digest"
     );
   });
+
+  // #295: the link-health view is the broken view's workspace composition —
+  // it claims the row the same way, whatever the filters say.
+  it("is broken links while the link-health view is open", () => {
+    expect(currentSmartView(EMPTY_FILTERS, { linkHealthOpen: true })).toBe("brokenLinks");
+    expect(currentSmartView({ ...EMPTY_FILTERS, folder: "Work" }, { linkHealthOpen: true })).toBe(
+      "brokenLinks"
+    );
+    expect(
+      currentSmartView({ ...EMPTY_FILTERS, neverOpened: true }, { linkHealthOpen: true })
+    ).toBe("brokenLinks");
+    // The digest stays the front page when both find their way open.
+    expect(currentSmartView(EMPTY_FILTERS, { digestOpen: true, linkHealthOpen: true })).toBe(
+      "digest"
+    );
+  });
 });
