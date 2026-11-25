@@ -441,6 +441,19 @@ describe("BookmarkForm's sheet below `lg` (#300)", () => {
     expect(select).toHaveValue("Work/Deep/A");
   });
 
+  it("keeps a folder literally named __custom__ a real folder", () => {
+    const onSave = vi.fn();
+    renderForm({ onSave, folders: ["__custom__"] });
+
+    // The pick shares its value with the sentinel option; the two are told
+    // apart by data, so the folder wins and the select stays.
+    fireEvent.change(screen.getByLabelText("Folder"), { target: { value: "__custom__" } });
+
+    expect(screen.getByLabelText("Folder").tagName).toBe("SELECT");
+    fireEvent.submit(document.querySelector("#bookmark-form"));
+    expect(onSave.mock.calls[0][0].folderId).toBe("__custom__");
+  });
+
   it("previews the parsed tags as chips, hidden from the accessibility tree", () => {
     renderForm({
       bookmark: { id: "1", title: "A", url: "https://a.test/", tags: ["macos", "shell"] },

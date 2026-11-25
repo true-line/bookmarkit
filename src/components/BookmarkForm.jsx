@@ -89,7 +89,9 @@ function BackIcon() {
 }
 
 // The sheet's folder select hands spelling back to the free-text field through
-// this sentinel option value; it cannot collide with a real folder path.
+// this sentinel option. Its value is only a label slot — which option was
+// picked is read from the option's data-custom attribute, because a collection
+// may hold a real top-level folder named "__custom__" (#313 review).
 const CUSTOM_FOLDER = "__custom__";
 
 const BookmarkForm = ({
@@ -302,10 +304,12 @@ const BookmarkForm = ({
   };
 
   // #300: the sheet's select. "No folder" is the empty value the field already
-  // uses; the sentinel swaps the select for the free-text field, so a path the
-  // list doesn't know is still typable — `/` syntax and autocomplete included.
+  // uses; the sentinel option swaps the select for the free-text field, so a
+  // path the list doesn't know is still typable — `/` syntax and autocomplete
+  // included. The sentinel is told apart by its data attribute, never by its
+  // value: a folder may legitimately be named "__custom__".
   const handleFolderSelect = (event) => {
-    if (event.target.value === CUSTOM_FOLDER) {
+    if (event.target.selectedOptions[0]?.dataset.custom === "true") {
       setIsCustomFolder(true);
       return;
     }
@@ -704,7 +708,9 @@ const BookmarkForm = ({
               {formData.folderId && !folders.includes(formData.folderId) && (
                 <option value={formData.folderId}>{formData.folderId}</option>
               )}
-              <option value={CUSTOM_FOLDER}>{t("bookmarkForm.folderCustom")}</option>
+              <option value={CUSTOM_FOLDER} data-custom="true">
+                {t("bookmarkForm.folderCustom")}
+              </option>
             </select>
           </div>
           <InputField
