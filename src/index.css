@@ -1295,6 +1295,73 @@ body {
   flex: 1 1 0;
 }
 
+/* #296: the digest as a workspace view — the weekly-digest mockup's main
+   (288–392) beside the sidebar: its own header row, the three metric cards
+   of the summary strip, and the topic clusters' bookmark rows. The mockup's
+   rounded-md card radius loses to the spec per the recorded divergence
+   (DESIGN.md), as it already did on the modal's cards. */
+.ui-digest-metric {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--ui-space-gutter-sm);
+  padding: var(--ui-space-gutter-md);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-lowest);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.ui-digest-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: var(--ui-space-gutter-md);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-container-lowest);
+  box-shadow: var(--ui-shadow-sm);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-state) var(--ui-ease-state),
+    color var(--ui-duration-state) var(--ui-ease-state);
+}
+
+.ui-digest-row:hover {
+  background: var(--ui-surface-container);
+}
+
+.ui-digest-row:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+/* The title is the row's link affordance, so it wears the primary color the
+   modal's item titles did; the URL line stays a muted hint. */
+.ui-digest-row-title {
+  color: var(--ui-primary);
+}
+
+.ui-digest-roundel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--ui-radius-full);
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface-variant);
+  overflow: hidden;
+}
+
+.ui-digest-roundel img {
+  width: 20px;
+  height: 20px;
+}
+
 /* ─── Empty shelf (#254) ──────────────────────────────────────────────────
    The manager mockup's empty-shelf centerpiece: a centered column — the
    card-stack mark, the copy block, the actions — on headline/body type with

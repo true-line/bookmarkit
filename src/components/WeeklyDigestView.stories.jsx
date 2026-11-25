@@ -1,12 +1,14 @@
-import DigestModal from "./DigestModal.jsx";
+import WeeklyDigestView from "./WeeklyDigestView.jsx";
 import { UiScope } from "../design-system/story-decorator.jsx";
 
-// #248: the weekly digest is migrated onto the unified design system, so its
-// story renders under the shared UiScope decorator like the other migrated
-// dialogs — the UI theme and direction toolbars audit light/dark and LTR/RTL
-// on the migrated modal. The fixture mirrors the weekly-digest mockup's
-// readings: model-named themes over the week's additions, a settled
-// never-opened set, and an untagged set with the model-powered triage action.
+// #296: the weekly digest is a workspace view from `lg` — the weekly-digest
+// mockup's main beside the sidebar — and the mobile mockup's full-page sheet
+// below it (#302). The story renders under the shared UiScope decorator like
+// the other migrated surfaces, so the UI theme and direction toolbars audit
+// light/dark and LTR/RTL on both compositions. The fixture mirrors the
+// weekly-digest mockup's readings: model-named themes over the week's
+// additions, a settled never-opened set, and an untagged set with the
+// model-powered triage action.
 const noop = () => undefined;
 
 const bookmark = (id, title, url) => ({ id, title, url });
@@ -47,11 +49,12 @@ const DIGEST = {
     },
     { title: "Terminal & Shell Tooling", summary: "", ids: ["3"] },
   ],
+  totals: { added: 14, neverOpened: 6, untagged: 4 },
 };
 
 const meta = {
-  title: "BookmarkIt/Dialogs/Digest",
-  component: DigestModal,
+  title: "BookmarkIt/Views/Weekly Digest",
+  component: WeeklyDigestView,
   decorators: [UiScope],
   parameters: { layout: "fullscreen" },
   args: {
@@ -65,10 +68,20 @@ const meta = {
 
 export default meta;
 
+// The composition the viewport picks: the workspace view from `lg`, the
+// sheet below — narrow the canvas to see the other one.
 export const Digest = {};
 
-// A digest with no model grouping: the sections stand on their own and the
-// triage action is the only model-powered affordance left in the footer.
+// A digest with no model grouping: the clusters stand on their own and the
+// triage action is the only model-powered affordance left in the header.
 export const UntaggedOnly = {
-  args: { digest: { added: [], neverOpened: [], untagged: DIGEST.untagged, themes: [] } },
+  args: {
+    digest: {
+      added: [],
+      neverOpened: [],
+      untagged: DIGEST.untagged,
+      themes: [],
+      totals: { added: 0, neverOpened: 0, untagged: 1 },
+    },
+  },
 };

@@ -89,7 +89,6 @@ export const dialogMessages = {
     deleteConfirmQuestion: "Are you sure you want to delete {count} bookmark(s)?",
     deleteFailed: "Failed to delete bookmark(s). Please try again.",
     deletedCount: "Deleted {count} bookmark(s).",
-    digest: "Digest",
     findArchived: "Find Archived Copies ({count})",
     folderChangeFailed: "Failed to move the bookmark(s). Please try again.",
     folders: "Folders",

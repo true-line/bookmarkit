@@ -417,6 +417,19 @@ Two smaller decisions follow from that split:
   manual filter — so it composes with sort, folder and bulk editing, and a saved
   view can hold it — and "Triage the untagged" is the organizer (#44) pointed at
   that set with `fields: ["tags"]`, reviewed through the same diff.
+- From `lg` up the digest is a workspace view, not a dialog (#296). The sidebar's
+  Weekly Digest row opens the weekly-digest mockup's main beside the rail
+  (`WeeklyDigestView`): the week's range under the title with the two exits in
+  the view's own header, the uncapped totals as a three-card summary strip, and
+  the additions as topic clusters of rows that open like everywhere else. The
+  centered desktop modal retired with it — a workspace is navigated, not
+  dismissed, so the view carries no close affordance; every navigation path —
+  another smart view, a saved view, a folder, a search — ends it
+  (`closeDigest`), as do its own two exits. While the digest is on screen the
+  list column is unmounted rather than hidden, so the shell's shortcuts stay
+  suspended (`isDialogOpen` includes the digest in both compositions) instead of
+  acting on a list that is not there. The digest claims its sidebar row
+  (`currentSmartView`'s `digestOpen`) while it shows, at every width.
 - Below `lg` the digest is the weekly-digest mockup's full-page sheet (#302,
   `DigestSheet`, the shared sheet chrome): the three counts as the summary's
   tiles, the untagged set behind the Auto-Tag strip — the same triage handoff
