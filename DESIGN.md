@@ -340,7 +340,9 @@ Two decisions in the sweep are load-bearing:
   store needs the signed-in client. A worker writing statuses would be a second
   write path around the store contract. What is persisted instead is when each
   link was last checked, so a sweep resumes across sessions rather than
-  restarting, which is what the periodic behavior was for.
+  restarting, which is what the periodic behavior was for — and, beside it
+  (#303), when the sweep last ran, written as each batch lands so the view's
+  freshness line tells the truth about partial sweeps too.
 - It is asked for rather than automatic, and it never re-points a bookmark.
   Checking every link contacts every host in the collection — the same privacy
   question site icons answered with an opt-in — and a redirect target is the
@@ -387,11 +389,22 @@ asked-for step — the view offers "Find Archive Snapshots" and contacts the
 archive only then, about the collection's dead links, with the same paced run
 the header's button uses. Staged rows survive leaving the page and coming back,
 so a second look does not re-ask the archive about links already looked up; a
-row whose link recovered some other way stops matching and disappears. Below
-`lg` the row keeps the brokenOnly filter — the list with its sweep bar and the
-review dialog are that composition today, and their dedicated mobile reading is
-#303's. Both workspace views yield to navigation through one choke point
-(`closeWorkspaceViews`), the way the digest has since its review fix.
+row whose link recovered some other way stops matching and disappears.
+
+#303 finished the mockup pair. Every row carries its own actions — **Edit
+URL**, the ordinary edit form for that one link, and **Wayback**, the same
+paced lookup pointed at a single row, which re-asks on the user's explicit
+press even where the session's batch already asked and missed. The mobile
+mockup's status banner ("N bookmarks returned HTTP errors or timeouts.") and
+the freshness line ("Last scan 2 hours ago", from the timestamp written beside
+the record of past checks) ride above the rows, and below `lg` the whole view
+presents as the mockup's full-page sheet (`LinkHealthSheet`) — back bar over
+the flagged count and freshness, Re-check in the bar, the same rows as cards,
+Apply Selected in the footer — rather than yielding to the brokenOnly filter
+it kept before the sheet existed. The sheet makes way before the edit form
+opens, so the two never stack, the rule the digest sheet set. Both workspace
+views yield to navigation through one choke point (`closeWorkspaceViews`), the
+way the digest has since its review fix.
 
 ## The week
 
