@@ -38,7 +38,11 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - JSON array of bookmarks
   - Netscape Bookmark HTML (compatible with browsers’ export files)
   - Bookmark management
-  - Add, edit, delete, tag, folder, rating, favicon support
+  - Add, edit, delete, tag, folder, rating, favicon support. On narrow windows
+    (below `lg`) the form is a full-page sheet — back to bookmarks, the folder
+    under the title, **Cancel**/**Save Bookmark** pinned to the bottom — with
+    the folder picked from a list (**Custom path…** keeps the `/` syntax for
+    spellings the list doesn't know). Wider, it stays the centered dialog.
   - List views, chosen with the header selector and remembered per browser:
     **Single column** (one full-width card per row), **Flow columns** (the
     default responsive shelf: the list flows into equal-width columns that fit
