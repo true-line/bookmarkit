@@ -48,6 +48,7 @@ import { useDebounce } from "../hooks/useDebounce.js";
 import { useSmartViews } from "../hooks/useSmartViews.js";
 import { useUndoHistory } from "../hooks/useUndoHistory.js";
 import MobileTopBar from "./MobileTopBar.jsx";
+import MobileFilterRow from "./MobileFilterRow.jsx";
 import NavDrawer from "./NavDrawer.jsx";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 
@@ -219,6 +220,13 @@ const BookmarkApp = () => {
   useEffect(() => {
     if (isSidebarViewport) setIsNavDrawerOpen(false);
   }, [isSidebarViewport]);
+  // #299: the shell's select mode — the touch path into the multi-selection.
+  // Past `lg` the gestures keep their modifiers again, so the mode is left
+  // behind with the rest of the shell chrome when the window grows.
+  const [selectMode, setSelectMode] = useState(false);
+  useEffect(() => {
+    if (isSidebarViewport) setSelectMode(false);
+  }, [isSidebarViewport]);
   const [bookmarksToDelete, setBookmarksToDelete] = useState([]);
   // #50: the digest being read, null when none is.
   const [digest, setDigest] = useState(null);
@@ -269,7 +277,7 @@ const BookmarkApp = () => {
     onBookmarkClick: handleBookmarkClick,
     onBookmarkDoubleClick: handleBookmarkDoubleClick,
     onBookmarkKeyDown: handleBookmarkKeyDown,
-  } = useBookmarkSelection(openBookmark, handleEditBookmark);
+  } = useBookmarkSelection(openBookmark, handleEditBookmark, selectMode);
 
   // Read by an effect that must not resubscribe when the list changes.
   const bookmarksRef = useRef(bookmarks);
@@ -729,10 +737,12 @@ const BookmarkApp = () => {
   }, [resetSearch]);
 
   // ─── Keyboard shortcuts ──────────────────────────────────────────────────────
-  // Escape drops the selection and anything staged for deletion with it.
+  // Escape drops the selection, the select mode it was made in, and anything
+  // staged for deletion with it.
   const clearSelection = useCallback(() => {
     clearSelectedBookmarks();
     setBookmarksToDelete([]);
+    setSelectMode(false);
   }, [clearSelectedBookmarks]);
 
   const confirmDeleteSelection = useCallback(() => {
@@ -1216,6 +1226,18 @@ const BookmarkApp = () => {
                 />
               </div>
             </div>
+            {/* #299: the compact filter row — the shell owns rating and sort
+                below `lg`, and the select mode is the touch path into the
+                selection the bottom bar acts on. */}
+            {!isSidebarViewport && (
+              <MobileFilterRow
+                filters={manualFilters}
+                onChange={setManualFilters}
+                selectMode={selectMode}
+                selectedCount={multiSelectedBookmarkIds.length}
+                onToggleSelectMode={() => setSelectMode((on) => !on)}
+              />
+            )}
             {/* One horizontally scrollable strip: at phone widths the buttons
                 used to wrap into five rows and eat the viewport. #294: the
                 entries that used to sit here only below `lg` — Add New, the
@@ -1388,6 +1410,7 @@ const BookmarkApp = () => {
                 effectsEnabled={effects}
                 viewMode={viewMode}
                 filters={manualFilters}
+                showSortControls={isSidebarViewport}
                 tagFacets={tagFacets}
                 onFilterChange={setManualFilters}
                 onCycleTag={handleCycleTag}
