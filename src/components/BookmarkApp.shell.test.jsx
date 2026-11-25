@@ -254,3 +254,68 @@ describe("BookmarkApp's selection surfaces (#299)", () => {
     );
   });
 });
+
+// #296: the digest is a workspace view beside the rail from `lg` up, and
+// navigation owns leaving it. The review fix pins the two paths a stuck
+// digest would strand: another smart view and a folder — a digest of
+// additions alone has neither header exit, so without these the rail's
+// Weekly Digest row stays highlighted over a list that moved on.
+describe("BookmarkApp's weekly digest view (#296)", () => {
+  const seedDigestFixture = async () => {
+    // The store adopts a bar folder titled "bookmarkit" as its root (the
+    // selection tests' seed relies on the same title match), so a folder
+    // inside it is a real tree row for the rail, and the composite store
+    // stamps the fresh bookmark's createdAt — arrived this week.
+    const root = await fakeStore.bookmarks.create({ parentId: "1", title: "bookmarkit" });
+    const folder = await fakeStore.bookmarks.create({ parentId: root.id, title: "Deep reads" });
+    await fakeStore.bookmarks.create({
+      parentId: folder.id,
+      title: "Fresh read",
+      url: "https://example.com/fresh",
+    });
+    return folder;
+  };
+
+  const openDigestView = async () => {
+    fireEvent.click(screen.getByRole("button", { name: /Weekly Digest/ }));
+    return screen.findByRole("heading", { name: "Weekly Digest" });
+  };
+
+  it("opens from the rail, and yields when another smart view is chosen", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await seedDigestFixture();
+    await renderShell();
+
+    const heading = await openDigestView();
+    expect(heading).toBeInTheDocument();
+    // The rail marks the digest as the page while the list column is the view.
+    expect(screen.getByRole("button", { name: /Weekly Digest/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /All Bookmarks/ }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Weekly Digest" })).toBeNull()
+    );
+    expect(screen.getByRole("button", { name: /All Bookmarks/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("yields when a folder is chosen from the rail's tree", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    const folder = await seedDigestFixture();
+    await renderShell();
+
+    await openDigestView();
+
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(folder.title) }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Weekly Digest" })).toBeNull()
+    );
+  });
+});

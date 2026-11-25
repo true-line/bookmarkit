@@ -423,8 +423,9 @@ Two smaller decisions follow from that split:
   the view's own header, the uncapped totals as a three-card summary strip, and
   the additions as topic clusters of rows that open like everywhere else. The
   centered desktop modal retired with it — a workspace is navigated, not
-  dismissed, so the view carries no close affordance and leaves through the
-  sidebar, the filters, or the triage handoff. While the digest is on screen the
+  dismissed, so the view carries no close affordance; every navigation path —
+  another smart view, a saved view, a folder, a search — ends it
+  (`closeDigest`), as do its own two exits. While the digest is on screen the
   list column is unmounted rather than hidden, so the shell's shortcuts stay
   suspended (`isDialogOpen` includes the digest in both compositions) instead of
   acting on a list that is not there. The digest claims its sidebar row

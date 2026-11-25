@@ -231,6 +231,11 @@ const BookmarkApp = () => {
   const [bookmarksToDelete, setBookmarksToDelete] = useState([]);
   // #50: the digest being read, null when none is.
   const [digest, setDigest] = useState(null);
+  // #296: ending the digest is one decision, made wherever navigation
+  // happens. The digest view is the week, not a filter over the list, so
+  // every destination — another smart view, a saved view, a folder, a
+  // search — names a list the digest is not, and the view yields to it.
+  const closeDigest = useCallback(() => setDigest(null), []);
   // #44/#102: the change set waiting to be reviewed — `{title, rows}` — and whether
   // it is being written. One at a time, whoever proposed it.
   const [review, setReview] = useState(null);
@@ -418,11 +423,15 @@ const BookmarkApp = () => {
     [views, lastAction, manualFilters]
   );
 
-  const applyView = useCallback((view) => {
-    setLastAction(view.plan.length > 0 ? view.plan : null);
-    setManualFilters(view.filters);
-    setSearchQuery("");
-  }, []);
+  const applyView = useCallback(
+    (view) => {
+      closeDigest();
+      setLastAction(view.plan.length > 0 ? view.plan : null);
+      setManualFilters(view.filters);
+      setSearchQuery("");
+    },
+    [closeDigest]
+  );
 
   const handleSaveView = useCallback(
     (name) => {
@@ -537,12 +546,13 @@ const BookmarkApp = () => {
   const selectFolder = useCallback(
     (folder) => {
       clearSelectedBookmarks();
+      closeDigest();
       setManualFilters((prev) => ({ ...prev, folder }));
       // #294: the drawer covers the list it just filtered, so picking a
       // folder is also done with it.
       setIsNavDrawerOpen(false);
     },
-    [clearSelectedBookmarks]
+    [clearSelectedBookmarks, closeDigest]
   );
 
   // A dragged card carries the selection it belongs to, and only itself otherwise.
@@ -709,9 +719,13 @@ const BookmarkApp = () => {
         showDigest();
         return;
       }
+      // #296: the digest view yields to any other destination — its row
+      // would otherwise stay highlighted over a list that moved on, and a
+      // digest of additions alone would have no exit.
+      closeDigest();
       setManualFilters((prev) => smartViewFilters(prev, view));
     },
-    [showDigest]
+    [closeDigest, showDigest]
   );
 
   // Which sidebar row is the one on screen. Decided beside the other saved
@@ -1011,9 +1025,11 @@ const BookmarkApp = () => {
         return;
       }
       setBookmarksToDelete([]);
+      // #296: a query names the list it wants; the digest view yields to it.
+      closeDigest();
       runAgent(searchQuery);
     },
-    [searchQuery, runAgent]
+    [closeDigest, searchQuery, runAgent]
   );
 
   // ─── Import handlers ─────────────────────────────────────────────────────────
