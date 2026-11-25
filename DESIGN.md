@@ -176,6 +176,19 @@ Two boundaries are worth keeping straight:
   until the mobile sheet (#301) replaces that handoff. The app measures the
   band into `--app-selectionbar-height`, which `.bookmarkit-main` pays as
   bottom padding, so the last row is never under it.
+- **The bookmark form below `lg` (#300).** Editing or adding a bookmark is the
+  edit mockup's full-page sheet instead of the centered dialog: a sticky app
+  bar (back to bookmarks, the title over the bookmark's folder, delete), the
+  same form, and a sticky footer with **Cancel** and **Save Bookmark**. It is
+  still a dialog to the keyboard — the shared focus trap, Escape routed
+  through the same close guard — and every desktop behavior (URL validation
+  and the ignore affordance, the AI suggests, the pending-confirmation gate)
+  is the dialog's code, not a fork. From `lg` up nothing changes. The sheet's
+  folder control is a select over the folders that exist with a **No folder**
+  entry; **Custom path…** swaps in the free-text field with its `/` syntax and
+  datalist for spellings the list doesn't know. Parsed tags preview as `#`
+  chips under the field (aria-hidden; the input stays the accessible control),
+  and the rating's targets are 44px.
 
 ## UI message catalogue
 
