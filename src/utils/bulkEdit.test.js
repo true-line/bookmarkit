@@ -137,6 +137,35 @@ describe("previousValuesFor (#54)", () => {
       { id: "1", url: "https://gone.test/a", urlStatus: "dead", unreachable: true },
     ]);
   });
+
+  // #295: the failure's reason rides with the verdict it explains, so an undo
+  // that restored the verdict without it would hand back a dead link that
+  // could no longer say what was wrong with it.
+  it("restores the failure reason an undo took away with the verdict", () => {
+    const before = [
+      {
+        id: "1",
+        url: "https://gone.test/a",
+        urlStatus: "invalid",
+        urlStatusReason: "http:404",
+      },
+    ];
+    const patch = {
+      id: "1",
+      url: "https://web.archive.org/web/2019/https://gone.test/a",
+      urlStatus: "idle",
+      urlStatusReason: null,
+    };
+
+    expect(previousValuesFor([patch], before)).toEqual([
+      {
+        id: "1",
+        url: "https://gone.test/a",
+        urlStatus: "invalid",
+        urlStatusReason: "http:404",
+      },
+    ]);
+  });
 });
 
 describe("describeBulkEdit (#54)", () => {

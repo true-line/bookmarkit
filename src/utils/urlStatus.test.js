@@ -111,6 +111,18 @@ describe("fetchUrlStatus in the web build", () => {
   });
 
   it("tells a timeout from the rest of what the network can refuse", async () => {
+    // AbortSignal.timeout() rejects with TimeoutError (codex, #295); some
+    // engines surfaced that same expiry as AbortError. Both are the probe
+    // giving up, not the network refusing.
+    globalThis.fetch.mockRejectedValueOnce(
+      Object.assign(new Error("timed out"), { name: "TimeoutError" })
+    );
+    await expect(fetchUrlStatus("https://example.com")).resolves.toEqual({
+      status: "invalid",
+      redirectUrl: null,
+      reason: "timeout",
+    });
+
     globalThis.fetch.mockRejectedValueOnce(
       Object.assign(new Error("slow"), { name: "AbortError" })
     );

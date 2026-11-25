@@ -175,7 +175,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({
         status: "invalid",
         redirectUrl: null,
-        reason: error?.name === "AbortError" ? "timeout" : "unreachable",
+        // AbortSignal.timeout() rejects with TimeoutError; some engines
+        // surfaced the same expiry as AbortError. Either name means the probe
+        // gave up — anything else is the network refusing the attempt.
+        reason:
+          error?.name === "TimeoutError" || error?.name === "AbortError"
+            ? "timeout"
+            : "unreachable",
       })
     );
   return true; // keep message channel open for async response

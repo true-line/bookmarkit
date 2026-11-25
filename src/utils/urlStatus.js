@@ -67,6 +67,9 @@ export function fetchUrlStatus(url) {
     })
     .catch((error) => ({
       ...UNREACHABLE,
-      reason: error?.name === "AbortError" ? "timeout" : "unreachable",
+      // Same reading as the worker's: AbortSignal.timeout() rejects with
+      // TimeoutError, and some engines surfaced that expiry as AbortError.
+      reason:
+        error?.name === "TimeoutError" || error?.name === "AbortError" ? "timeout" : "unreachable",
     }));
 }
