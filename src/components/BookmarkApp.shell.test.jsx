@@ -35,14 +35,25 @@ const installViewport = () => {
 };
 
 let fakeStore;
+// Every observer the app builds while a test runs, with the element it was
+// given: the height plumbing fires them by hand, the way a browser does
+// after layout.
+let observers;
 
 beforeEach(() => {
   fakeStore = installFakeChromeBookmarks();
+  observers = [];
   // The header reports its height through one; jsdom has none to report to.
   vi.stubGlobal(
     "ResizeObserver",
     class {
-      observe() {}
+      constructor(cb) {
+        this.cb = cb;
+        observers.push(this);
+      }
+      observe(el) {
+        this.observed = el;
+      }
       disconnect() {}
     }
   );
@@ -214,6 +225,24 @@ describe("BookmarkApp's selection surfaces (#299)", () => {
     const bar = await buildSelectionBelowLg();
     await openDrawer();
 
-    expect(bar.parentElement).toHaveAttribute("inert");
+    expect(bar).toHaveAttribute("inert");
+  });
+
+  // #311 review: the band is the fixed element, so it is the one to measure —
+  // a wrapper around it has no layout height to read, and the padding would
+  // stay 0px with the last row still under the band.
+  it("measures the fixed band itself into the main area's padding", async () => {
+    installViewport();
+    const bar = await buildSelectionBelowLg();
+
+    const observer = observers.find((candidate) => candidate.observed === bar);
+    expect(observer).toBeDefined();
+
+    Object.defineProperty(bar, "offsetHeight", { configurable: true, value: 68 });
+    observer.cb();
+
+    expect(document.documentElement.style.getPropertyValue("--app-selectionbar-height")).toBe(
+      "68px"
+    );
   });
 });

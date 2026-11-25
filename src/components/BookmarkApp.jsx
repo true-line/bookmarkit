@@ -1476,15 +1476,16 @@ const BookmarkApp = () => {
       {/* #299: the selection's bar, pinned where a thumb reaches. It sits at
           the root with the header, so no ancestor's transform can re-anchor
           its fixed position, and it takes the drawer's inert like every other
-          surface behind the dialog. */}
+          surface behind the dialog. The ref lands on the band itself — a
+          fixed element gives a wrapper no height to measure. */}
       {selectionBarShown && (
-        <div ref={selectionBarRef} inert={navDrawerOpen || undefined}>
-          <SelectionBar
-            count={multiSelectedBookmarkIds.length}
-            onClear={clearSelectedBookmarks}
-            onBulkEdit={() => setBulkEditorOpen(true)}
-          />
-        </div>
+        <SelectionBar
+          ref={selectionBarRef}
+          inert={navDrawerOpen || undefined}
+          count={multiSelectedBookmarkIds.length}
+          onClear={clearSelectedBookmarks}
+          onBulkEdit={() => setBulkEditorOpen(true)}
+        />
       )}
 
       {/* ─── Modals ─── */}
