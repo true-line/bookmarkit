@@ -61,7 +61,6 @@ beforeEach(() => {
 
 afterEach(() => {
   delete window.matchMedia;
-  vi.unstubAllGlobals();
 });
 
 // The store opens asynchronously, so a test waits for the shell to come up.
@@ -466,24 +465,28 @@ describe("BookmarkApp's link health view (#295, sheet #303)", () => {
   });
 
   // The availability API's answer for the seeded link: one usable snapshot on
-  // the archive's own host, the shape `readSnapshot` trusts.
+  // the archive's own host, the shape `readSnapshot` trusts. Restored by hand:
+  // a global unstub in afterEach would also drop the ResizeObserver stub the
+  // cleanup unmount's pending effects still reach for (the second CI failure,
+  // #303).
   const stubArchiveHit = () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        ok: true,
-        json: async () => ({
-          archived_snapshots: {
-            closest: {
-              available: true,
-              status: "200",
-              url: "https://web.archive.org/web/20240512/https://gone.test/page",
-              timestamp: "20240512",
-            },
+    const original = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        archived_snapshots: {
+          closest: {
+            available: true,
+            status: "200",
+            url: "https://web.archive.org/web/20240512/https://gone.test/page",
+            timestamp: "20240512",
           },
-        }),
-      }))
-    );
+        },
+      }),
+    }));
+    return () => {
+      globalThis.fetch = original;
+    };
   };
 
   it("keeps a declined proposal declined when the window crosses `lg`", async () => {
@@ -494,23 +497,27 @@ describe("BookmarkApp's link health view (#295, sheet #303)", () => {
 
     await openLinkHealthView();
 
-    // The archive answers with a copy, staged as the row's proposal.
-    stubArchiveHit();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Find an archived copy of A page the sweep lost" })
-    );
-    await screen.findByText("https://web.archive.org/web/20240512/https://gone.test/page");
+    const restoreFetch = stubArchiveHit();
+    try {
+      // The archive answers with a copy, staged as the row's proposal.
+      fireEvent.click(
+        screen.getByRole("button", { name: "Find an archived copy of A page the sweep lost" })
+      );
+      await screen.findByText("https://web.archive.org/web/20240512/https://gone.test/page");
 
-    // The reader declines it: nothing left to apply.
-    fireEvent.click(screen.getByRole("checkbox", { name: "A page the sweep lost" }));
-    expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
+      // The reader declines it: nothing left to apply.
+      fireEvent.click(screen.getByRole("checkbox", { name: "A page the sweep lost" }));
+      expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
 
-    // ...and the window shrinks: the sheet is a different mount of the view,
-    // reading the app's set of rejections, not a component-local one — so
-    // crossing the breakpoint cannot quietly re-select what was refused.
-    act(() => viewport.resizeTo(false));
-    await screen.findByRole("dialog", { name: "Broken Links" });
-    expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
-    expect(screen.getByRole("checkbox", { name: "A page the sweep lost" })).not.toBeChecked();
+      // ...and the window shrinks: the sheet is a different mount of the view,
+      // reading the app's set of rejections, not a component-local one — so
+      // crossing the breakpoint cannot quietly re-select what was refused.
+      act(() => viewport.resizeTo(false));
+      await screen.findByRole("dialog", { name: "Broken Links" });
+      expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
+      expect(screen.getByRole("checkbox", { name: "A page the sweep lost" })).not.toBeChecked();
+    } finally {
+      restoreFetch();
+    }
   });
 });
