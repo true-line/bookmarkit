@@ -173,6 +173,11 @@ describe("BookmarkApp's selection surfaces (#299)", () => {
     fireEvent.click(screen.getByRole("button", { name: /Bulk Edit/ }));
     expect(screen.getByRole("dialog", { name: "Bulk Edit" })).toBeInTheDocument();
 
+    // Open, the sheet owns the keyboard: the list's shortcuts are suspended,
+    // so `d` cannot stage a deletion behind it (#301).
+    fireEvent.keyDown(window, { key: "d" });
+    expect(screen.getByRole("dialog", { name: "Bulk Edit" })).toBeInTheDocument();
+
     // Backing out returns to the bar with the selection intact.
     fireEvent.click(screen.getByRole("button", { name: "Back to bookmarks" }));
     expect(screen.queryByRole("dialog", { name: "Bulk Edit" })).toBeNull();

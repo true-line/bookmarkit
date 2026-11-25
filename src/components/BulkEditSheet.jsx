@@ -164,7 +164,7 @@ const BulkEditSheet = ({
         <Button intent="secondary" onClick={requestClose} disabled={isAutoTagging}>
           {t("common.cancel")}
         </Button>
-        <Button intent="primary" onClick={apply} disabled={nothingToDo}>
+        <Button intent="primary" onClick={apply} disabled={nothingToDo || isAutoTagging}>
           {confirming ? t("bulkEdit.applyTo", { count: patchCount }) : t("bulkEdit.applyChanges")}
         </Button>
       </footer>

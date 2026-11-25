@@ -363,7 +363,7 @@ const BulkEditBar = React.memo(function BulkEditBar({
         </div>
 
         <div className="ui-bulk-actions">
-          <Button type="button" onClick={apply} disabled={nothingToDo}>
+          <Button type="button" onClick={apply} disabled={nothingToDo || isAutoTagging}>
             {confirming ? t("bulkEdit.applyTo", { count: patches.length }) : t("bulkEdit.apply")}
           </Button>
 

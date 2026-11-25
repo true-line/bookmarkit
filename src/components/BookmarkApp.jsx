@@ -802,7 +802,10 @@ const BookmarkApp = () => {
     Boolean(digest) ||
     // #294: the navigation drawer. It handles its own Escape, as every dialog
     // does; this keeps the list shortcuts from firing behind it.
-    navDrawerOpen;
+    navDrawerOpen ||
+    // #301: the bulk-edit sheet below `lg` — a dialog to the keyboard like
+    // the rest, so `d` cannot stage a deletion behind it while it is open.
+    bulkEditorOpen;
 
   useKeyboardShortcuts(
     {
@@ -972,6 +975,10 @@ const BookmarkApp = () => {
   // dedupe and embedding paths apply (#86). A locked key keeps the box open:
   // submitting a query is how the user reaches the engine's unlock prompt.
   const isAgentConfigured = isSearchEnabled(runtimeProvider, providerOptions, encryption.locked);
+  // #301: Auto-Tag asks the provider directly and has no unlock prompt to
+  // offer, so its gate is the same readiness without the locked pass-through
+  // search uses to reach the unlock flow — locked settings mean it is off.
+  const canAutoTag = isSearchEnabled(runtimeProvider, providerOptions, false);
 
   const { isProcessing, run: runAgent } = useAgentEngine({
     provider: runtimeProvider,
@@ -1417,7 +1424,7 @@ const BookmarkApp = () => {
                 onClearSelection={clearSelectedBookmarks}
                 onDelete={confirmDeleteSelection}
                 onClose={() => setBulkEditorOpen(false)}
-                canAutoTag={isAgentConfigured}
+                canAutoTag={canAutoTag}
                 provider={runtimeProvider}
                 providerOptions={providerOptions}
               />

@@ -317,6 +317,18 @@ describe("BulkEditBar (#54)", () => {
     await waitFor(() => expect(addTags()).toHaveValue("mine, cli, reference"));
   });
 
+  // A change already typed is reviewed before Apply — a suggestion in flight
+  // must not be overtaken by the apply of the form it is about to join.
+  it("holds Apply while a suggestion is in flight", () => {
+    generate.mockImplementationOnce(() => new Promise(() => {}));
+    setup({ canAutoTag: true });
+
+    fireEvent.change(addTags(), { target: { value: "typed" } });
+    fireEvent.click(screen.getByRole("button", { name: /Suggest tags/ }));
+
+    expect(applyButton()).toBeDisabled();
+  });
+
   it("says when the model has nothing", async () => {
     generate.mockResolvedValueOnce("```\n```");
     setup({ canAutoTag: true, selected: selection(2) });
@@ -412,6 +424,18 @@ describe("BulkEditBar's sheet below `lg` (#301)", () => {
 
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Back to bookmarks" })).toBeDisabled();
+  });
+
+  // Same hold as the bar: the apply of the pre-suggestion form must not
+  // overtake the suggestion it is about to join.
+  it("holds Apply while a suggestion is in flight", () => {
+    generate.mockImplementationOnce(() => new Promise(() => {}));
+    setupSheet({ canAutoTag: true });
+
+    fireEvent.change(screen.getByLabelText("Add tags"), { target: { value: "typed" } });
+    fireEvent.click(screen.getByRole("button", { name: /Suggest tags/ }));
+
+    expect(screen.getByRole("button", { name: "Apply Changes" })).toBeDisabled();
   });
 
   it("keeps the large-selection second press before writing", async () => {
