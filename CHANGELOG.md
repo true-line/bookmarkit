@@ -1,5 +1,12 @@
 # bookmarkit
 
+## 0.16.0
+
+### Minor Changes
+
+- bce5a7f: Link health is a workspace view. On windows from `lg` up, **Broken Links** in the sidebar opens the broken-links mockup's **Link Health & Archive Recovery** page beside the navigation rail instead of narrowing the list: the sweep's summary ("N checked · M unreachable") with **Re-check Links** in the header, and each unreachable link as a row — the failure named in words on a status chip ("HTTP 404", "DNS Unreachable", "Timeout"), the dead address struck through, and the archive's proposed snapshot beside it. Proposals review in place with the dialog's contract — every snapshot starts selected, nothing writes until **Apply Selected (n)**, and accepting is one undo — while **Find Archive Snapshots** asks the archive about the collection's dead links, only once pressed, on the same paced run as before. The check now keeps _why_ a link failed (`urlStatusReason`), cleared when a link recovers or passes; the review dialog shows that detail in its diff, and the URL-check boundary is unchanged — still public http(s) only, still no redirects followed, still answered by the extension's service worker. Below `lg` the Broken Links row keeps the broken-only filter, and the header's **Find Archived Copies** dialog flow is unchanged.
+- 7f5b131: The weekly digest is a workspace view. On windows from `lg` up, **Weekly Digest** in the sidebar (or the navigation drawer) opens the weekly-digest mockup's full page beside the navigation rail instead of a modal over the list: the week's range under the title with **Show never opened** and **Triage untagged** in the header, the **Arrived this week / Settled & never opened / Needs tags** figures as a summary strip, and the week's additions as named topic clusters of bookmark rows — favicon roundel, title, URL — that open like everywhere else. The centered desktop modal retires; below `lg` the digest is still the full-page sheet with the Needs Review queue, and no write path changed — the two header actions remain the never-opened filter and the organizer's tag review.
+
 ## 0.15.0
 
 ### Minor Changes
