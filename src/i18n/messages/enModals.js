@@ -80,10 +80,12 @@ export const surfaceMessages = {
       "<strong>Import/Export</strong> lets you back up or restore bookmarks from JSON/HTML.",
   },
 
-  // DigestModal, and the two group titles no model chose (utils/digest.js,
-  // #307). The sheet keys are DigestSheet's, below `lg` (#302).
+  // WeeklyDigestView (#296) — the workspace view from `lg` and the sheet's
+  // host below it — and the two group titles no model chose
+  // (utils/digest.js, #307). The sheet-only keys are DigestSheet's (#302).
   digest: {
     alsoSaved: "Also saved",
+    arrivedThisWeek: "Arrived this week",
     autoTag: "Auto-Tag",
     autoTagAria: "Suggest tags for the untagged with AI",
     backAria: "Back to bookmarks",
@@ -102,8 +104,11 @@ export const surfaceMessages = {
     flagUntagged: "Untagged",
     groupedByTheme: "Grouped by theme.",
     needsReviewTitle: "Needs Review",
+    needsTags: "Needs tags",
     neverOpenedHint: "Saved a while ago and not opened since — oldest first.",
     neverOpenedTitle: "Never opened",
+    nothingAdded: "Nothing arrived this week — the summary is still the week.",
+    olderThanSevenDays: "Older than 7 days",
     openCard: "Open",
     queueCount: {
       one: "1 item",
@@ -113,7 +118,10 @@ export const surfaceMessages = {
       one: "{range} · 1 saved",
       other: "{range} · {count} saved",
     },
+    rangeSubtitle: "{range} · Local summary with optional AI topic grouping.",
+    readyForTriage: "Ready for triage",
     savedTitle: "Saved this week",
+    settledNeverOpened: "Settled & never opened",
     showNeverOpened: "Show never opened",
     summaryAria: "Digest summary",
     summarySaved: "Saved",
@@ -121,6 +129,10 @@ export const surfaceMessages = {
     summaryUntagged: "Untagged",
     tagAndFile: "Tag & File",
     title: "Weekly Digest",
+    topicGroups: {
+      one: "1 topic group",
+      other: "{count} topic groups",
+    },
     triage: "Triage untagged",
     untaggedHint: "Filed in a hurry. The organizer can suggest tags for these.",
     untaggedTitle: "Untagged",

@@ -65,7 +65,7 @@ import BookmarkList from "./BookmarkList.jsx";
 import ViewSelector from "./ViewSelector.jsx";
 import BulkEditBar from "./BulkEditBar.jsx";
 import SelectionBar from "./SelectionBar.jsx";
-import DigestModal from "./DigestModal.jsx";
+import WeeklyDigestView from "./WeeklyDigestView.jsx";
 import { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
@@ -81,7 +81,6 @@ import Toast from "./Toast.jsx";
 import { Button, IconButton, InputField } from "../design-system/index.js";
 import {
   AddIcon,
-  CalendarIcon,
   CopiesIcon,
   HealthIcon,
   SearchIcon,
@@ -1325,14 +1324,6 @@ const BookmarkApp = () => {
               </Button>
               <Button
                 intent="outlined"
-                onClick={showDigest}
-                loading={digestEngine.running}
-                leadingIcon={<CalendarIcon />}
-              >
-                {t("app.digest")}
-              </Button>
-              <Button
-                intent="outlined"
                 onClick={sweep.running ? sweep.stop : sweep.start}
                 leadingIcon={<HealthIcon />}
               >
@@ -1394,107 +1385,126 @@ const BookmarkApp = () => {
             itself decides whether that still earns another column. */}
         <div className="relative flex-1 min-h-0 w-full mx-auto px-4 flex gap-4 max-w-none min-[2752px]:max-w-[2720px]">
           <div className="flex-1 min-w-0 min-h-0 flex flex-col">
-            {/* Agent plan display */}
-            {lastAction && (
-              <div className="mb-4">
-                <AgentPlan steps={lastAction} error={lastAction.action === "error"} />
-              </div>
-            )}
+            {/* #296: from `lg` the digest is a workspace view beside the
+                sidebar, not a modal over the list — the weekly-digest
+                mockup's main. The list column (plan bar, sweep bar, bulk
+                edit, shelf) is the collection's view and yields the page
+                while the week is on screen; leaving is navigation, the way
+                it is between any two views. Below `lg` the digest stays the
+                sheet, and the list column stays mounted behind it. */}
+            {digest && isSidebarViewport ? (
+              <WeeklyDigestView
+                digest={digest}
+                remoteFavicons={remoteFavicons}
+                onOpen={openBookmark}
+                onShowNeverOpened={showNeverOpened}
+                onTriage={triageUntagged}
+              />
+            ) : (
+              <>
+                {/* Agent plan display */}
+                {lastAction && (
+                  <div className="mb-4">
+                    <AgentPlan steps={lastAction} error={lastAction.action === "error"} />
+                  </div>
+                )}
 
-            <LinkSweepBar
-              running={sweep.running}
-              checked={sweep.checked}
-              total={sweep.total}
-              brokenCount={brokenCount}
-              brokenOnly={manualFilters.brokenOnly}
-              onStop={sweep.stop}
-              onShowBroken={showBrokenOnly}
-            />
+                <LinkSweepBar
+                  running={sweep.running}
+                  checked={sweep.checked}
+                  total={sweep.total}
+                  brokenCount={brokenCount}
+                  brokenOnly={manualFilters.brokenOnly}
+                  onStop={sweep.stop}
+                  onShowBroken={showBrokenOnly}
+                />
 
-            {organizer.running && (
-              <div
-                className="mb-4 p-3 rounded-lg border border-border bg-primary-bg flex items-center gap-3"
-                role="status"
-                aria-live="polite"
-              >
-                <span className="text-sm text-primary-text">
-                  {t("app.organizerProgress", { done: organizer.done, total: organizer.total })}
-                </span>
-                <Button type="button" intent="secondary" onClick={organizer.stop}>
-                  {t("common.stop")}
-                </Button>
-              </div>
-            )}
+                {organizer.running && (
+                  <div
+                    className="mb-4 p-3 rounded-lg border border-border bg-primary-bg flex items-center gap-3"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span className="text-sm text-primary-text">
+                      {t("app.organizerProgress", { done: organizer.done, total: organizer.total })}
+                    </span>
+                    <Button type="button" intent="secondary" onClick={organizer.stop}>
+                      {t("common.stop")}
+                    </Button>
+                  </div>
+                )}
 
-            {/* #54: Only for a real multi-selection — a single click is served
+                {/* #54: Only for a real multi-selection — a single click is served
                 by the form. #299: below `lg` the selection's home is the bar
                 at the bottom, and "Bulk Edit" opens this editor as the sheet
                 (#301); the bar itself becomes that sheet below `lg`. */}
-            {multiSelectedBookmarkIds.length > 0 && (isSidebarViewport || bulkEditorOpen) && (
-              <BulkEditBar
-                selected={selectedBookmarks}
-                allBookmarks={bookmarks}
-                onApply={handleBulkEdit}
-                onClearSelection={clearSelectedBookmarks}
-                onDelete={confirmDeleteSelection}
-                onClose={() => setBulkEditorOpen(false)}
-                canAutoTag={canAutoTag}
-                provider={runtimeProvider}
-                providerOptions={providerOptions}
-              />
-            )}
+                {multiSelectedBookmarkIds.length > 0 && (isSidebarViewport || bulkEditorOpen) && (
+                  <BulkEditBar
+                    selected={selectedBookmarks}
+                    allBookmarks={bookmarks}
+                    onApply={handleBulkEdit}
+                    onClearSelection={clearSelectedBookmarks}
+                    onDelete={confirmDeleteSelection}
+                    onClose={() => setBulkEditorOpen(false)}
+                    canAutoTag={canAutoTag}
+                    provider={runtimeProvider}
+                    providerOptions={providerOptions}
+                  />
+                )}
 
-            {/* ARCH-10: Empty state + PERF-06: virtualized list — flex-1 fills remaining viewport height */}
-            <div className="flex-1 min-h-0 pb-4">
-              <BookmarkList
-                bookmarks={displayedBookmarks}
-                selectedBookmarkId={selectedBookmarkId}
-                multiSelectedBookmarkIds={multiSelectedBookmarkIds}
-                bookmarksToDelete={bookmarksToDelete}
-                onBookmarkClick={handleBookmarkClick}
-                onBookmarkDoubleClick={handleBookmarkDoubleClick}
-                onBookmarkKeyDown={handleBookmarkKeyDown}
-                onBookmarkDragStart={
-                  // #55: dragging onto a folder needs the tree on screen — the
-                  // rail from `lg`, the drawer below it while it is open.
-                  navDrawerOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
-                }
-                isLoading={isLoading}
-                bookmarksTotal={bookmarks.length}
-                searchActive={!!debouncedSearchQuery || hasActiveFilters(effectiveFilters)}
-                lastAction={lastAction}
-                searchQuery={debouncedSearchQuery || debouncedFilterText}
-                onClearSearch={clearAllFilters}
-                onAddNew={handleAddNewBookmark}
-                onImport={handleImportExportOpen}
-                remoteFavicons={remoteFavicons}
-                effectsEnabled={effects}
-                viewMode={viewMode}
-                filters={manualFilters}
-                showSortControls={isSidebarViewport}
-                tagFacets={tagFacets}
-                onFilterChange={setManualFilters}
-                onCycleTag={handleCycleTag}
-                onClearFilters={clearManualFilters}
-                filterSummary={(() => {
-                  const shown =
-                    displayedBookmarks.length === bookmarks.length
-                      ? t("app.summaryTotal", { count: bookmarks.length })
-                      : t("app.summaryShown", {
-                          shown: displayedBookmarks.length,
-                          total: bookmarks.length,
+                {/* ARCH-10: Empty state + PERF-06: virtualized list — flex-1 fills remaining viewport height */}
+                <div className="flex-1 min-h-0 pb-4">
+                  <BookmarkList
+                    bookmarks={displayedBookmarks}
+                    selectedBookmarkId={selectedBookmarkId}
+                    multiSelectedBookmarkIds={multiSelectedBookmarkIds}
+                    bookmarksToDelete={bookmarksToDelete}
+                    onBookmarkClick={handleBookmarkClick}
+                    onBookmarkDoubleClick={handleBookmarkDoubleClick}
+                    onBookmarkKeyDown={handleBookmarkKeyDown}
+                    onBookmarkDragStart={
+                      // #55: dragging onto a folder needs the tree on screen — the
+                      // rail from `lg`, the drawer below it while it is open.
+                      navDrawerOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
+                    }
+                    isLoading={isLoading}
+                    bookmarksTotal={bookmarks.length}
+                    searchActive={!!debouncedSearchQuery || hasActiveFilters(effectiveFilters)}
+                    lastAction={lastAction}
+                    searchQuery={debouncedSearchQuery || debouncedFilterText}
+                    onClearSearch={clearAllFilters}
+                    onAddNew={handleAddNewBookmark}
+                    onImport={handleImportExportOpen}
+                    remoteFavicons={remoteFavicons}
+                    effectsEnabled={effects}
+                    viewMode={viewMode}
+                    filters={manualFilters}
+                    showSortControls={isSidebarViewport}
+                    tagFacets={tagFacets}
+                    onFilterChange={setManualFilters}
+                    onCycleTag={handleCycleTag}
+                    onClearFilters={clearManualFilters}
+                    filterSummary={(() => {
+                      const shown =
+                        displayedBookmarks.length === bookmarks.length
+                          ? t("app.summaryTotal", { count: bookmarks.length })
+                          : t("app.summaryShown", {
+                              shown: displayedBookmarks.length,
+                              total: bookmarks.length,
+                            });
+                      if (multiSelectedBookmarkIds.length > 0)
+                        return t("app.summarySelected", {
+                          count: multiSelectedBookmarkIds.length,
+                          summary: shown,
                         });
-                  if (multiSelectedBookmarkIds.length > 0)
-                    return t("app.summarySelected", {
-                      count: multiSelectedBookmarkIds.length,
-                      summary: shown,
-                    });
-                  if (selectedBookmarkId)
-                    return t("app.summarySelected", { count: 1, summary: shown });
-                  return shown;
-                })()}
-              />
-            </div>
+                      if (selectedBookmarkId)
+                        return t("app.summarySelected", { count: 1, summary: shown });
+                      return shown;
+                    })()}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </main>
@@ -1584,8 +1594,11 @@ const BookmarkApp = () => {
             isLoading={isDeleting}
           />
         )}
-        {digest && (
-          <DigestModal
+        {/* #296/#302: below `lg` the digest is the mobile mockup's full-page
+            sheet, an overlay over the list exactly as before. From `lg` the
+            digest is the workspace view in `main` and mounts there instead. */}
+        {digest && !isSidebarViewport && (
+          <WeeklyDigestView
             digest={digest}
             onOpen={openBookmark}
             onShowNeverOpened={showNeverOpened}

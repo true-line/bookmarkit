@@ -1,5 +1,5 @@
 // #302: the mobile weekly digest (design/mockups
-// /bookmarkit_mobile_weekly_digest/code.html 186–277) — what DigestModal
+// /bookmarkit_mobile_weekly_digest/code.html 186–277) — what the digest
 // becomes below `lg`, where the week's triage leaves the centered modal for
 // the mockup's full-page sheet: a sticky app bar (back, the title over the
 // week's range and count, Auto-Tag), the summary's three counts, and the
