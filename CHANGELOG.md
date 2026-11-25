@@ -1,5 +1,13 @@
 # bookmarkit
 
+## 0.15.0
+
+### Minor Changes
+
+- d61c08f: The weekly digest has its mobile sheet. On windows narrower than `lg`, opening the digest leaves the centered modal for a full-page composition: the week's **Saved / Unopened / Untagged** counts as a summary card, an **Auto-Tag** strip that hands the untagged set to the organizer exactly as the modal's triage action does, and a **Needs Review** queue that reads the never-opened and untagged sections as one deduplicated list, newest save first — every card with **Open** and a **Tag & File** action that opens the ordinary edit form, all controls at the mockup's 44px targets. No new write path: triage reviews through the same diff, Tag & File saves through the form.
+- 8d01787: The Options dialog's Appearance section gains **Interface Language**. "System default" follows the browser's own language; English is the locale the catalogue ships today, and a locale appears in the select as soon as its message file lands. The choice persists to the browser and applies immediately — copy, number and date formats, and the document's `dir`, which mirrors the whole interface for right-to-left locales (the selector, the sidebar and dialogs are built on logical properties; the folder tree's indentation follows when #291's utility sweep lands).
+- 4e4abc2: The navigation sidebar gains a maintenance footer: **Check Links**, **Remove Duplicates**, **Import / Export** and **Options**. The rows run the same handlers and open the same dialogs as the header strip's buttons, in the rail from `lg` up and in the navigation drawer below it — the link sweep flips its row to "Stop Check" while it runs, and the duplicate compare holds its row, exactly as the header's buttons do.
+
 ## 0.14.0
 
 ### Minor Changes
