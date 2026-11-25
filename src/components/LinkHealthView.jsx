@@ -4,8 +4,9 @@
 // sidebar's Broken Links row opens this view instead of narrowing the list:
 // link health is a page of its own — the sweep's summary, the re-check it
 // offers, and the archive's recovery proposals reviewed in place — not a
-// filter over the shelf. Below `lg` the list, its sweep bar and the review
-// dialog stay as they are today; their dedicated mobile composition is #303.
+// filter over the shelf. Below `lg` the same view presents as the mobile
+// mockup's full-page sheet (#303, LinkHealthSheet): same data, same actions,
+// different chrome.
 //
 // The review contract is ChangeReviewModal's (#102), carried into the view:
 // every snapshot proposal starts accepted, any row can be dropped on its own,
@@ -13,103 +14,26 @@
 // bulk-edit write path as the dialog, so re-pointing a set is one undo. The
 // lookup itself stays an asked-for step (#102's privacy stance): the view
 // offers "Find Archive Snapshots" and contacts the archive only then, once
-// per run, about the dead links only.
+// per run, about the dead links only — or, per row (#303), when Wayback is
+// pressed on the one card being read.
 //
 // It renders what it is given and decides nothing: which links are broken is
 // `utils/linkHealth.js`, whether an archived copy exists is
-// `utils/archiveRecovery.js`, and what a failure is called (HTTP 404, DNS
-// Unreachable, Timeout) is the check's stored reason, shared with the review
-// dialog's diff through `statusReasonLabel`. The chip is text and icon — the
-// color is the third channel, never the only one.
+// `utils/archiveRecovery.js`, and what a failure is called is the check's
+// stored reason (see LinkHealthRows).
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import { Button, Tag, Typography } from "../design-system/index.js";
+import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
+import { useFocusTrap } from "../hooks/useFocusTrap.js";
+import { Button, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
-import { statusReasonLabel } from "../utils/linkHealth.js";
-import { DnsIcon, LinkOffIcon, RefreshIcon, TimerIcon } from "./icons.jsx";
+import { lastScanLabel } from "../utils/linkHealth.js";
+import { Banner, ProgressLines, ProposalRow, RowActions } from "./LinkHealthRows.jsx";
+import LinkHealthSheet from "./LinkHealthSheet.jsx";
+import { RefreshIcon } from "./icons.jsx";
 
 const mutedStyle = { color: "var(--ui-on-surface-variant)" };
-
-// The status chip's glyph, per the mockup's picks: the parted link for an
-// HTTP status (and for the unexplained failure an older sweep left), the
-// stacked hosts for the network's refusal, the timer for the probe that gave
-// up. Text always rides beside it — status is never color alone.
-const reasonIcon = (reason) =>
-  reason === "timeout" ? TimerIcon : reason === "unreachable" ? DnsIcon : LinkOffIcon;
-
-const ReasonChip = ({ reason }) => {
-  const t = useMessages();
-  const Icon = reasonIcon(reason);
-  return (
-    <Tag className="ui-health-chip">
-      <Icon size={14} />
-      {statusReasonLabel(reason, t)}
-    </Tag>
-  );
-};
-
-// One proposal row, in the mockup's composition: the checkbox over the title,
-// the status chip on the row's end, and the two boxes — the dead address in
-// the mono type with the strike the mockup gives it, and the snapshot beside
-// it. A link the archive could not help keeps the row (the summary counts it)
-// with the "no copy" reading and a checkbox there is nothing to apply.
-const ProposalRow = ({ bookmark, snapshot, selected, disabled, onToggle }) => {
-  const t = useMessages();
-  return (
-    <article className="ui-health-row" aria-label={bookmark.title || bookmark.url}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="flex min-w-0 cursor-pointer items-center gap-2.5">
-          <input
-            type="checkbox"
-            style={{ accentColor: "var(--ui-primary)" }}
-            checked={selected}
-            onChange={onToggle}
-            disabled={disabled}
-          />
-          <Typography variant="label-lg" as="span" dir="auto" className="truncate">
-            {bookmark.title || bookmark.url}
-          </Typography>
-        </label>
-        <ReasonChip reason={bookmark.urlStatusReason} />
-      </div>
-      <div className="ui-health-grid">
-        <div className="ui-health-box">
-          <Typography variant="label-sm" as="span" className="block" style={mutedStyle}>
-            {t("linkHealth.originalLabel")}
-          </Typography>
-          <Typography
-            variant="mono-sm"
-            as="p"
-            dir="ltr"
-            className="ui-health-url ui-health-url--dead"
-          >
-            {bookmark.url}
-          </Typography>
-        </div>
-        {snapshot ? (
-          <div className="ui-health-box ui-health-box--proposal">
-            <Typography variant="label-sm" as="span" className="ui-health-box-label block">
-              {t("linkHealth.snapshotLabel")}
-            </Typography>
-            <Typography variant="mono-sm" as="p" dir="ltr" className="ui-health-url">
-              {snapshot}
-            </Typography>
-          </div>
-        ) : (
-          <div className="ui-health-box">
-            <Typography variant="label-sm" as="span" className="block" style={mutedStyle}>
-              {t("linkHealth.snapshotLabel")}
-            </Typography>
-            <Typography variant="body-sm" as="p" style={mutedStyle}>
-              {t("linkHealth.noSnapshot")}
-            </Typography>
-          </div>
-        )}
-      </div>
-    </article>
-  );
-};
 
 // The mockup's header actions: Re-check Links — the sweep's stop while it
 // runs — then Find Archive Snapshots while a lookup is still owed, then
@@ -167,6 +91,81 @@ const HeaderActions = ({
   );
 };
 
+// The workspace composition: the title over the summary and freshness, the
+// header's actions, and the shared content below. It exists only from `lg`,
+// so landing focus on the title is simply its own mount effect.
+const LinkHealthWorkspace = ({
+  checkedTotal,
+  unreachableCount,
+  freshness,
+  proposalCount,
+  accepted,
+  sweepRunning,
+  archiveRunning,
+  needsLookup,
+  applying,
+  content,
+  onRecheck,
+  onStopSweep,
+  onFindSnapshots,
+  onStopArchive,
+  onApply,
+}) => {
+  const t = useMessages();
+  const headingRef = useRef(null);
+
+  // Opening the view announces where the reader landed: the sidebar row's
+  // activation moves focus to the view's title, the way the digest's does.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="ui-health-view min-h-0 w-full flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Typography variant="headline-lg" as="h2" ref={headingRef} tabIndex={-1}>
+              {t("linkHealth.title")}
+            </Typography>
+            <Typography
+              variant="body-sm"
+              className="mt-0.5"
+              style={{ ...mutedStyle, unicodeBidi: "plaintext" }}
+            >
+              <span>
+                {t("linkHealth.summary", { checked: checkedTotal, unreachable: unreachableCount })}
+              </span>
+              {freshness && (
+                <>
+                  {" · "}
+                  <span>{freshness}</span>
+                </>
+              )}
+              {" · "}
+              <span>{t("linkHealth.proposalNote")}</span>
+            </Typography>
+          </div>
+          <HeaderActions
+            sweepRunning={sweepRunning}
+            archiveRunning={archiveRunning}
+            needsLookup={needsLookup}
+            applying={applying}
+            proposalCount={proposalCount}
+            accepted={accepted}
+            onRecheck={onRecheck}
+            onStopSweep={onStopSweep}
+            onFindSnapshots={onFindSnapshots}
+            onStopArchive={onStopArchive}
+            onApply={onApply}
+          />
+        </header>
+        {content}
+      </div>
+    </div>
+  );
+};
+
 const LinkHealthView = ({
   checkedTotal,
   unreachableCount,
@@ -183,25 +182,34 @@ const LinkHealthView = ({
   archiveDone = 0,
   archiveTotal = 0,
   applying = false,
+  // #303: when the sweep last ran, for the freshness line.
+  lastSweepAt = null,
   onRecheck,
   onStopSweep,
   onFindSnapshots,
   onStopArchive,
   onApply,
+  // #303: the per-card actions — the ordinary edit form for the one link,
+  // and a single-row ask of the archive.
+  onEdit,
+  onWayback,
+  // Below `lg` the sheet is the composition, and the back bar needs its way
+  // out. Unused in the workspace composition.
+  onClose,
 }) => {
   const t = useMessages();
-  const headingRef = useRef(null);
   // The dialog's stance: everything starts accepted, and unticking is the
   // disagreement. Applied rows leave `broken` (the store's verdict is cleared),
   // so a stale rejection is harmless — it can only resurface as "this snapshot
   // was declined before" if the same link dies again.
   const [rejected, setRejected] = useState(() => new Set());
 
-  // Opening the view announces where the reader landed: the sidebar row's
-  // activation moves focus to the view's title, the way the digest's does.
-  useEffect(() => {
-    headingRef.current?.focus();
-  }, []);
+  // #303: the view is a workspace beside the rail from `lg`, and the mobile
+  // mockup's full-page sheet below it — the digest's arrangement. The trap
+  // arms only for the sheet; the view is no dialog and arms nothing.
+  const isDialogViewport = useSidebarViewport();
+  const sheetRef = useRef(null);
+  useFocusTrap(sheetRef, !isDialogViewport);
 
   const snapshots = useMemo(
     () => broken.map((b) => proposalUrls[b.id] ?? null),
@@ -220,83 +228,101 @@ const LinkHealthView = ({
       return next;
     });
 
+  // One props bag per row, so the workspace view and the sheet render the
+  // very same rows.
+  const rows = broken.map((bookmark, index) => ({
+    key: bookmark.id,
+    bookmark,
+    snapshot: snapshots[index],
+    selected: Boolean(proposalUrls[bookmark.id]) && !rejected.has(bookmark.id),
+    disabled: !proposalUrls[bookmark.id] || applying,
+    onToggle: () => toggle(bookmark.id),
+    actions: (onEdit || onWayback) && (
+      <RowActions
+        bookmark={bookmark}
+        snapshot={snapshots[index]}
+        onEdit={onEdit}
+        onWayback={onWayback}
+        archiveRunning={archiveRunning}
+        applying={applying}
+      />
+    ),
+  }));
+
+  // The two readings the summary and the sheet's subtitle share.
+  const freshness = lastScanLabel(lastSweepAt, t);
+
+  // The alarm, the in-flight readings and the rows themselves — composed
+  // once, shared by both compositions. The sheet is the chrome around them.
+  const content = (
+    <>
+      {broken.length > 0 && <Banner count={broken.length} />}
+      <ProgressLines
+        sweepRunning={sweepRunning}
+        sweepChecked={sweepChecked}
+        sweepTotal={sweepTotal}
+        archiveRunning={archiveRunning}
+        archiveDone={archiveDone}
+        archiveTotal={archiveTotal}
+      />
+      {broken.length === 0 ? (
+        <Typography variant="body-sm" style={mutedStyle}>
+          {t("linkHealth.noBroken")}
+        </Typography>
+      ) : (
+        <section aria-label={t("linkHealth.rowsLabel")} className="flex flex-col gap-4">
+          {rows.map(({ key, ...rowProps }) => (
+            <ProposalRow key={key} {...rowProps} />
+          ))}
+        </section>
+      )}
+    </>
+  );
+
+  // #303: below `lg` the sheet is the whole composition — the bar's back and
+  // re-check, this content, and the footer's write.
+  if (!isDialogViewport) {
+    return (
+      <LinkHealthSheet
+        sheetRef={sheetRef}
+        brokenCount={broken.length}
+        freshness={freshness}
+        proposalCount={proposals.length}
+        acceptedCount={accepted.length}
+        sweepRunning={sweepRunning}
+        archiveRunning={archiveRunning}
+        needsLookup={needsLookup}
+        applying={applying}
+        onRecheck={onRecheck}
+        onStopSweep={onStopSweep}
+        onFindSnapshots={onFindSnapshots}
+        onStopArchive={onStopArchive}
+        onApplyAccepted={() => onApply(accepted.map((b) => b.id))}
+        onClose={onClose}
+      >
+        {content}
+      </LinkHealthSheet>
+    );
+  }
+
   return (
-    <div className="ui-health-view min-h-0 w-full flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <Typography variant="headline-lg" as="h2" ref={headingRef} tabIndex={-1}>
-              {t("linkHealth.title")}
-            </Typography>
-            <Typography
-              variant="body-sm"
-              className="mt-0.5"
-              style={{ ...mutedStyle, unicodeBidi: "plaintext" }}
-            >
-              <span>
-                {t("linkHealth.summary", { checked: checkedTotal, unreachable: unreachableCount })}
-              </span>
-              {" · "}
-              <span>{t("linkHealth.proposalNote")}</span>
-            </Typography>
-          </div>
-          <HeaderActions
-            sweepRunning={sweepRunning}
-            archiveRunning={archiveRunning}
-            needsLookup={needsLookup}
-            applying={applying}
-            proposalCount={proposals.length}
-            accepted={accepted}
-            onRecheck={onRecheck}
-            onStopSweep={onStopSweep}
-            onFindSnapshots={onFindSnapshots}
-            onStopArchive={onStopArchive}
-            onApply={onApply}
-          />
-        </header>
-
-        {sweepRunning && (
-          <div className="ui-sweep-bar" role="status" aria-live="polite">
-            <span className="ui-sweep-status">{t("linkSweep.checking")} </span>
-            <Tag className="ui-numeric">
-              {t("linkSweep.progress", { checked: sweepChecked, total: sweepTotal })}
-            </Tag>
-            <div className="ui-sweep-track">
-              <div
-                className="ui-sweep-fill"
-                style={{
-                  width: `${sweepTotal ? Math.round((sweepChecked / sweepTotal) * 100) : 0}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
-        {archiveRunning && (
-          <Typography variant="body-sm" role="status" aria-live="polite" style={mutedStyle}>
-            {t("linkHealth.findingSnapshots", { done: archiveDone, total: archiveTotal })}
-          </Typography>
-        )}
-
-        {broken.length === 0 ? (
-          <Typography variant="body-sm" style={mutedStyle}>
-            {t("linkHealth.noBroken")}
-          </Typography>
-        ) : (
-          <section aria-label={t("linkHealth.rowsLabel")} className="flex flex-col gap-4">
-            {broken.map((bookmark, index) => (
-              <ProposalRow
-                key={bookmark.id}
-                bookmark={bookmark}
-                snapshot={snapshots[index]}
-                selected={Boolean(proposalUrls[bookmark.id]) && !rejected.has(bookmark.id)}
-                disabled={!proposalUrls[bookmark.id] || applying}
-                onToggle={() => toggle(bookmark.id)}
-              />
-            ))}
-          </section>
-        )}
-      </div>
-    </div>
+    <LinkHealthWorkspace
+      checkedTotal={checkedTotal}
+      unreachableCount={unreachableCount}
+      freshness={freshness}
+      proposalCount={proposals.length}
+      accepted={accepted}
+      sweepRunning={sweepRunning}
+      archiveRunning={archiveRunning}
+      needsLookup={needsLookup}
+      applying={applying}
+      content={content}
+      onRecheck={onRecheck}
+      onStopSweep={onStopSweep}
+      onFindSnapshots={onFindSnapshots}
+      onStopArchive={onStopArchive}
+      onApply={onApply}
+    />
   );
 };
 
