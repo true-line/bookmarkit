@@ -8,6 +8,7 @@ import {
   isCheckable,
   lastScanLabel,
   nextSweepBatch,
+  nextScanAgeChange,
   readCheckedAt,
   readLastSweepAt,
   recordChecked,
@@ -212,6 +213,24 @@ describe("scanAge and the sweep's freshness (#303)", () => {
     expect(scanAge(now + 5 * DAY, now)).toBe("now");
   });
 
+  it("names the boundary the words are about to cross", () => {
+    // Inside the first minute: the turn to "1 minute ago".
+    expect(nextScanAgeChange(now - 30 * 1000, now)).toBe(30 * 1000);
+    // Inside the minutes: the next minute mark, not the hour's.
+    expect(nextScanAgeChange(now - 90 * 1000, now)).toBe(30 * 1000);
+    expect(nextScanAgeChange(now - 59 * 60 * 1000, now)).toBe(60 * 1000);
+    // Inside the hours: the next hour mark.
+    expect(nextScanAgeChange(now - 2 * 60 * 60 * 1000, now)).toBe(60 * 60 * 1000);
+    // Inside the days: the next day mark.
+    expect(nextScanAgeChange(now - 25 * 60 * 60 * 1000, now)).toBe(23 * 60 * 60 * 1000);
+  });
+
+  it("names no boundary when no sweep has run", () => {
+    expect(nextScanAgeChange(null, now)).toBeNull();
+    expect(nextScanAgeChange(0, now)).toBeNull();
+    expect(nextScanAgeChange(undefined, now)).toBeNull();
+  });
+
   it("words the line from the locale's own formatter", () => {
     const t = (key, params) => {
       const catalogue = {
@@ -223,11 +242,12 @@ describe("scanAge and the sweep's freshness (#303)", () => {
     // The shape the real translator carries (i18n/index.js), in English words.
     t.relative = (value, unit) => `${-value} ${unit}${-value === 1 ? "" : "s"} ago`;
 
-    // lastScanLabel reads the real clock, so its inputs are real epochs.
-    expect(lastScanLabel(Date.now() - 30 * 1000, t)).toBe("Last scan just now");
-    // The age is ready-worded, so the template only names the scan.
-    expect(lastScanLabel(Date.now() - 2 * 60 * 60 * 1000, t)).toBe("Last scan 2 hours ago");
-    expect(lastScanLabel(null, t)).toBeNull();
+    // The clock is injectable, so a timer can re-read one instant (#303).
+    expect(lastScanLabel(100 * DAY - 30 * 1000, t, 100 * DAY)).toBe("Last scan just now");
+    expect(lastScanLabel(100 * DAY - 2 * 60 * 60 * 1000, t, 100 * DAY)).toBe(
+      "Last scan 2 hours ago"
+    );
+    expect(lastScanLabel(null, t, 100 * DAY)).toBeNull();
   });
 });
 

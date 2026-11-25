@@ -702,6 +702,21 @@ const BookmarkApp = () => {
     setRecoveryRows((prev) => [...prev.filter((row) => !fresh.has(row.id)), ...rows]);
   }, []);
 
+  // #303 (codex): which staged proposals the reader unticked — held here,
+  // above the breakpoint-dependent mounts, so crossing `lg` while the view is
+  // open swaps the workspace for the sheet without re-selecting what was
+  // explicitly declined.
+  const [rejectedRecovery, setRejectedRecovery] = useState(() => new Set());
+
+  const toggleRejectedRecovery = useCallback((id) => {
+    setRejectedRecovery((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   // #295: the view's lookup — the whole collection's dead links, not the
   // selection or the screen the header button works from. The same paced run
   // and the same proposal-not-write shape.
@@ -1575,6 +1590,8 @@ const BookmarkApp = () => {
                 onApply={handleApplyLinkHealth}
                 onEdit={editFromLinkHealth}
                 onWayback={handleRowLookup}
+                rejectedIds={rejectedRecovery}
+                onToggleRejected={toggleRejectedRecovery}
               />
             ) : (
               <>
@@ -1809,6 +1826,8 @@ const BookmarkApp = () => {
             onApply={handleApplyLinkHealth}
             onEdit={editFromLinkHealth}
             onWayback={handleRowLookup}
+            rejectedIds={rejectedRecovery}
+            onToggleRejected={toggleRejectedRecovery}
             onClose={() => setLinkHealthOpen(false)}
           />
         )}

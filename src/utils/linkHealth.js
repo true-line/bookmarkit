@@ -132,6 +132,24 @@ export function scanAge(lastSweepAt, now = Date.now()) {
 }
 
 /**
+ * How long until the age's bucket turns over — the minute, hour or day
+ * boundary the words are about to cross — so a view that stays open can
+ * re-read the clock exactly when its freshness line would go stale, rather
+ * than on a timer that runs forever. Null when there is no sweep to stale.
+ *
+ * @param {number|null} lastSweepAt
+ * @param {number} [now]
+ * @returns {number|null} Milliseconds until the label's inputs change, or null.
+ */
+export function nextScanAgeChange(lastSweepAt, now = Date.now()) {
+  const at = Number(lastSweepAt);
+  if (!Number.isFinite(at) || at <= 0) return null;
+  const elapsed = Math.max(0, now - at);
+  const step = elapsed < 3_600_000 ? 60_000 : elapsed < 86_400_000 ? 3_600_000 : 86_400_000;
+  return step - (elapsed % step);
+}
+
+/**
  * The freshness line's words: when the sweep last ran, and how long ago that
  * was — "Last scan 2 hours ago". The age buckets are `scanAge`'s; the age
  * itself is the locale formatter's (`t.relative`), so a locale renders its
@@ -139,10 +157,11 @@ export function scanAge(lastSweepAt, now = Date.now()) {
  *
  * @param {number|null} lastSweepAt
  * @param {(key: string, params?: Record<string, unknown>) => string} t
+ * @param {number} [now] Injectable clock, so a timer re-reads one instant.
  * @returns {string|null}
  */
-export const lastScanLabel = (lastSweepAt, t) => {
-  const age = scanAge(lastSweepAt);
+export const lastScanLabel = (lastSweepAt, t, now = Date.now()) => {
+  const age = scanAge(lastSweepAt, now);
   if (!age) return null;
   if (age === "now") return t("linkHealth.lastScanJustNow");
   return t("linkHealth.lastScanAgo", { age: t.relative(age.value, age.unit) });

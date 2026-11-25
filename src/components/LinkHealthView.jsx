@@ -28,7 +28,7 @@ import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 import { useFocusTrap } from "../hooks/useFocusTrap.js";
 import { Button, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
-import { lastScanLabel } from "../utils/linkHealth.js";
+import { lastScanLabel, nextScanAgeChange } from "../utils/linkHealth.js";
 import { Banner, ProgressLines, ProposalRow, RowActions } from "./LinkHealthRows.jsx";
 import LinkHealthSheet from "./LinkHealthSheet.jsx";
 import { RefreshIcon } from "./icons.jsx";
@@ -193,16 +193,27 @@ const LinkHealthView = ({
   // and a single-row ask of the archive.
   onEdit,
   onWayback,
+  // #303 (codex): which proposals the reader unticked, held by the app above
+  // the breakpoint-dependent mounts — this component can be unmounted and
+  // remounted by crossing `lg`, and the disagreement must survive the trip.
+  rejectedIds = new Set(),
+  onToggleRejected,
   // Below `lg` the sheet is the composition, and the back bar needs its way
   // out. Unused in the workspace composition.
   onClose,
 }) => {
   const t = useMessages();
-  // The dialog's stance: everything starts accepted, and unticking is the
-  // disagreement. Applied rows leave `broken` (the store's verdict is cleared),
-  // so a stale rejection is harmless — it can only resurface as "this snapshot
-  // was declined before" if the same link dies again.
-  const [rejected, setRejected] = useState(() => new Set());
+
+  // The freshness line's clock: a relative age only changes when a bucket
+  // boundary passes, so the view re-reads the clock exactly then (codex, #303)
+  // rather than letting "Last scan just now" outlive the minute it names.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const delay = nextScanAgeChange(lastSweepAt, now);
+    if (delay == null) return undefined;
+    const timer = setTimeout(() => setNow(Date.now()), Math.max(1_000, delay));
+    return () => clearTimeout(timer);
+  }, [lastSweepAt, now]);
 
   // #303: the view is a workspace beside the rail from `lg`, and the mobile
   // mockup's full-page sheet below it — the digest's arrangement. The trap
@@ -216,17 +227,16 @@ const LinkHealthView = ({
     [broken, proposalUrls]
   );
   const proposals = broken.filter((b) => proposalUrls[b.id]);
+  // The dialog's stance: everything starts accepted, and unticking is the
+  // disagreement — recorded above this component, so it survives the swap
+  // between the two compositions. Applied rows leave `broken` (the store's
+  // verdict is cleared), so a stale rejection is harmless — it can only
+  // resurface as "this snapshot was declined before" if the same link dies
+  // and is asked about once more.
   const accepted = useMemo(
-    () => proposals.filter((b) => !rejected.has(b.id)),
-    [proposals, rejected]
+    () => proposals.filter((b) => !rejectedIds.has(b.id)),
+    [proposals, rejectedIds]
   );
-  const toggle = (id) =>
-    setRejected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   // One props bag per row, so the workspace view and the sheet render the
   // very same rows.
@@ -234,9 +244,9 @@ const LinkHealthView = ({
     key: bookmark.id,
     bookmark,
     snapshot: snapshots[index],
-    selected: Boolean(proposalUrls[bookmark.id]) && !rejected.has(bookmark.id),
+    selected: Boolean(proposalUrls[bookmark.id]) && !rejectedIds.has(bookmark.id),
     disabled: !proposalUrls[bookmark.id] || applying,
-    onToggle: () => toggle(bookmark.id),
+    onToggle: () => onToggleRejected(bookmark.id),
     actions: (onEdit || onWayback) && (
       <RowActions
         bookmark={bookmark}
@@ -250,7 +260,7 @@ const LinkHealthView = ({
   }));
 
   // The two readings the summary and the sheet's subtitle share.
-  const freshness = lastScanLabel(lastSweepAt, t);
+  const freshness = lastScanLabel(lastSweepAt, t, now);
 
   // The alarm, the in-flight readings and the rows themselves — composed
   // once, shared by both compositions. The sheet is the chrome around them.

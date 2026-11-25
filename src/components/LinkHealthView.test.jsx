@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 
 import LinkHealthView from "./LinkHealthView.jsx";
 
@@ -26,7 +26,29 @@ const installViewport = (isWide) => {
 
 afterEach(() => {
   delete window.matchMedia;
+  vi.useRealTimers();
 });
+
+// #303 (codex): the app owns the unticked set, so the view's tests stand in
+// for it with this stateful shell — rejections behave here exactly as they do
+// across the app's two compositions.
+const Harness = (props) => {
+  const [rejected, setRejected] = useState(() => new Set());
+  return (
+    <LinkHealthView
+      rejectedIds={rejected}
+      onToggleRejected={(id) =>
+        setRejected((current) => {
+          const next = new Set(current);
+          if (next.has(id)) next.delete(id);
+          else next.add(id);
+          return next;
+        })
+      }
+      {...props}
+    />
+  );
+};
 
 const dead = (id, title, reason, extra = {}) => ({
   id,
@@ -57,7 +79,7 @@ const setup = (over = {}) => {
     onClose: vi.fn(),
   };
   render(
-    <LinkHealthView
+    <Harness
       checkedTotal={1024}
       unreachableCount={broken.length}
       broken={broken}
@@ -221,6 +243,62 @@ describe("LinkHealthView's proposal rows (#295)", () => {
 
     expect(screen.getByRole("checkbox", { name: "Structured Outputs" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Apply Selected (1)" })).toBeDisabled();
+  });
+
+  it("shows the app's rejections as unticked rows, with nothing to apply", () => {
+    setup({ rejectedIds: new Set(["1"]) });
+
+    expect(screen.getByRole("checkbox", { name: "Structured Outputs" })).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
+  });
+});
+
+// #303 (codex): the freshness line reads a clock that moves on without the
+// reader — a view left open advances its words at the exact boundary they
+// turn over, and sits still between boundaries.
+describe("LinkHealthView's freshness clock (#303)", () => {
+  it("advances the line when the minute it was showing runs out", () => {
+    vi.useFakeTimers();
+    setup({ lastSweepAt: Date.now() });
+
+    expect(screen.getByText("Last scan just now")).toBeInTheDocument();
+
+    // Past the minute boundary (and the scheduler's one-second floor): the
+    // words move without a single user interaction.
+    act(() => {
+      vi.advanceTimersByTime(61_000);
+    });
+
+    expect(screen.getByText("Last scan 1 minute ago")).toBeInTheDocument();
+  });
+
+  it("leaves an hour-old line alone until its hour is up", () => {
+    vi.useFakeTimers();
+    setup({ lastSweepAt: Date.now() - 2 * 60 * 60 * 1000 });
+
+    // Fifty-nine minutes in: the label's hour bucket still holds; nothing
+    // has fired to re-render it.
+    act(() => {
+      vi.advanceTimersByTime(59 * 60_000);
+    });
+    expect(screen.getByText("Last scan 2 hours ago")).toBeInTheDocument();
+
+    // Past the hour boundary the timer was set for: the words turn over.
+    act(() => {
+      vi.advanceTimersByTime(61 * 1000);
+    });
+    expect(screen.getByText("Last scan 3 hours ago")).toBeInTheDocument();
+  });
+
+  it("sits still when no sweep has ever run", () => {
+    vi.useFakeTimers();
+    setup({ lastSweepAt: null });
+
+    act(() => {
+      vi.advanceTimersByTime(10 * 60_000);
+    });
+
+    expect(screen.queryByText(/Last scan/)).toBeNull();
   });
 });
 

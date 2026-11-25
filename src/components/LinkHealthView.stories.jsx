@@ -58,6 +58,7 @@ const meta = {
     onApply: noop,
     onEdit: noop,
     onWayback: noop,
+    onToggleRejected: noop,
   },
 };
 

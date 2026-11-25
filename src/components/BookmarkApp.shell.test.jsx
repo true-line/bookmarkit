@@ -61,6 +61,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete window.matchMedia;
+  vi.unstubAllGlobals();
 });
 
 // The store opens asynchronously, so a test waits for the shell to come up.
@@ -462,5 +463,54 @@ describe("BookmarkApp's link health view (#295, sheet #303)", () => {
     // the sheet rather than opening on top of it.
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Broken Links" })).toBeNull());
     expect(screen.getByRole("dialog", { name: "Edit Bookmark" })).toBeInTheDocument();
+  });
+
+  // The availability API's answer for the seeded link: one usable snapshot on
+  // the archive's own host, the shape `readSnapshot` trusts.
+  const stubArchiveHit = () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          archived_snapshots: {
+            closest: {
+              available: true,
+              status: "200",
+              url: "https://web.archive.org/web/20240512/https://gone.test/page",
+              timestamp: "20240512",
+            },
+          },
+        }),
+      }))
+    );
+  };
+
+  it("keeps a declined proposal declined when the window crosses `lg`", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await seedBrokenBookmark();
+    await renderShell();
+
+    await openLinkHealthView();
+
+    // The archive answers with a copy, staged as the row's proposal.
+    stubArchiveHit();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Find an archived copy of A page the sweep lost" })
+    );
+    await screen.findByText("https://web.archive.org/web/20240512/https://gone.test/page");
+
+    // The reader declines it: nothing left to apply.
+    fireEvent.click(screen.getByRole("checkbox", { name: "A page the sweep lost" }));
+    expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
+
+    // ...and the window shrinks: the sheet is a different mount of the view,
+    // reading the app's set of rejections, not a component-local one — so
+    // crossing the breakpoint cannot quietly re-select what was refused.
+    act(() => viewport.resizeTo(false));
+    await screen.findByRole("dialog", { name: "Broken Links" });
+    expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: "A page the sweep lost" })).not.toBeChecked();
   });
 });
