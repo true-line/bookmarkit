@@ -178,6 +178,38 @@ all owned by `useTheme` because they land on the document element beside
   name after — so the outcome of an upload (whose toasts land elsewhere) is
   still announced.
 
+### Legal footers and copy alignment (#292)
+
+- **Legal links.** The Help dialog's footer gains the mockup's legal row —
+  version and license in the mono style, then Privacy Policy and Licenses —
+  and the options modal gains the mockup's "About, Privacy & Licensing"
+  section (version beside the heading, a privacy subline, the same two
+  links as secondary anchors sharing the button recipe's classes). The
+  version and license come from `package.json` via `src/version.js`, which
+  Vite inlines at build time so both targets agree without reading a
+  manifest at runtime. The links open public https pages in a new tab —
+  this repo's README "Privacy and storage" section and the committed
+  `THIRD-PARTY-NOTICES.md` — targets the extension is allowed to open; the
+  app fetches nothing from them.
+- **Copy alignment.** The empty shelf's CTAs carry the mobile mockup's
+  "Add First Bookmark" / "Import Bookmarks" rather than the toolbar's
+  generic Add New / Import (the desktop mockup says only "Add Bookmark";
+  the mobile wording the issue quotes wins — it is the first-run voice).
+  The bookmark form's folder field takes the mockup's placeholder/hint pair
+  ("e.g., Work/Project A" / "Use / for nested subfolders"). The dialog
+  close control's fallback label is now "Close dialog", the dialog mockups'
+  shared X label; callers with a better name keep theirs — Help ("Close
+  help") and Options ("Close options") match their mockups, and the two
+  review dialogs deliberately say "Close without applying/removing", where
+  a generic label would understate the stakes.
+- **The help example chips stay.** The mockup's three chips are looser,
+  invented readings ("find tags: react sort by rating desc", "show 4+
+  stars"); the six shipped chips are the real agent grammar (`filter
+rating >= 4 then sort by title asc`, the `then` compositions, the
+  `"options"` command) and keeping invented syntax in the help dialog would
+  teach commands that do not run. The divergence is this paragraph: the
+  mockup's chip copy is not the spec — the shipped chips are.
+
 ### The manager shell (#283)
 
 `SidebarNav` is the mockup's persistent navigation sidebar: a fixed rail from

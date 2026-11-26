@@ -97,6 +97,10 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - **Reduce motion**: Options → Appearance. Forces the transition collapse
     your system's reduced-motion setting provides — even when the system
     doesn't ask for it
+  - Legal footers: the Help dialog and Options → About, Privacy & Licensing
+    carry the version, the license, and links to this README's
+    [privacy section](#privacy-and-storage) and the generated third-party
+    notices
   - Interface language: Options → Appearance. "System default" follows the
     browser's language; the interface ships English today, applies instantly,
     and the layout mirrors itself for right-to-left locales as their

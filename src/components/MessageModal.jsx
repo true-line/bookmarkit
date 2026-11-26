@@ -18,7 +18,7 @@ const MessageModal = ({ message, type = "info", onClose }) => {
     <Modal
       title={t(TITLE_KEYS[type] ?? "messageModal.info")}
       onClose={onClose}
-      closeLabel={t("common.close")}
+      closeLabel={t("common.closeDialog")}
       footer={
         <Button intent="secondary" onClick={onClose}>
           {t("common.close")}

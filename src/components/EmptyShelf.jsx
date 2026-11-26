@@ -58,13 +58,16 @@ const EmptyShelfStates = React.memo(function EmptyShelfStates({
         description={t("emptyShelf.emptyDescription")}
         actions={
           <>
+            {/* #292: the empty-shelf mockups' own CTA copy — the mobile
+                screen's "Add First Bookmark" wording, not the toolbar's
+                generic Add New / Import. */}
             <Button type="button" onClick={onAddNew}>
               <AddIcon />
-              {t("common.addNew")}
+              {t("emptyShelf.addFirstBookmark")}
             </Button>
             <Button type="button" intent="secondary" onClick={onImport}>
               <UploadIcon />
-              {t("common.import")}
+              {t("emptyShelf.importBookmarks")}
             </Button>
           </>
         }

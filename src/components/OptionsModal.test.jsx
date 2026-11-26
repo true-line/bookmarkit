@@ -239,6 +239,28 @@ describe("OptionsModal appearance settings (#290)", () => {
     expect(onThemeUpload).toHaveBeenCalledTimes(1);
     expect(onThemeUpload.mock.calls[0][0].name).toBe("ocean.json");
   });
+
+  // #292: the mockup's About, Privacy & Licensing section — version and
+  // license beside the heading, and the two links as anchors to the targets
+  // the extension is allowed to open.
+  it("closes with an About, Privacy & Licensing section carrying version and links", () => {
+    render(<OptionsModal {...baseProps} themes={{ default: {} }} />);
+
+    expect(screen.getByRole("heading", { name: "About, Privacy & Licensing" })).toBeInTheDocument();
+    expect(document.querySelector(".ui-url")).toHaveTextContent(/^v\d+\.\d+\.\d+ · MIT License$/);
+
+    const privacy = screen.getByRole("link", { name: "Privacy Policy" });
+    expect(privacy).toHaveAttribute(
+      "href",
+      "https://github.com/qwts/bookmarkit#privacy-and-storage"
+    );
+    const licenses = screen.getByRole("link", { name: "Open-Source Licenses" });
+    expect(licenses).toHaveAttribute(
+      "href",
+      "https://github.com/qwts/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md"
+    );
+    expect(licenses).toHaveClass("ui-button--secondary");
+  });
 });
 
 // Local providers need no key, but a server behind an authenticating proxy may
