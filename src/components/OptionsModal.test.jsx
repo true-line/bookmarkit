@@ -189,6 +189,58 @@ describe("OptionsModal effects preference", () => {
   });
 });
 
+// #290: the appearance section gains the mockups' built-in theme entries, the
+// Reduce motion override, and the chosen-file status span.
+describe("OptionsModal appearance settings (#290)", () => {
+  it("offers the built-in theme entries under the mockup labels, uploads after", () => {
+    render(<OptionsModal {...baseProps} themes={{ default: {}, ocean: {} }} />);
+    const labels = [...screen.getByLabelText("Theme").options].map((o) => o.textContent);
+    expect(labels).toEqual([
+      "System default",
+      "Light (Alabaster)",
+      "Dark (Slate)",
+      "High Contrast",
+      "ocean",
+    ]);
+  });
+
+  it("reports theme picks and the Reduce motion override", () => {
+    const onThemeChange = vi.fn();
+    const onReduceMotionChange = vi.fn();
+    render(
+      <OptionsModal
+        {...baseProps}
+        themes={{ default: {} }}
+        onThemeChange={onThemeChange}
+        onReduceMotionChange={onReduceMotionChange}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Theme"), { target: { value: "system" } });
+    expect(onThemeChange).toHaveBeenCalledWith("system");
+
+    const motion = screen.getByRole("checkbox", { name: /reduce motion/i });
+    expect(motion).not.toBeChecked();
+    fireEvent.click(motion);
+    expect(onReduceMotionChange).toHaveBeenCalledWith(true);
+  });
+
+  it("names the chosen theme file in a status span, No file chosen before", () => {
+    const onThemeUpload = vi.fn();
+    const { container } = render(
+      <OptionsModal {...baseProps} themes={{ default: {} }} onThemeUpload={onThemeUpload} />
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("No file chosen");
+
+    const input = container.querySelector('input[type="file"]');
+    fireEvent.change(input, { target: { files: [new File(["{}"], "ocean.json")] } });
+    expect(screen.getByRole("status")).toHaveTextContent("ocean.json");
+    expect(onThemeUpload).toHaveBeenCalledTimes(1);
+    expect(onThemeUpload.mock.calls[0][0].name).toBe("ocean.json");
+  });
+});
+
 // Local providers need no key, but a server behind an authenticating proxy may
 // ask for one; the field is offered for both and stays optional.
 describe("OptionsModal local provider API key (optional)", () => {

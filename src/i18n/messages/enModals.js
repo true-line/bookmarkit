@@ -288,6 +288,7 @@ export const surfaceMessages = {
     modelLabel: "Model",
     noModelsHint:
       "The endpoint returned no models. Enter the key above (or start the local server), then Refresh — or type the model id.",
+    noFileChosen: "No file chosen",
     onlyIfServerRequires: "Only if the server requires one",
     privacyHeading: "Privacy",
     providerGemini: "Gemini",
@@ -297,6 +298,9 @@ export const surfaceMessages = {
     providerOllama: "Ollama (Local)",
     providerOpenai: "OpenAI (ChatGPT)",
     providerSubline: "Changes apply immediately and persist to this browser.",
+    reduceMotionHint:
+      "Collapse drawer, dialog and card transitions to instant cuts, even when your system doesn’t ask for reduced motion.",
+    reduceMotionLabel: "Reduce motion",
     refresh: "Refresh",
     refreshModelList: "Refresh model list",
     remoteFaviconsHint:
@@ -308,11 +312,16 @@ export const surfaceMessages = {
     temperatureHint:
       "Higher values make responses more varied. Leave off to use the provider default.",
     temperatureUnsupported: "(not supported by this model)",
+    themeDarkSlate: "Dark (Slate)",
     themeExample: "Show theme example",
     themeExampleTitle: "Theme File Format",
     themeFileHint: "Upload a JSON or YAML theme file.",
-    themeHint: "Select a theme to apply.",
+    themeHighContrast: "High Contrast",
+    themeHint:
+      "“System default” follows your system’s light or dark appearance. Uploads appear here too.",
     themeLabel: "Theme",
+    themeLightAlabaster: "Light (Alabaster)",
+    themeSystemDefault: "System default",
     themeUploadLabel: "Upload custom theme",
     title: "Options",
     webMcpHint:

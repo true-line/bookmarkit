@@ -6,6 +6,9 @@ import { Button, IconButton, InputField, Modal, Typography } from "../design-sys
 import { useMessages } from "../i18n/index.js";
 import { useLocale } from "../i18n/LocaleProvider.js";
 import { SYSTEM_LOCALE } from "../i18n/locales.js";
+// #290: the built-in theme identities, so the select can offer them under
+// their mockup labels ahead of any uploaded themes.
+import { BUILTIN_THEME_KEYS, SYSTEM_THEME } from "../hooks/useTheme.js";
 
 // Migrated to the unified design system (#246): the options-settings screen's
 // modal-standard shell at its max-w-2xl reading (size="2xl"), headline-sm
@@ -200,6 +203,8 @@ const OptionsModal = ({
   themes,
   onThemeChange,
   onThemeUpload,
+  reduceMotion = false,
+  onReduceMotionChange,
   remoteFavicons = false,
   onRemoteFaviconsChange,
   effects = true,
@@ -216,6 +221,9 @@ const OptionsModal = ({
   const [modelsError, setModelsError] = useState("");
   const [baseUrlError, setBaseUrlError] = useState("");
   const [showExample, setShowExample] = useState(false);
+  // #290: the mockup's chosen-file status — the picked file's name, "No file
+  // chosen" before one is.
+  const [chosenFileName, setChosenFileName] = useState(null);
   const fileInputRef = useRef(null);
 
   const debouncedApiKey = useDebounce(providerOptions.apiKey || "", 600);
@@ -564,12 +572,24 @@ const OptionsModal = ({
             >
               {t("options.appearanceHeading")}
             </Typography>
+            {/* #290: the mockups' built-in entries first — "System default"
+                resolves through the OS scheme; the palettes carry the mobile
+                mockup's "Scheme (Palette)" labels — then uploaded themes by
+                their file names. */}
             <TokenSelect
               label={t("options.themeLabel")}
               id="theme-select"
               value={currentTheme}
               onChange={(e) => onThemeChange?.(e.target.value)}
-              options={Object.keys(themes)}
+              options={[
+                { value: SYSTEM_THEME, label: t("options.themeSystemDefault") },
+                { value: "default", label: t("options.themeLightAlabaster") },
+                { value: "dark", label: t("options.themeDarkSlate") },
+                { value: "high-contrast", label: t("options.themeHighContrast") },
+                ...Object.keys(themes)
+                  .filter((name) => !BUILTIN_THEME_KEYS.includes(name))
+                  .map((name) => ({ value: name, label: name })),
+              ]}
               hint={t("options.themeHint")}
             />
             {/* #298: the interface language, the mockup's Appearance & i18n
@@ -617,6 +637,16 @@ const OptionsModal = ({
                 <Button intent="secondary" onClick={() => fileInputRef.current?.click()}>
                   {t("options.chooseFile")}
                 </Button>
+                {/* #290: the mockup's status span beside the picker — the
+                    picked file's name, announced as a status since the upload
+                    result also lands elsewhere. */}
+                <span
+                  className="ui-type-body-sm"
+                  style={{ color: "var(--ui-on-surface-variant)" }}
+                  role="status"
+                >
+                  {chosenFileName ?? t("options.noFileChosen")}
+                </span>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -626,6 +656,7 @@ const OptionsModal = ({
                     // rejected theme fires another change event.
                     const [file] = e.target.files;
                     e.target.value = "";
+                    setChosenFileName(file ? file.name : null);
                     if (file) onThemeUpload?.(file);
                   }}
                   style={{ display: "none" }}
@@ -635,6 +666,25 @@ const OptionsModal = ({
                 {t("options.themeFileHint")}
               </Typography>
             </div>
+            {/* #290: the mobile mockup's Reduce motion row. Checked forces the
+                transition collapse the OS media query provides; unchecked, the
+                OS setting alone decides. The attribute lands on the document
+                element via useTheme, so the popup follows too. */}
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(reduceMotion)}
+                onChange={(e) => onReduceMotionChange?.(e.target.checked)}
+                className="mt-0.5"
+                style={{ accentColor: "var(--ui-primary-container)" }}
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="ui-type-label-md">{t("options.reduceMotionLabel")}</span>
+                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+                  {t("options.reduceMotionHint")}
+                </span>
+              </span>
+            </label>
             {/* Decorative 3D effects: pure presentation, on by default, off in
                 one click. Nothing about the collection changes with them. */}
             <label className="flex items-start gap-3 cursor-pointer">

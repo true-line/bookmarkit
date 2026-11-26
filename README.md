@@ -91,6 +91,12 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Appearance
   - A warm "bookmark shelf" look: paper-tinted surfaces, ink text, and the
     brand mark's red as the accent; custom themes keep working
+  - Themes (Options → Appearance): **System default** follows your system's
+    light or dark appearance live, with built-in **Light (Alabaster)**,
+    **Dark (Slate)** and **High Contrast** palettes alongside your uploads
+  - **Reduce motion**: Options → Appearance. Forces the transition collapse
+    your system's reduced-motion setting provides — even when the system
+    doesn't ask for it
   - Interface language: Options → Appearance. "System default" follows the
     browser's language; the interface ships English today, applies instantly,
     and the layout mirrors itself for right-to-left locales as their

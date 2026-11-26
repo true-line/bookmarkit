@@ -862,7 +862,11 @@
 }
 
 /* Motion collapses entirely under prefers-reduced-motion: reduce — hover and
-   focus stay instant, dialog and drawer transitions become cuts. */
+   focus stay instant, dialog and drawer transitions become cuts. #290: the
+   settings' Reduce motion toggle forces the same collapse where the OS
+   wouldn't ask for it — useTheme stamps data-ui-motion="reduce" on the
+   document element, an ancestor of every .ui-root, so the attribute and the
+   media query are alternative triggers, not stacked ones. */
 @media (prefers-reduced-motion: reduce) {
   .ui-root *,
   .ui-root *::before,
@@ -870,4 +874,11 @@
     animation-duration: 0ms !important;
     transition-duration: 0ms !important;
   }
+}
+
+[data-ui-motion="reduce"] .ui-root *,
+[data-ui-motion="reduce"] .ui-root *::before,
+[data-ui-motion="reduce"] .ui-root *::after {
+  animation-duration: 0ms !important;
+  transition-duration: 0ms !important;
 }

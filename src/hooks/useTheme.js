@@ -1,4 +1,9 @@
 // ARCH-06: Encapsulates theme state, persistence, and CSS variable application.
+// #290: the mockups' appearance settings land here too — "System default"
+// resolves through the OS's prefers-color-scheme and re-resolves live, and
+// the Reduce motion toggle overrides that OS request — because both land on
+// the document element beside data-ui-theme, and both the manager and the
+// popup need them applied.
 
 import { useCallback, useEffect, useState } from "react";
 import { getMessages } from "../i18n/index.js";
@@ -27,6 +32,60 @@ const REQUIRED_THEME_KEYS = [
   "accentHover",
 ];
 
+// #290: the mockups' built-in entries beyond the warm default. "Dark (Slate)"
+// takes its values from the design system's own dark token scope — the same
+// #0d141c family [data-ui-theme="dark"] declares, so the seven legacy
+// variables and the --ui-* palette read as one surface. "High Contrast" is a
+// fixed light palette at maximum contrast: white canvas, ink text, black
+// borders, and the brand crimson dark enough to hold ~6:1 on white (it does
+// not follow the OS scheme; it is a statement, not a mirror).
+const DARK_SLATE_THEME = {
+  bgPrimary: "#0d141c",
+  bgSecondary: "#151c24",
+  textPrimary: "#dce3ef",
+  textSecondary: "#aeb4be",
+  border: "#404751",
+  accent: "#ffb4ab",
+  accentHover: "#ffd2cd",
+};
+
+const HIGH_CONTRAST_THEME = {
+  bgPrimary: "#ffffff",
+  bgSecondary: "#ffffff",
+  textPrimary: "#000000",
+  textSecondary: "#1a1a1a",
+  border: "#000000",
+  accent: "#b82925",
+  accentHover: "#8f1f1c",
+};
+
+const BUILTIN_THEMES = {
+  default: DEFAULT_THEME,
+  dark: DARK_SLATE_THEME,
+  "high-contrast": HIGH_CONTRAST_THEME,
+};
+
+// The built-in keys, for hiding them from the custom-theme entries — an
+// uploaded theme cannot shadow a built-in (the merge below sees to that), so
+// the select must not offer it twice.
+export const BUILTIN_THEME_KEYS = Object.keys(BUILTIN_THEMES);
+
+// #290: "System default" is not a palette of its own — it resolves to a
+// built-in through the OS's prefers-color-scheme, re-resolving live when the
+// OS flips while the app is open.
+export const SYSTEM_THEME = "system";
+
+const REDUCE_MOTION_KEY = "bm_reduce_motion";
+
+// #290: which palette actually paints — the selected one, or, for "System
+// default", whichever built-in the OS's current scheme calls for.
+function resolveActiveTheme(themes, currentTheme, systemPrefersDark) {
+  if (currentTheme === SYSTEM_THEME) {
+    return systemPrefersDark ? themes.dark : themes.default;
+  }
+  return themes[currentTheme] || themes.default;
+}
+
 // #240: the unified design system scopes its --ui-* tokens to a
 // [data-ui-theme="light"|"dark"] root, while this app's themes are seven
 // user-editable variables with no such attribute. applyThemeToDom is the
@@ -35,7 +94,9 @@ const REQUIRED_THEME_KEYS = [
 // user's accent onto the design system's brand tokens so anything tokenized
 // as brand follows the selected theme. The rest of the --ui-* palette stays
 // the canonical one from the Stitch screens; only brand follows the user.
-function applyThemeToDom(theme) {
+// The High Contrast built-in is the one exception — it stamps the design
+// system's ink and border roles inline (see below).
+function applyThemeToDom(theme, highContrast = false) {
   const t = theme || DEFAULT_THEME;
   const root = document.documentElement;
   root.style.setProperty("--bg-primary", t.bgPrimary || "#fffdf8");
@@ -48,6 +109,22 @@ function applyThemeToDom(theme) {
   root.setAttribute("data-ui-theme", resolveUiTheme(t.bgPrimary));
   root.style.setProperty("--ui-brand-crimson", t.accent || "#c62f35");
   root.style.setProperty("--ui-brand-crimson-hover", t.accentHover || "#a92329");
+  // Review fix on #290: the white background alone would land High Contrast
+  // on the ordinary light --ui-* palette, leaving most surfaces' borders on
+  // the low-contrast outline-variant and their text on the variant ink. The
+  // ink and border roles ride inline overrides while the built-in paints,
+  // and are cleared the moment any other theme takes over.
+  if (highContrast) {
+    root.style.setProperty("--ui-outline", "#000000");
+    root.style.setProperty("--ui-outline-variant", "#000000");
+    root.style.setProperty("--ui-on-surface", "#000000");
+    root.style.setProperty("--ui-on-surface-variant", "#1a1a1a");
+  } else {
+    root.style.removeProperty("--ui-outline");
+    root.style.removeProperty("--ui-outline-variant");
+    root.style.removeProperty("--ui-on-surface");
+    root.style.removeProperty("--ui-on-surface-variant");
+  }
 }
 
 // Light or dark, judged by the theme's own background: parse #rrggbb (what
@@ -110,20 +187,30 @@ async function saveThemeToPersistence(key, value) {
 
 export function useTheme() {
   const [currentTheme, setCurrentTheme] = useState("default");
-  const [themes, setThemes] = useState({ default: DEFAULT_THEME });
+  const [themes, setThemes] = useState(BUILTIN_THEMES);
+  // #290: the OS scheme "System default" resolves against, kept in state so
+  // a mid-session flip re-runs the apply effect below.
+  const [systemPrefersDark, setSystemPrefersDark] = useState(false);
+  const [reduceMotion, setReduceMotionState] = useState(false);
 
   // Load persisted themes on mount
   useEffect(() => {
     (async () => {
       try {
         if (typeof chrome !== "undefined" && chrome.storage) {
-          const result = await chrome.storage.local.get(["bm_current_theme", "bm_themes"]);
+          const result = await chrome.storage.local.get([
+            "bm_current_theme",
+            "bm_themes",
+            REDUCE_MOTION_KEY,
+          ]);
           setCurrentTheme(result.bm_current_theme || "default");
+          setReduceMotionState(result[REDUCE_MOTION_KEY] === "true");
           const parsed = result.bm_themes ? JSON.parse(result.bm_themes) : {};
           setThemes((prev) => ({ ...parsed, ...prev }));
         } else {
           const theme = localStorage.getItem("bm_current_theme") || "default";
           setCurrentTheme(theme);
+          setReduceMotionState(localStorage.getItem(REDUCE_MOTION_KEY) === "true");
           const raw = localStorage.getItem("bm_themes");
           const parsed = raw ? JSON.parse(raw) : {};
           setThemes((prev) => ({ ...parsed, ...prev }));
@@ -134,10 +221,45 @@ export function useTheme() {
     })();
   }, []);
 
-  // Apply CSS variables whenever theme changes
+  // #290: "System default" stays live — when the OS flips schemes with the
+  // app open, the resolution re-runs without a new selection. matchMedia is
+  // guarded because tests and odd embedders may not provide it.
   useEffect(() => {
-    applyThemeToDom(themes[currentTheme] || themes.default);
-  }, [currentTheme, themes]);
+    if (currentTheme !== SYSTEM_THEME || typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => setSystemPrefersDark(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, [currentTheme]);
+
+  // Apply CSS variables whenever theme changes. "high-contrast" is the key
+  // that resolves to the HC built-in (System default never does — it lands
+  // on default or dark), and the flag is what lifts its palette into the
+  // design system's token roles.
+  useEffect(() => {
+    applyThemeToDom(
+      resolveActiveTheme(themes, currentTheme, systemPrefersDark),
+      currentTheme === "high-contrast"
+    );
+  }, [currentTheme, themes, systemPrefersDark]);
+
+  // #290: the Reduce motion override — stamped as an attribute beside
+  // data-ui-theme so the collapse rules in the stylesheets can key off it
+  // where prefers-reduced-motion alone wouldn't fire. Unchecked, no attribute
+  // is set and the OS media queries stand alone.
+  useEffect(() => {
+    if (reduceMotion) {
+      document.documentElement.setAttribute("data-ui-motion", "reduce");
+    } else {
+      document.documentElement.removeAttribute("data-ui-motion");
+    }
+  }, [reduceMotion]);
+
+  const setReduceMotion = useCallback((enabled) => {
+    setReduceMotionState(Boolean(enabled));
+    saveThemeToPersistence(REDUCE_MOTION_KEY, enabled ? "true" : "false");
+  }, []);
 
   const selectTheme = useCallback((themeName) => {
     setCurrentTheme(themeName);
@@ -149,6 +271,16 @@ export function useTheme() {
     if (!file) return;
     if (file.size > 100 * 1024) {
       showMessage(getMessages()("themeUpload.tooLarge"), "error");
+      return;
+    }
+    // Review fix on #290: the built-in keys — and "system", the OS-follow
+    // mode — are reserved. An upload named "dark.json" would otherwise
+    // shadow the built-in until the next load, then silently vanish when
+    // the merge order restores it. Rejected up front; the picker's status
+    // span still shows the name, and the toast explains.
+    const themeName = file.name.replace(/\.(json|yaml|yml)$/i, "");
+    if (BUILTIN_THEME_KEYS.includes(themeName) || themeName === SYSTEM_THEME) {
+      showMessage(getMessages()("themeUpload.reservedName"), "error");
       return;
     }
     try {
@@ -189,7 +321,6 @@ export function useTheme() {
         showMessage(getMessages()("themeUpload.invalidColors"), "error");
         return;
       }
-      const themeName = file.name.replace(/\.(json|yaml|yml)$/i, "");
       setThemes((prev) => {
         const next = { ...prev, [themeName]: themeData };
         saveThemeToPersistence("bm_themes", JSON.stringify(next));
@@ -201,5 +332,5 @@ export function useTheme() {
     }
   }, []);
 
-  return { currentTheme, themes, selectTheme, uploadTheme };
+  return { currentTheme, themes, selectTheme, uploadTheme, reduceMotion, setReduceMotion };
 }
