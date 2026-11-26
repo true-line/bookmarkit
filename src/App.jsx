@@ -27,7 +27,8 @@ function App() {
     <div
       className="ui-root"
       style={isPopup ? { width: 600, minHeight: 400, maxHeight: 580, overflow: "hidden" } : {}}
-    >      <LocaleProvider>
+    >
+      <LocaleProvider>
         <ErrorBoundary fallbackMessage="BookmarkIt encountered an unexpected error. Please reload.">
           <BookmarkApp />
         </ErrorBoundary>
