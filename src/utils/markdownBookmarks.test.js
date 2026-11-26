@@ -75,7 +75,8 @@ describe("parseMarkdownLinks", () => {
   it("accepts angle-bracket destinations and undoes the escapes", () => {
     expect(
       parseMarkdownLinks(
-        "- [Wiki](<https://example.com/a (b)?q=1>)\n- [Tiny](<https://x.test/\\<a\\>>)")
+        "- [Wiki](<https://example.com/a (b)?q=1>)\n- [Tiny](<https://x.test/\\<a\\>>)"
+      )
     ).toEqual([
       { title: "Wiki", url: "https://example.com/a (b)?q=1" },
       { title: "Tiny", url: "https://x.test/<a>" },
