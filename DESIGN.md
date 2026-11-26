@@ -217,6 +217,25 @@ Two boundaries are worth keeping straight:
   Apply Changes footer. Escape, the back arrow and Cancel return to the
   selection bar with the selection intact, and a suggestion in flight holds
   the sheet still.
+- **The card's own anatomy (#288).** Every card carries the manager mockup's
+  per-bookmark **Edit** control beside its label-lg title — named after the
+  bookmark it opens (`aria-label="Edit <title> bookmark"`, the URL standing
+  in when there is no title), the mockup's 36px ghost from `lg` up and its
+  44px bordered touch target below. The #239 nested-control rule is what
+  keeps it from double-firing: the card's guarded activation drops the
+  control's click and Enter as a nested control's own, so one gesture is
+  one edit. Below `lg` the meta row is the mobile mockup's footer — the
+  folder chip (no folder tree is on screen to carry the path), the tags as
+  `#` chips, and **Unrated** where a count would sit — because with the
+  chrome gone, the card is where a bookmark's place is read. One divergence
+  is deliberate: the manager mockup draws the selection context bar at one
+  plain-click selected, but the shelf's two-stage contract (#54) gives that
+  same gesture its second meaning, so the context bar stays the
+  multi-selection's home — it already reads "1 selected" when a
+  modifier-click or a select-mode tap made one, and a plain-clicked
+  bookmark is acted on by the next click rather than by a bar. The mockups'
+  mobile sticky selection bar is the mobile-shell issue's (#299), not this
+  card's.
 
 ## UI message catalogue and interface language
 
