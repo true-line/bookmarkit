@@ -82,6 +82,29 @@ describe("HelpModal on the unified design system", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  // #292: the mockup's legal footer — the version/license line and the two
+  // links, with the targets the extension is allowed to open (public https
+  // pages: this repo's README privacy section and the committed notices).
+  it("carries the version, license, and legal links in the footer", () => {
+    renderHelp();
+    expect(document.querySelector(".ui-legal-version")).toHaveTextContent(/^v\d+\.\d+\.\d+ · MIT$/);
+
+    const privacy = screen.getByRole("link", { name: "Privacy Policy" });
+    expect(privacy).toHaveAttribute(
+      "href",
+      "https://github.com/true-line/bookmarkit#privacy-and-storage"
+    );
+    expect(privacy).toHaveAttribute("target", "_blank");
+    expect(privacy).toHaveAttribute("rel", "noreferrer");
+
+    const licenses = screen.getByRole("link", { name: "Licenses" });
+    expect(licenses).toHaveAttribute(
+      "href",
+      "https://github.com/true-line/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md"
+    );
+    expect(licenses).toHaveAttribute("target", "_blank");
+  });
+
   it("closes on Escape after the 150ms exit animation", () => {
     vi.useFakeTimers();
     const onClose = vi.fn();

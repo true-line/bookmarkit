@@ -39,7 +39,7 @@ describe("EmptyShelfStates recipes (#254)", () => {
     expect(document.querySelector(".ui-empty")).toBeNull();
   });
 
-  it("offers Add New on primary and Import on secondary for an empty shelf", () => {
+  it("offers Add First Bookmark on primary and Import Bookmarks on secondary (#292)", () => {
     setup({ bookmarksTotal: 0 });
     expect(screen.getByRole("heading", { name: "Your shelf is empty." })).toHaveClass(
       "ui-type-headline-lg",
@@ -48,14 +48,18 @@ describe("EmptyShelfStates recipes (#254)", () => {
     expect(screen.getByText("Add your first bookmark, or import a browser export.")).toHaveClass(
       "ui-type-body-md"
     );
-    expect(screen.getByRole("button", { name: /Add New/ })).toHaveClass("ui-button--primary");
-    expect(screen.getByRole("button", { name: /Import/ })).toHaveClass("ui-button--secondary");
+    expect(screen.getByRole("button", { name: /Add First Bookmark/ })).toHaveClass(
+      "ui-button--primary"
+    );
+    expect(screen.getByRole("button", { name: /Import Bookmarks/ })).toHaveClass(
+      "ui-button--secondary"
+    );
   });
 
   it("wires the empty shelf's calls to the shelf's owners", async () => {
     const { onAddNew, onImport } = setup({ bookmarksTotal: 0 });
-    fireEvent.click(screen.getByRole("button", { name: /Add New/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Import/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Add First Bookmark/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Import Bookmarks/ }));
     expect(onAddNew).toHaveBeenCalledTimes(1);
     expect(onImport).toHaveBeenCalledTimes(1);
   });

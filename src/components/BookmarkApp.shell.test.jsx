@@ -112,7 +112,7 @@ describe("BookmarkApp's shell below `lg` (#294)", () => {
     expect(bar.getByRole("button", { name: "Open navigation menu" })).toBeInTheDocument();
     expect(bar.getByRole("button", { name: "Add" })).toBeInTheDocument();
     expect(bar.getByText("All Bookmarks")).toBeInTheDocument();
-    expect(bar.queryByRole("button", { name: "Add New" })).toBeNull();
+    expect(bar.queryByRole("button", { name: "Add First Bookmark" })).toBeNull();
     expect(bar.queryByRole("button", { name: /Folders/ })).toBeNull();
     expect(screen.queryByRole("complementary")).toBeNull();
   });
