@@ -111,10 +111,11 @@ ship; only brand follows the user). Surfaces migrate one at a time by
 rendering under that attribute — `HelpModal` is the first (#244), in the app
 under the bridge's scope and in Storybook under the preview's scope root,
 which also supplies the UI-theme and direction toolbars. The app root is
-itself such a surface now (#289): `BookmarkApp` renders under `.ui-root`, so
+itself such a surface now (#289): the app entry renders under `.ui-root`, so
 the spec's body typeface and the shared 2px focus contract hold across the
-whole app, migrated surfaces or not — and the rating input joined the
-component set, the edit-bookmark mockup's 36px star targets with the visible
+whole app — the entry wraps every terminal render state, loading and
+load-error included, migrated surfaces or not — and the rating input joined
+the component set, the edit-bookmark mockup's 36px star targets with the visible
 "N / 5" readout, a radiogroup statically named "Bookmark rating" whose
 changes the readout announces. The legacy
 `DesignSystem.jsx` library is retired (#255); `useTheme` and its seven
