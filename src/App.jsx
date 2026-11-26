@@ -21,7 +21,13 @@ const isPopup =
 function App() {
   return (
     // UX-08: Apply popup size constraints so the UI fits inside the extension popup window.
-    <div style={isPopup ? { width: 600, minHeight: 400, maxHeight: 580, overflow: "hidden" } : {}}>
+    // #289: the design system's scope root wraps every terminal render state —
+    // loading, load-error, crash boundary, shell — so the spec typeface and the
+    // shared focus contract hold even on the screens that return early.
+    <div
+      className="ui-root"
+      style={isPopup ? { width: 600, minHeight: 400, maxHeight: 580, overflow: "hidden" } : {}}
+    >
       <LocaleProvider>
         <ErrorBoundary fallbackMessage="BookmarkIt encountered an unexpected error. Please reload.">
           <BookmarkApp />

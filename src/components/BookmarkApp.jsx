@@ -1292,7 +1292,10 @@ const BookmarkApp = () => {
 
   return (
     <div
-      className="bookmarkit-shell h-screen overflow-hidden flex flex-col font-sans"
+      // The design system's scope root sits on the App wrapper (#289), above
+      // this component's loading and load-error returns; the shell keeps only
+      // its own canvas background.
+      className="bookmarkit-shell h-screen overflow-hidden flex flex-col"
       style={{ backgroundColor: "var(--bg-secondary)" }}
     >
       {/* UX-06: Import progress bar */}
