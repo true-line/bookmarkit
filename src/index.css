@@ -1183,6 +1183,108 @@ body {
   color: var(--ui-primary);
 }
 
+/* #288: the mockups' title row — the label-lg title and the card's own Edit
+   control share the line, the button pulled into the padding's corner the
+   way the manager mockup's -mt-1/-me-1 sits it. The control is the card's,
+   not the design system's button-icon: from `lg` up it is the mockup's ghost
+   (bare pencil on on-surface-variant, surfacing on hover), which the tonal
+   bordered recipe would misread. */
+.ui-bookmark-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.ui-bookmark-title-row .ui-bookmark-title {
+  flex: 1;
+  min-width: 0;
+}
+.ui-bookmark-edit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-block-start: -4px;
+  margin-inline-end: -4px;
+  border: none;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: var(--ui-on-surface-variant);
+  opacity: 0.8;
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-state) var(--ui-ease-state),
+    opacity var(--ui-duration-state) var(--ui-ease-state);
+}
+.ui-bookmark-card:hover .ui-bookmark-edit,
+.ui-bookmark-edit:focus-visible {
+  opacity: 1;
+}
+.ui-bookmark-edit:hover {
+  background: var(--ui-surface-container);
+}
+
+/* #288: the mobile mockup's card reads its own meta — the folder chip, the
+   tags as bordered # chips, Unrated where a count would sit, the whole row
+   under a hairline like the mockup's footer. The title clamps at two lines
+   (the mockup's line-clamp-2), the roundel grows to its 40px, and the Edit
+   control takes the shell's 44px touch target with the bordered fill. */
+.ui-bookmark-card--mobile {
+  padding: 14px;
+}
+.ui-bookmark-card--mobile .ui-bookmark-favicon {
+  width: 40px;
+  height: 40px;
+}
+.ui-bookmark-card--mobile .ui-bookmark-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+}
+.ui-bookmark-card--mobile .ui-bookmark-edit {
+  width: 44px;
+  height: 44px;
+  margin-block-start: 0;
+  margin-inline-end: 0;
+  border: 1px solid var(--ui-outline-variant);
+  background: var(--ui-surface-container);
+  opacity: 1;
+}
+.ui-bookmark-card--mobile .ui-bookmark-edit:hover {
+  background: var(--ui-surface-container-high);
+}
+.ui-bookmark-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 2px 8px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-container);
+  color: var(--ui-on-surface-variant);
+  font: var(--ui-type-label-sm);
+}
+.ui-bookmark-folder-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-bookmark-card--mobile .ui-tag {
+  background: var(--ui-surface-container-low);
+  border: 1px solid var(--ui-outline-variant);
+}
+.ui-bookmark-unrated {
+  margin-inline-start: auto;
+  color: var(--ui-on-surface-variant);
+  font: var(--ui-type-label-sm);
+}
+.ui-bookmark-card--mobile .ui-bookmark-meta {
+  border-block-start: 1px solid var(--ui-outline-variant);
+}
+
 /* ─── Selection bar (#252) ────────────────────────────────────────────────
    The bulk-edit bar wears the manager mockup's selection-context reading: a
    surface-container band under a hairline outline-variant border, the count

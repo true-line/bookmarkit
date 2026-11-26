@@ -1719,6 +1719,8 @@ const BookmarkApp = () => {
                       // rail from `lg`, the drawer below it while it is open.
                       navDrawerOpen || isSidebarViewport ? handleBookmarkDragStart : undefined
                     }
+                    onBookmarkEdit={handleEditBookmark}
+                    isMobileViewport={!isSidebarViewport}
                     isLoading={isLoading}
                     bookmarksTotal={bookmarks.length}
                     searchActive={!!debouncedSearchQuery || hasActiveFilters(effectiveFilters)}

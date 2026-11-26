@@ -74,6 +74,8 @@ function BookmarkRow({ index, style, data }) {
     onBookmarkDoubleClick,
     onBookmarkKeyDown,
     onBookmarkDragStart,
+    onBookmarkEdit,
+    isMobileViewport,
     onRowHeightChange,
     remoteFavicons,
   } = data;
@@ -109,11 +111,13 @@ function BookmarkRow({ index, style, data }) {
                 isSelected={selectedBookmarkId === bookmark.id}
                 isMultiSelected={multiSelectedBookmarkIds.includes(bookmark.id)}
                 isPendingDelete={bookmarksToDelete.includes(bookmark.id)}
+                isMobileViewport={isMobileViewport}
                 remoteFavicons={remoteFavicons}
                 onClick={(e) => onBookmarkClick(bookmark, e)}
                 onDoubleClick={(e) => onBookmarkDoubleClick(bookmark, e)}
                 onKeyDown={(e) => onBookmarkKeyDown(e, bookmark)}
                 onDragStart={onBookmarkDragStart && ((e) => onBookmarkDragStart(e, bookmark))}
+                onEdit={onBookmarkEdit}
               />
             </div>
           ))}
@@ -176,6 +180,10 @@ const BookmarkList = React.memo(function BookmarkList({
   filterSummary,
   // #299: below `lg` the shell's compact row owns rating and sort.
   showSortControls,
+  // #288: the card's mobile anatomy (folder chip, # tags, Unrated) and its
+  // per-bookmark Edit control, both decided at the shell's `lg` boundary.
+  isMobileViewport,
+  onBookmarkEdit,
   remoteFavicons,
   effectsEnabled,
   viewMode = "flow",
@@ -241,6 +249,8 @@ const BookmarkList = React.memo(function BookmarkList({
       onBookmarkDoubleClick,
       onBookmarkKeyDown,
       onBookmarkDragStart,
+      onBookmarkEdit,
+      isMobileViewport,
       filters,
       tagFacets,
       onFilterChange,
@@ -262,6 +272,8 @@ const BookmarkList = React.memo(function BookmarkList({
       onBookmarkDoubleClick,
       onBookmarkKeyDown,
       onBookmarkDragStart,
+      onBookmarkEdit,
+      isMobileViewport,
       filters,
       tagFacets,
       onFilterChange,
