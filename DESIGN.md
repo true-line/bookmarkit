@@ -262,10 +262,10 @@ partial sentences (design spec, Voice & Content Strategy):
 - `t.rich(key, params)` renders a template that carries inline emphasis
   (`<strong>` and `<em>`, the only elements a template may name) or a slot
   that holds markup of its own — the count chip in the link-sweep sentence,
-  the key caps in the header hint, the two titles of a duplicate pair. The
-  sentence stays one template in the translator's word order. Plain `t()` on
-  the same key drops the emphasis and leaves a markup-only slot visible,
-  which is what an `aria-label` or a `title` should read.
+  the key caps in the header hint. The sentence stays one template in the
+  translator's word order. Plain `t()` on the same key drops the emphasis and
+  leaves a markup-only slot visible, which is what an `aria-label` or a
+  `title` should read.
 
 A catalogue is data, so it cannot put anything else on the page: an element
 outside the allow-list stays as literal text, and a parameter's value is
@@ -623,10 +623,12 @@ inside the trust boundary:
   smuggle a bookmark into a deletion.
 - A bookmark already proposed is left out of later pairs, so three copies pairing
   up three ways cannot delete all three.
-- The result is a proposal. It reaches the store only through the confirmation
-  dialog the delete button already uses, and each proposed pair shows the reason
-  it was proposed. Which copy survives is decided by the same rule the
-  deterministic layer uses, not by the model.
+- The result is a proposal. It reaches the store only through the
+  duplicate-review dialog (#285), where every pair — both copies side by side,
+  the reason it was called the same page, and whether the rule or the model
+  proposed it — is decided on its own before Remove writes the surviving-pair
+  drops through the same delete path as the confirm dialog. Which copy survives
+  is decided by the same rule the deterministic layer uses, not by the model.
 
 With no usable provider, a locked key, or a failed request, the proposal is empty
 and the rule-based result stands on its own. "Usable" is `isProviderReady`, not a

@@ -58,8 +58,10 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Multi‑select (Cmd/Ctrl+Click, or **Select** in the header's filter row on
     narrow windows), open in new tab (click the selected bookmark,
     double‑click, or Enter)
-  - Detect and remove duplicates by the page they point at, with an optional
-    second opinion from your LLM on the same article saved under two URLs
+  - Detect and review duplicates pair by pair — both copies side by side,
+    with where the match came from (rule or LLM) — and remove only the pairs
+    you confirm; the LLM's second opinion covers the same article saved under
+    two URLs
   - Bulk edit a multi-selection: add or remove tags, move to a folder, set or
     clear ratings, and **Auto-Tag** the selection with your LLM (one
     suggestion, landed in the Add-tags field and reviewed before applying) —

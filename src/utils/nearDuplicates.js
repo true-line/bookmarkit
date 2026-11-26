@@ -8,7 +8,7 @@
 // So a model is asked, but only about pairs worth asking about, and only ever for
 // an opinion. Everything here is pure: choosing candidates, reading a verdict
 // back, and turning verdicts into a proposal. Asking is the hook's job, and
-// deleting stays behind the confirmation the user already sees.
+// deleting stays behind the duplicate-review dialog the user already sees (#285).
 
 import { getDuplicateKey, metadataWeight } from "./duplicates.js";
 import { normalizeUrl } from "./url.js";
@@ -144,17 +144,19 @@ function extractJson(text) {
 }
 
 /**
- * What to propose deleting, and why.
+ * What to propose removing, as pairs: both copies of each verdict the model
+ * called the same page, the survivor first, plus the reason the pair was
+ * proposed — the model's own phrase, or the candidate's signal when the model
+ * gave none. #285 reviews these pairs individually.
  *
  * Which copy goes is decided the same way #45 decides it — the copy carrying less
  * metadata, since deleting the annotated one loses work — and a bookmark already
  * proposed is never proposed twice, so a chain of pairs cannot empty a group.
  *
- * @returns {{ids: string[], reasons: {id: string, title: string, keptTitle: string, reason: string}[]}}
+ * @returns {{keep: object, drop: object, reason: string}[]}
  */
-export function proposeDuplicateRemovals(pairs = [], verdicts = []) {
-  const ids = [];
-  const reasons = [];
+export function proposeDuplicatePairs(pairs = [], verdicts = []) {
+  const proposed = [];
   const spoken = new Set();
 
   for (const { pair, same, reason } of verdicts) {
@@ -164,20 +166,12 @@ export function proposeDuplicateRemovals(pairs = [], verdicts = []) {
     if (!drop?.id) continue;
     spoken.add(candidate.a?.id);
     spoken.add(candidate.b?.id);
-    ids.push(drop.id);
-    reasons.push({
-      id: drop.id,
-      title: labelOf(drop),
-      keptTitle: labelOf(keep),
-      reason: reason || candidate.reason,
-    });
+    proposed.push({ keep, drop, reason: reason || candidate.reason });
   }
 
-  return { ids, reasons };
+  return proposed;
 }
 
 const alreadySpokenFor = ({ a, b }, spoken) => spoken.has(a?.id) || spoken.has(b?.id);
 
 const richerFirst = ({ a, b }) => (metadataWeight(a) >= metadataWeight(b) ? [a, b] : [b, a]);
-
-const labelOf = (bookmark) => bookmark?.title || bookmark?.url || "";

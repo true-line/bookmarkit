@@ -71,7 +71,7 @@ describe("HelpModal on the unified design system", () => {
     expect(duplicates.tagName).toBe("STRONG");
     expect(portability.tagName).toBe("STRONG");
     expect(duplicates.closest("li")).toHaveTextContent(
-      'Use the Remove Duplicates button (or type "remove duplicates" into the search) to find and delete duplicates by title+URL.'
+      'Use the Remove Duplicates button (or type "remove duplicates" into the search) to review duplicates pair by pair — both copies are shown, and nothing goes until you confirm.'
     );
   });
 

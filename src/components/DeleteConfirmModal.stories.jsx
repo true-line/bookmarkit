@@ -7,15 +7,6 @@ import { UiScope } from "../design-system/story-decorator.jsx";
 // drive the light / dark / RTL screenshots.
 const noop = () => undefined;
 
-const reasons = [
-  {
-    id: "syndicated",
-    title: "Rust ownership, explained",
-    keptTitle: "Rust ownership explained",
-    reason: "syndicated copy of the same article",
-  },
-];
-
 const meta = {
   title: "BookmarkIt/Dialogs/Delete Confirm",
   component: DeleteConfirmModal,
@@ -27,15 +18,6 @@ export default meta;
 export const Confirmation = {
   args: {
     message: "Are you sure you want to delete 2 bookmark(s)?",
-    onConfirm: noop,
-    onCancel: noop,
-  },
-};
-
-export const DuplicatePair = {
-  args: {
-    message: "Are you sure you want to delete 1 bookmark(s)?",
-    reasons,
     onConfirm: noop,
     onCancel: noop,
   },

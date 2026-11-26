@@ -15,10 +15,9 @@ import { useMessages } from "../i18n/index.js";
 // both routes out so a deletion in flight cannot be abandoned half way.
 // A11Y-04, PERF-05: dialog labelling and React.memo.
 // UX-09: isLoading prop disables buttons and shows spinner during async deletion.
-// #86: `reasons` explains a proposal the user did not make by hand — a model's
-// verdict that two bookmarks are the same page. Nothing is deleted without the
-// pair, and the reason for it, being visible first.
-const DeleteConfirmModal = ({ message, reasons = [], onConfirm, onCancel, isLoading = false }) => {
+// #285: duplicates no longer confirm here — each pair is decided on its own in
+// the duplicate-review dialog, which carries the proposal explanation now.
+const DeleteConfirmModal = ({ message, onConfirm, onCancel, isLoading = false }) => {
   const t = useMessages();
   return (
     <Modal
@@ -37,23 +36,7 @@ const DeleteConfirmModal = ({ message, reasons = [], onConfirm, onCancel, isLoad
           </Button>
         </>
       }
-    >
-      {reasons.length > 0 && (
-        <ul className="mt-3 max-h-60 overflow-y-auto text-sm space-y-2">
-          {reasons.map(({ id, title, keptTitle, reason }) => (
-            // The row is one sentence; the two titles are its nodes, and the
-            // words between them take the row's secondary color.
-            <li key={id} className="p-2 rounded border border-border text-secondary-text">
-              {t.rich("deleteConfirm.samePageAs", {
-                removed: <span className="text-primary-text">{title}</span>,
-                kept: <span className="text-primary-text">{keptTitle}</span>,
-              })}
-              <div className="text-xs text-secondary-text">{reason}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Modal>
+    />
   );
 };
 

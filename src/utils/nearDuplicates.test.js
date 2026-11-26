@@ -4,7 +4,7 @@ import {
   candidateReason,
   findNearDuplicateCandidates,
   parseDuplicateVerdicts,
-  proposeDuplicateRemovals,
+  proposeDuplicatePairs,
 } from "./nearDuplicates.js";
 
 const bookmark = (id, title, url, extra = {}) => ({ id, title, url, ...extra });
@@ -123,7 +123,7 @@ describe("parseDuplicateVerdicts", () => {
   });
 });
 
-describe("proposeDuplicateRemovals", () => {
+describe("proposeDuplicatePairs", () => {
   const bare = bookmark("bare", "Rust ownership", "https://a.example/rust");
   const annotated = bookmark("rich", "Rust ownership, explained", "https://b.example/rust", {
     tags: ["rust"],
@@ -131,24 +131,20 @@ describe("proposeDuplicateRemovals", () => {
     description: "Notes from a second read.",
   });
 
-  it("keeps the copy carrying the work", () => {
+  it("keeps the copy carrying the work, with the reason it was proposed", () => {
     const pairs = [{ a: bare, b: annotated, reason: "similar titles" }];
-    const { ids, reasons } = proposeDuplicateRemovals(pairs, [
-      { pair: 0, same: true, reason: "syndicated copy" },
-    ]);
+    const rows = proposeDuplicatePairs(pairs, [{ pair: 0, same: true, reason: "syndicated copy" }]);
 
-    expect(ids).toEqual(["bare"]);
-    expect(reasons[0]).toMatchObject({
-      id: "bare",
-      keptTitle: "Rust ownership, explained",
-      reason: "syndicated copy",
-    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].drop.id).toBe("bare");
+    expect(rows[0].keep.id).toBe("rich");
+    expect(rows[0].reason).toBe("syndicated copy");
   });
 
   it("proposes nothing for a pair the model called different", () => {
     const pairs = [{ a: bare, b: annotated, reason: "similar titles" }];
 
-    expect(proposeDuplicateRemovals(pairs, [{ pair: 0, same: false, reason: "" }]).ids).toEqual([]);
+    expect(proposeDuplicatePairs(pairs, [{ pair: 0, same: false, reason: "" }])).toEqual([]);
   });
 
   // Three copies pair up three ways. Acting on every "same" verdict would delete
@@ -163,19 +159,19 @@ describe("proposeDuplicateRemovals", () => {
       { a: one, b: three, reason: "similar titles" },
     ];
 
-    const { ids } = proposeDuplicateRemovals(pairs, [
+    const rows = proposeDuplicatePairs(pairs, [
       { pair: 0, same: true, reason: "same" },
       { pair: 1, same: true, reason: "same" },
       { pair: 2, same: true, reason: "same" },
     ]);
 
-    expect(ids).toEqual(["2"]);
+    expect(rows.map(({ drop }) => drop.id)).toEqual(["2"]);
   });
 
   it("falls back to the candidate's own reason when the model gave none", () => {
     const pairs = [{ a: bare, b: annotated, reason: "similar titles" }];
-    const { reasons } = proposeDuplicateRemovals(pairs, [{ pair: 0, same: true, reason: "" }]);
+    const rows = proposeDuplicatePairs(pairs, [{ pair: 0, same: true, reason: "" }]);
 
-    expect(reasons[0].reason).toBe("similar titles");
+    expect(rows[0].reason).toBe("similar titles");
   });
 });

@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { getDuplicateKey, findDuplicateIds, filterDuplicateImports } from "./duplicates.js";
+import {
+  getDuplicateKey,
+  findDuplicateIds,
+  findDuplicatePairs,
+  keepReasonTokens,
+  filterDuplicateImports,
+} from "./duplicates.js";
 
 describe("getDuplicateKey", () => {
   it("is case-insensitive and trims the url", () => {
@@ -68,6 +74,82 @@ describe("findDuplicateIds", () => {
       { id: "4", url: "https://example.com/a#install" },
     ];
     expect(findDuplicateIds(list)).toEqual([]);
+  });
+});
+
+// #285: the review shows both copies of every pair, so the pairs are a thing
+// of their own — the same keep decisions findDuplicateIds has always made,
+// with the survivor attached.
+describe("findDuplicatePairs", () => {
+  it("pairs each extra copy with the survivor", () => {
+    const list = [
+      { id: "1", title: "A", url: "http://a.com" },
+      { id: "2", title: "a", url: "http://a.com" },
+      { id: "3", title: "B", url: "http://b.com" },
+      { id: "4", title: "b ", url: " http://b.com" },
+    ];
+
+    expect(findDuplicatePairs(list)).toEqual([
+      { keep: list[0], drop: list[1] },
+      { keep: list[2], drop: list[3] },
+    ]);
+  });
+
+  it("keeps the richer copy even when it arrives last", () => {
+    const bare = { id: "bare", title: "A", url: "https://a.test/" };
+    const annotated = { id: "annotated", title: "A", url: "https://a.test/", tags: ["react"] };
+
+    expect(findDuplicatePairs([bare, annotated])).toEqual([{ keep: annotated, drop: bare }]);
+  });
+
+  // #285 codex: three copies of growing richness. Every row must point at the
+  // group's final survivor, so unticking either row independently keeps both
+  // its copies — no row may name a survivor another row deletes.
+  it("pairs every loser with the group's final survivor", () => {
+    const bare = { id: "bare", title: "A", url: "https://a.test/" };
+    const richer = { id: "richer", title: "A", url: "https://a.test/", tags: ["x"] };
+    const richest = { id: "richest", title: "A", url: "https://a.test/", tags: ["x"], rating: 5 };
+
+    expect(findDuplicatePairs([bare, richer, richest])).toEqual([
+      { keep: richest, drop: bare },
+      { keep: richest, drop: richer },
+    ]);
+  });
+
+  it("agrees with findDuplicateIds about which copy goes", () => {
+    const list = [
+      { id: "first", title: "A", url: "https://a.test/", rating: 3 },
+      { id: "second", title: "A", url: "https://a.test/", tags: ["x"] },
+    ];
+
+    expect(findDuplicatePairs(list).map(({ drop }) => drop.id)).toEqual(findDuplicateIds(list));
+  });
+});
+
+describe("keepReasonTokens", () => {
+  it("names the metadata the survivor has and the dropped copy lacks", () => {
+    expect(
+      keepReasonTokens(
+        { tags: ["a"], rating: 4, description: "Notes." },
+        { title: "A", url: "https://a.test/" }
+      )
+    ).toEqual(["tags", "rating", "notes"]);
+  });
+
+  it("stays silent about metadata both copies share (#285 codex)", () => {
+    const both = { tags: ["a"], rating: 4, description: "Notes." };
+
+    expect(keepReasonTokens({ ...both, rating: 5 }, { ...both, rating: 2 })).toEqual(["earliest"]);
+  });
+
+  it("falls back to earliest when the copies are equally bare", () => {
+    expect(keepReasonTokens({ title: "A", url: "https://a.test/" }, { title: "a" })).toEqual([
+      "earliest",
+    ]);
+  });
+
+  it("does not count an empty description or a zero rating", () => {
+    expect(keepReasonTokens({ tags: [], rating: 0, description: "   " }, {})).toEqual(["earliest"]);
   });
 });
 
