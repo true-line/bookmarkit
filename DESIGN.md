@@ -606,6 +606,31 @@ batch, and callers fall back to writing one bookmark at a time. The fallback is
 part of the contract rather than a workaround, so a new store is useful before it
 is complete.
 
+## Import/export
+
+`ImportExportContent` runs as the modal-standard dialog with an export tab and
+three import tabs — JSON, Netscape HTML, and Markdown
+(`utils/markdownBookmarks.js`, a link list in both directions: titles and
+addresses only, `- [Title](address)` bullets out, every markdown link in a
+document accepted). The tabbed composition is the app's own on purpose, and the
+difference from the mockups is recorded here: both mockups merge every format
+onto one chooser, and the desktop one shows only JSON and HTML. One chooser
+hides what the tabs keep legible — each format has its own accept list, paste
+placeholder, and staging path (JSON validates asynchronously before
+confirming; HTML and Markdown stage synchronously) — and the format-specific
+round trips are pinned by tests that a merged chooser would blur.
+
+The confirmation is honest about skip-existing (#287). Skipping URLs the
+library already holds is the store edge's own default
+(`filterDuplicateImports` in `BookmarkApp`), and the mockup's "Skip URLs
+already in library" checkbox hands that decision to the user: checked, the
+confirmation's count runs the staged entries through the same normalized-URL
+rule and names what it would skip; unchecked, every usable entry is imported,
+duplicates included. The count you approve is the count that is added, and an
+import that would add nothing cannot be confirmed. Under "Replace all", the
+checkbox is retired — the library is emptied ahead of the import, so there is
+nothing left to skip.
+
 ## Duplicates
 
 Duplicate detection has two layers, and the order matters. `utils/duplicates.js`
