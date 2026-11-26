@@ -138,6 +138,41 @@ say nothing, the sticker sheet's
 and spec text disagree (the digest's `rounded-md` card, inputs' 1px focus
 ring), the spec text wins and the divergence is noted in comments.
 
+### Appearance and motion settings (#290)
+
+The options modal's appearance section gains the mockups' missing settings,
+all owned by `useTheme` because they land on the document element beside
+`data-ui-theme` (so the popup follows the manager for free):
+
+- **"System default"** is a resolution, not a palette: the select entry
+  resolves through `prefers-color-scheme` — Light (Alabaster) or Dark (Slate)
+  — and a `matchMedia` listener re-resolves live when the OS flips while the
+  app is open. The choice persists like any other theme selection.
+- **Built-in palettes.** "Dark (Slate)" takes its seven bridge variables from
+  the design system's own dark token scope, so the legacy variables and the
+  `--ui-*` palette read as one surface. "High Contrast" is a fixed light
+  palette at maximum contrast (white canvas, ink text, black hairlines, the
+  brand crimson at ~6:1 on white) — a statement, deliberately not a mirror of
+  the OS scheme. Uploaded themes cannot shadow built-ins, and the select
+  lists built-ins under their mockup labels ahead of uploads by file name.
+- **Label pattern.** The two mockups name the dark theme differently
+  ("Dark Slate" desktop, "Dark (Slate)" mobile); the mobile pattern wins —
+  "Scheme (Palette)" generalizes to High Contrast and future palettes, and
+  the same mobile mockup is the source of the "System default" entry the
+  issue asks for. The four built-in labels are i18n'd; uploaded names are
+  data, as filenames always were.
+- **Reduce motion** is an override, not an echo: checked forces the
+  transition collapse `prefers-reduced-motion` provides, stamped as
+  `data-ui-motion="reduce"` on the document element for the stylesheets'
+  attribute-driven collapse rules; unchecked removes the attribute and the OS
+  media queries stand alone. The direction of the override is deliberate — a
+  user can force reduction on top of an OS that doesn't ask, but unchecked
+  never fights an OS that does (the safe default for accessibility).
+- **The chosen-file status** beside the custom-theme picker is a
+  `role="status"` span: "No file chosen" until a picker resolves, the file's
+  name after — so the outcome of an upload (whose toasts land elsewhere) is
+  still announced.
+
 ### The manager shell (#283)
 
 `SidebarNav` is the mockup's persistent navigation sidebar: a fixed rail from
