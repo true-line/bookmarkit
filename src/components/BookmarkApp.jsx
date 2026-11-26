@@ -1233,13 +1233,18 @@ const BookmarkApp = () => {
 
   // ─── Import handlers ─────────────────────────────────────────────────────────
   const handleImportJson = useCallback(
-    async (arr, replaceAll = false) => {
+    async (arr, replaceAll = false, skipExisting = true) => {
       const existing = replaceAll ? [] : bookmarks;
       // #25: The dialog already ran the array through readImportedBookmarks, but
       // this is the store-facing edge, so it validates rather than assuming.
       // #11 lives there too: only entries with a safe http(s) URL survive.
       const { bookmarks: safe } = readImportedBookmarks(arr);
-      const { bookmarks: bookmarksToImport, skippedCount } = filterDuplicateImports(safe, existing);
+      // #287: skip-existing is the confirm dialog's choice, but skipping stays
+      // the default here so a caller that forgets to pass the choice cannot
+      // double-import what the library already holds.
+      const { bookmarks: bookmarksToImport, skippedCount } = skipExisting
+        ? filterDuplicateImports(safe, existing)
+        : { bookmarks: safe, skippedCount: 0 };
 
       if (replaceAll) {
         await saveAllBookmarks(bookmarksToImport);
@@ -1261,17 +1266,17 @@ const BookmarkApp = () => {
   );
 
   const handleImportHtml = useCallback(
-    async (html, replaceAll = false) => {
+    async (html, replaceAll = false, skipExisting = true) => {
       try {
         const importedBookmarks = parseNetscapeHtml(html);
 
         // #11: only import links with a safe http(s) URL.
         const safeBookmarks = importedBookmarks.filter((b) => isSafeHttpUrl(b.url));
         const existing = replaceAll ? [] : bookmarks;
-        const { bookmarks: bookmarksToImport, skippedCount } = filterDuplicateImports(
-          safeBookmarks,
-          existing
-        );
+        // #287: same skip-existing contract as the JSON edge above.
+        const { bookmarks: bookmarksToImport, skippedCount } = skipExisting
+          ? filterDuplicateImports(safeBookmarks, existing)
+          : { bookmarks: safeBookmarks, skippedCount: 0 };
 
         if (replaceAll) {
           await saveAllBookmarks(bookmarksToImport);
