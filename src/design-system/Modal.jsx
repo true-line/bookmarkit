@@ -105,7 +105,10 @@ export function Modal({
           description={description}
           descriptionId={descriptionId}
           closable={Boolean(onClose) && !hideClose}
-          closeLabel={closeLabel ?? t("common.close")}
+          // #292: the dialog mockups label the close control "Close dialog";
+          // callers with a better name (help, options, the review warnings)
+          // pass their own.
+          closeLabel={closeLabel ?? t("common.closeDialog")}
           closeDisabled={closeDisabled}
           onClose={requestClose}
         />

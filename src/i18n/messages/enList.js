@@ -8,6 +8,7 @@ export const listMessages = {
     addNew: "Add New",
     cancel: "Cancel",
     close: "Close",
+    closeDialog: "Close dialog",
     delete: "Delete",
     dismiss: "Dismiss",
     import: "Import",
@@ -189,9 +190,11 @@ export const listMessages = {
 
   // EmptyShelf
   emptyShelf: {
+    addFirstBookmark: "Add First Bookmark",
     clearSearch: "Clear search",
     emptyDescription: "Add your first bookmark, or import a browser export.",
     emptyTitle: "Your shelf is empty.",
+    importBookmarks: "Import Bookmarks",
     noMatchQuery: 'No bookmarks match "{query}".',
     noMatchRequest: "No bookmarks match your request.",
     noMatchSearch: "No bookmarks match your search.",
