@@ -205,4 +205,70 @@ describe("system default, built-ins, and motion (#290)", () => {
     renderHook(() => useTheme());
     await waitFor(() => expect(root().getAttribute("data-ui-motion")).toBe("reduce"));
   });
+
+  it("lifts the high-contrast palette into the design system's ink and border roles", async () => {
+    const { result } = renderHook(() => useTheme());
+    await act(async () => {
+      result.current.selectTheme("high-contrast");
+    });
+    // Codex P1 on #290: the white background alone would leave most surfaces
+    // reading the ordinary light --ui-* palette — the contrast must reach
+    // the tokenized borders and text, not just the seven legacy variables.
+    expect(root().style.getPropertyValue("--ui-outline")).toBe("#000000");
+    expect(root().style.getPropertyValue("--ui-outline-variant")).toBe("#000000");
+    expect(root().style.getPropertyValue("--ui-on-surface")).toBe("#000000");
+    expect(root().style.getPropertyValue("--ui-on-surface-variant")).toBe("#1a1a1a");
+    await act(async () => {
+      result.current.selectTheme("default");
+    });
+    // And the overrides clear when any other theme takes over.
+    expect(root().style.getPropertyValue("--ui-outline")).toBe("");
+    expect(root().style.getPropertyValue("--ui-outline-variant")).toBe("");
+    expect(root().style.getPropertyValue("--ui-on-surface")).toBe("");
+    expect(root().style.getPropertyValue("--ui-on-surface-variant")).toBe("");
+  });
+
+  it("rejects an upload named after a built-in or the system mode", async () => {
+    const showMessage = vi.fn();
+    const { result } = renderHook(() => useTheme());
+    await act(async () => {
+      await result.current.uploadTheme(new File(["{}"], "dark.json"), showMessage);
+      await result.current.uploadTheme(new File(["{}"], "high-contrast.yaml"), showMessage);
+      await result.current.uploadTheme(new File(["{}"], "system.json"), showMessage);
+    });
+    // Codex P2 on #290: a shadowing upload would win for the session and
+    // then silently vanish at the next load, when the merge order restores
+    // the built-in.
+    expect(showMessage).toHaveBeenCalledTimes(3);
+    expect(showMessage).toHaveBeenCalledWith(expect.stringMatching(/reserved/i), "error");
+    expect(result.current.themes.dark.bgPrimary).toBe("#0d141c");
+    expect(result.current.themes["high-contrast"].bgPrimary).toBe("#ffffff");
+    expect(result.current.themes.system).toBeUndefined();
+  });
+
+  it("still accepts an upload whose name collides with nothing", async () => {
+    const showMessage = vi.fn();
+    const { result } = renderHook(() => useTheme());
+    await act(async () => {
+      await result.current.uploadTheme(
+        new File(
+          [
+            JSON.stringify({
+              bgPrimary: "#123456",
+              bgSecondary: "#234567",
+              textPrimary: "#ffffff",
+              textSecondary: "#dddddd",
+              border: "#333333",
+              accent: "#c62f35",
+              accentHover: "#a92329",
+            }),
+          ],
+          "midnight.json"
+        ),
+        showMessage
+      );
+    });
+    expect(result.current.themes.midnight).toBeDefined();
+    expect(showMessage).toHaveBeenCalledWith(expect.stringMatching(/uploaded/i), "success");
+  });
 });

@@ -265,6 +265,7 @@ export const dialogMessages = {
       "Theme contains invalid color values. Use valid CSS colors (e.g., #rrggbb, rgb(), hsl(), named colors).",
     invalidFormat: "Invalid theme format. Expected a JSON object with color properties.",
     missingProperties: "Theme is missing required properties: {properties}",
+    reservedName: "That file name is reserved by a built-in theme — rename the file and try again.",
     tooLarge: "Theme file is too large. Maximum allowed size is 100 KB.",
     unknownProperties:
       "Theme contains unknown properties: {properties}. Only the 7 color properties are allowed.",

@@ -94,7 +94,9 @@ function resolveActiveTheme(themes, currentTheme, systemPrefersDark) {
 // user's accent onto the design system's brand tokens so anything tokenized
 // as brand follows the selected theme. The rest of the --ui-* palette stays
 // the canonical one from the Stitch screens; only brand follows the user.
-function applyThemeToDom(theme) {
+// The High Contrast built-in is the one exception — it stamps the design
+// system's ink and border roles inline (see below).
+function applyThemeToDom(theme, highContrast = false) {
   const t = theme || DEFAULT_THEME;
   const root = document.documentElement;
   root.style.setProperty("--bg-primary", t.bgPrimary || "#fffdf8");
@@ -107,6 +109,22 @@ function applyThemeToDom(theme) {
   root.setAttribute("data-ui-theme", resolveUiTheme(t.bgPrimary));
   root.style.setProperty("--ui-brand-crimson", t.accent || "#c62f35");
   root.style.setProperty("--ui-brand-crimson-hover", t.accentHover || "#a92329");
+  // Review fix on #290: the white background alone would land High Contrast
+  // on the ordinary light --ui-* palette, leaving most surfaces' borders on
+  // the low-contrast outline-variant and their text on the variant ink. The
+  // ink and border roles ride inline overrides while the built-in paints,
+  // and are cleared the moment any other theme takes over.
+  if (highContrast) {
+    root.style.setProperty("--ui-outline", "#000000");
+    root.style.setProperty("--ui-outline-variant", "#000000");
+    root.style.setProperty("--ui-on-surface", "#000000");
+    root.style.setProperty("--ui-on-surface-variant", "#1a1a1a");
+  } else {
+    root.style.removeProperty("--ui-outline");
+    root.style.removeProperty("--ui-outline-variant");
+    root.style.removeProperty("--ui-on-surface");
+    root.style.removeProperty("--ui-on-surface-variant");
+  }
 }
 
 // Light or dark, judged by the theme's own background: parse #rrggbb (what
@@ -215,9 +233,15 @@ export function useTheme() {
     return () => query.removeEventListener("change", sync);
   }, [currentTheme]);
 
-  // Apply CSS variables whenever theme changes
+  // Apply CSS variables whenever theme changes. "high-contrast" is the key
+  // that resolves to the HC built-in (System default never does — it lands
+  // on default or dark), and the flag is what lifts its palette into the
+  // design system's token roles.
   useEffect(() => {
-    applyThemeToDom(resolveActiveTheme(themes, currentTheme, systemPrefersDark));
+    applyThemeToDom(
+      resolveActiveTheme(themes, currentTheme, systemPrefersDark),
+      currentTheme === "high-contrast"
+    );
   }, [currentTheme, themes, systemPrefersDark]);
 
   // #290: the Reduce motion override — stamped as an attribute beside
@@ -247,6 +271,16 @@ export function useTheme() {
     if (!file) return;
     if (file.size > 100 * 1024) {
       showMessage(getMessages()("themeUpload.tooLarge"), "error");
+      return;
+    }
+    // Review fix on #290: the built-in keys — and "system", the OS-follow
+    // mode — are reserved. An upload named "dark.json" would otherwise
+    // shadow the built-in until the next load, then silently vanish when
+    // the merge order restores it. Rejected up front; the picker's status
+    // span still shows the name, and the toast explains.
+    const themeName = file.name.replace(/\.(json|yaml|yml)$/i, "");
+    if (BUILTIN_THEME_KEYS.includes(themeName) || themeName === SYSTEM_THEME) {
+      showMessage(getMessages()("themeUpload.reservedName"), "error");
       return;
     }
     try {
@@ -287,7 +321,6 @@ export function useTheme() {
         showMessage(getMessages()("themeUpload.invalidColors"), "error");
         return;
       }
-      const themeName = file.name.replace(/\.(json|yaml|yml)$/i, "");
       setThemes((prev) => {
         const next = { ...prev, [themeName]: themeData };
         saveThemeToPersistence("bm_themes", JSON.stringify(next));

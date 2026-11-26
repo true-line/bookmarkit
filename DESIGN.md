@@ -153,8 +153,13 @@ all owned by `useTheme` because they land on the document element beside
   `--ui-*` palette read as one surface. "High Contrast" is a fixed light
   palette at maximum contrast (white canvas, ink text, black hairlines, the
   brand crimson at ~6:1 on white) — a statement, deliberately not a mirror of
-  the OS scheme. Uploaded themes cannot shadow built-ins, and the select
-  lists built-ins under their mockup labels ahead of uploads by file name.
+  the OS scheme. Its contrast reaches the tokenized surfaces too: applying it
+  stamps the design system's ink and border roles (`--ui-outline`,
+  `--ui-outline-variant`, the on-surface pair) inline, cleared the moment any
+  other theme takes over. Uploaded themes cannot shadow built-ins — names
+  that collide with a built-in (or `system`, the OS-follow mode) are rejected
+  up front — and the select lists built-ins under their mockup labels ahead
+  of uploads by file name.
 - **Label pattern.** The two mockups name the dark theme differently
   ("Dark Slate" desktop, "Dark (Slate)" mobile); the mobile pattern wins —
   "Scheme (Palette)" generalizes to High Contrast and future palettes, and
