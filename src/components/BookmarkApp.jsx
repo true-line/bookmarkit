@@ -1292,7 +1292,11 @@ const BookmarkApp = () => {
 
   return (
     <div
-      className="bookmarkit-shell h-screen overflow-hidden flex flex-col font-sans"
+      // The app renders under the design system's scope root (#289): the spec
+      // typeface for the body copy that has not migrated yet, and the shared
+      // 2px focus ring. The inline background stays — the shell's canvas is
+      // the app's own surface, not the scope's.
+      className="bookmarkit-shell ui-root h-screen overflow-hidden flex flex-col"
       style={{ backgroundColor: "var(--bg-secondary)" }}
     >
       {/* UX-06: Import progress bar */}
