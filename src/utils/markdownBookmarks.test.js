@@ -22,15 +22,29 @@ describe("generateMarkdownLinks", () => {
   it("wraps destinations that hold spaces or delimiters in angle brackets", () => {
     expect(
       generateMarkdownLinks([
-        { title: "Parens", url: "https://example.com/a(b)" },
         { title: "Spaces", url: "https://example.com/a b" },
         { title: "Bracketed", url: "https://example.com/?a=1<b" },
       ])
     ).toBe(
-      "- [Parens](https://example.com/a\\(b\\))\n" +
-        "- [Spaces](<https://example.com/a b>)\n" +
-        "- [Bracketed](<https://example.com/?a=1\\<b>)\n"
+      "- [Spaces](<https://example.com/a b>)\n" + "- [Bracketed](<https://example.com/?a=1\\<b>)\n"
     );
+  });
+
+  it("leaves balanced parentheses readable in plain destinations", () => {
+    expect(
+      generateMarkdownLinks([
+        { title: "Wiki", url: "https://en.wikipedia.org/wiki/Function_(mathematics)" },
+      ])
+    ).toBe("- [Wiki](https://en.wikipedia.org/wiki/Function_(mathematics))\n");
+  });
+
+  it("escapes a stray backslash or an unbalanced parenthesis in plain destinations", () => {
+    expect(
+      generateMarkdownLinks([
+        { title: "Slash", url: "https://example.com/a\\b" },
+        { title: "Open", url: "https://example.com/a(b" },
+      ])
+    ).toBe("- [Slash](https://example.com/a\\\\b)\n- [Open](https://example.com/a\\(b)\n");
   });
 
   it("falls back to the URL when a bookmark has no title", () => {
@@ -90,6 +104,36 @@ describe("parseMarkdownLinks", () => {
     };
 
     expect(parseMarkdownLinks(generateMarkdownLinks([bookmark]))).toEqual([bookmark]);
+  });
+
+  it("round-trips balanced and escaped destinations through the writer", () => {
+    const bookmarks = [
+      { title: "Wiki", url: "https://en.wikipedia.org/wiki/Function_(mathematics)" },
+      { title: "Slash", url: "https://example.com/a\\b(c" },
+    ];
+
+    expect(parseMarkdownLinks(generateMarkdownLinks(bookmarks))).toEqual(bookmarks);
+  });
+
+  it("reads a balanced-paren destination the way CommonMark readers do", () => {
+    expect(
+      parseMarkdownLinks("- [Wikipedia](https://en.wikipedia.org/wiki/Function_(mathematics))")
+    ).toEqual([
+      { title: "Wikipedia", url: "https://en.wikipedia.org/wiki/Function_(mathematics)" },
+    ]);
+  });
+
+  it("passes over images, code spans, and fenced blocks", () => {
+    const text = [
+      "![Logo](https://example.com/logo.png)",
+      "Use `![Inline](https://x.test/inline)` in prose about code.",
+      "```",
+      "- [Fenced](https://x.test/fenced)",
+      "```",
+      "- [Real](https://example.com/real)",
+    ].join("\n");
+
+    expect(parseMarkdownLinks(text)).toEqual([{ title: "Real", url: "https://example.com/real" }]);
   });
 
   it("finds nothing in prose without links and tolerates missing input", () => {

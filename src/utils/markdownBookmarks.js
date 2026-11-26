@@ -10,21 +10,52 @@
 // destinations choose their own quoting: a plain `(address)` when it has
 // nothing to hide, CommonMark's angle-bracket form `<address>` when it
 // carries spaces or delimiters. The reader accepts both and undoes exactly
-// the escapes the writer makes.
+// the escapes the writer makes — backslash included, in both forms, which is
+// what keeps the pair a true inverse rather than a lookalike.
+//
+// The reader is a link-list reader, not a Markdown parser, but it respects
+// the constructs that would otherwise lie about the list: an image
+// (`![alt](url)`) is not a bookmark, code spans and fenced blocks quote
+// examples rather than recommend pages, and a destination's balanced
+// parentheses are read the way CommonMark readers read them.
 
-const LINK = /\[((?:\\.|[^\]\\\n])*)\]\(\s*(?:<((?:\\.|[^<>\\\n])*)>|((?:\\.|[^()\\\n])*))\s*\)/gu;
+const LINK =
+  /(?<!!)\[((?:\\.|[^\]\\\n])*)\]\(\s*(?:<((?:\\.|[^<>\\\n])*)>|((?:\\.|[^()\\\n]|\([^()\\\n]*\))*))\s*\)/gu;
+
+// Not link material: fenced blocks and inline code spans quote their contents.
+const CODE_FENCES = /```[\s\S]*?```/g;
+const CODE_SPANS = /`[^`\n]*`/g;
 
 const escapeLinkText = (title) => String(title).replace(/[\\[\]]/g, "\\$&");
 
-// Plain destinations end at the first ")" and may not hold a space, so a
-// destination with either goes in angle brackets; inside the brackets only
-// <, > and \ need a backslash.
+// A destination is wrapped in angle brackets when it has a space or would
+// close the plain form early; inside the brackets only <, > and \ are
+// special. In the plain form, parentheses that balance are left readable —
+// CommonMark readers (and ours) handle them — so only a stray backslash or
+// an unbalanced parenthesis earns an escape.
 function destinationOf(url) {
   const address = String(url);
-  if (/[\s<>]/.test(address)) {
+  if /[\s<>]/.test(address)) {
     return `<${address.replace(/[\\<>]/g, "\\$&")}>`;
   }
-  return address.replace(/[()]/g, "\\$&");
+  if (!address.includes("\\") && balancedParens(address)) {
+    return address;
+  }
+  return address.replace(/[\\()]/g, "\\$&");
+}
+
+// Depth never goes negative and ends at zero — the plain form's parentheses
+// close the way they opened.
+function balancedParens(address) {
+  let depth = 0;
+  for (const char of address) {
+    if (char === "(") depth += 1;
+    else if (char === ")") {
+      depth -= 1;
+      if (depth < 0) return false;
+    }
+  }
+  return depth === 0;
 }
 
 const unescapeMarkdown = (value) => String(value ?? "").replace(/\\(.)/g, "$1");
@@ -50,15 +81,18 @@ export function generateMarkdownLinks(bookmarks) {
  * Read every markdown link out of a document as a raw {title, url} entry —
  * escapes undone, nothing validated. Bullet markers are optional and a line
  * may hold more than one link; a title the file left empty stays empty and
- * the caller's normalization falls back to the URL. URL safety and entry
- * normalization stay with the caller (readImportedBookmarks), exactly as for
- * the JSON path.
+ * the caller's normalization falls back to the URL. Images, code spans and
+ * fenced blocks are passed over. URL safety and entry normalization stay with
+ * the caller (readImportedBookmarks), exactly as for the JSON path.
  * @param {string} text
  * @returns {Array<{title: string, url: string}>}
  */
 export function parseMarkdownLinks(text) {
   const entries = [];
-  for (const [, linkText, pointy, plain] of String(text ?? "").matchAll(LINK)) {
+  const source = String(text ?? "")
+    .replace(CODE_FENCES, "")
+    .replace(CODE_SPANS, "");
+  for (const [, linkText, pointy, plain] of source.matchAll(LINK)) {
     entries.push({
       title: unescapeMarkdown(linkText),
       url: unescapeMarkdown(pointy ?? plain ?? ""),
