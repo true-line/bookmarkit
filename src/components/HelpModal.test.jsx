@@ -92,7 +92,7 @@ describe("HelpModal on the unified design system", () => {
     const privacy = screen.getByRole("link", { name: "Privacy Policy" });
     expect(privacy).toHaveAttribute(
       "href",
-      "https://github.com/true-line/bookmarkit#privacy-and-storage"
+      "https://github.com/qwts/bookmarkit#privacy-and-storage"
     );
     expect(privacy).toHaveAttribute("target", "_blank");
     expect(privacy).toHaveAttribute("rel", "noreferrer");
@@ -100,7 +100,7 @@ describe("HelpModal on the unified design system", () => {
     const licenses = screen.getByRole("link", { name: "Licenses" });
     expect(licenses).toHaveAttribute(
       "href",
-      "https://github.com/true-line/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md"
+      "https://github.com/qwts/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md"
     );
     expect(licenses).toHaveAttribute("target", "_blank");
   });

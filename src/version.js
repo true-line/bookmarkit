@@ -11,7 +11,6 @@ import pkg from "../package.json";
 export const APP_VERSION = pkg.version;
 export const APP_LICENSE = pkg.license;
 
-export const PRIVACY_POLICY_URL = "https://github.com/true-line/bookmarkit#privacy-and-storage";
+export const PRIVACY_POLICY_URL = "https://github.com/qwts/bookmarkit#privacy-and-storage";
 
-export const LICENSES_URL =
-  "https://github.com/true-line/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md";
+export const LICENSES_URL = "https://github.com/qwts/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md";

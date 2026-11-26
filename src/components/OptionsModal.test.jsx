@@ -252,12 +252,12 @@ describe("OptionsModal appearance settings (#290)", () => {
     const privacy = screen.getByRole("link", { name: "Privacy Policy" });
     expect(privacy).toHaveAttribute(
       "href",
-      "https://github.com/true-line/bookmarkit#privacy-and-storage"
+      "https://github.com/qwts/bookmarkit#privacy-and-storage"
     );
     const licenses = screen.getByRole("link", { name: "Open-Source Licenses" });
     expect(licenses).toHaveAttribute(
       "href",
-      "https://github.com/true-line/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md"
+      "https://github.com/qwts/bookmarkit/blob/main/THIRD-PARTY-NOTICES.md"
     );
     expect(licenses).toHaveClass("ui-button--secondary");
   });
