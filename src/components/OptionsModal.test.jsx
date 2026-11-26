@@ -263,6 +263,18 @@ describe("OptionsModal appearance settings (#290)", () => {
   });
 });
 
+// #291: the a11y sweep — the coarse-pointer 44px floor rides on the settings'
+// checkbox rows: the label wraps the box, so the row is the touch target.
+describe("OptionsModal accessibility sweep (#291)", () => {
+  it("marks the settings checkbox rows as the coarse-pointer targets", () => {
+    render(<OptionsModal {...baseProps} />);
+
+    const rows = [...document.querySelectorAll(".ui-settings-row")];
+    expect(rows).toHaveLength(4);
+    expect(rows.every((row) => row.tagName === "LABEL")).toBe(true);
+  });
+});
+
 // Local providers need no key, but a server behind an authenticating proxy may
 // ask for one; the field is offered for both and stays optional.
 describe("OptionsModal local provider API key (optional)", () => {

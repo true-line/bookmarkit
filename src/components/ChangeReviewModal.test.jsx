@@ -109,3 +109,38 @@ describe("ChangeReviewModal on the unified design system (#249)", () => {
     expect(screen.getByText("1 of 2 selected")).toBeInTheDocument();
   });
 });
+
+// #291: the a11y/RTL sweep — row titles read their own direction like the
+// bookmark cards' titles do, and the footer count announces its changes
+// instead of waiting for the reader to find it.
+describe("ChangeReviewModal accessibility sweep (#291)", () => {
+  it("lets each row title set its own direction, like the cards", () => {
+    setup();
+
+    expect(screen.getByText("Rust ownership")).toHaveAttribute("dir", "auto");
+  });
+
+  it("announces the footer count's changes politely", () => {
+    setup();
+
+    expect(screen.getByText("2 of 2 selected")).toHaveAttribute("aria-live", "polite");
+  });
+
+  // The keyboard-only pass: the rows are checkboxes and the footer is
+  // buttons — native controls in DOM order, with the dialog's focus trap
+  // (the design-system Modal's tested contract) keeping the cycle inside.
+  it("takes a keyboard pass through rows and footer in DOM order", () => {
+    const { container } = render(
+      <ChangeReviewModal rows={rows} onApply={vi.fn()} onCancel={vi.fn()} />
+    );
+
+    const tabbables = container.querySelectorAll(
+      "button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href]"
+    );
+    expect(tabbables.length).toBeGreaterThan(0);
+    for (const el of tabbables) {
+      el.focus();
+      expect(document.activeElement).toBe(el);
+    }
+  });
+});

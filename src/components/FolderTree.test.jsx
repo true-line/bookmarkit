@@ -201,3 +201,44 @@ describe("FolderTree in the navigation sidebar (#283)", () => {
     expect(nav.firstElementChild.nextElementSibling.tagName).toBe("UL");
   });
 });
+
+// #291: the a11y/RTL sweep — the tree is the app's deepest mirroring surface,
+// so nothing in it may pin to the physical left: alignment rides text-start
+// and the delete confirmation's indent rides ms-*.
+describe("FolderTree RTL mirroring (#291)", () => {
+  it("leaves nothing pinned to the physical left", () => {
+    const { container } = render(<FolderTree bookmarks={bookmarks} onSelect={vi.fn()} />);
+
+    const pinned = [...container.querySelectorAll("*")].filter(
+      (el) => typeof el.className === "string" && /\b(ml-6|text-left)\b/.test(el.className)
+    );
+    expect(pinned).toEqual([]);
+    expect(container.querySelector("button.text-start")).not.toBeNull();
+  });
+
+  it("indents the delete confirmation with a mirrorable margin", () => {
+    const { container } = render(<FolderTree bookmarks={bookmarks} onSelect={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove folder Work" }));
+    expect(container.querySelector(".ms-6")).not.toBeNull();
+  });
+
+  // The keyboard-only pass: every control is a native tabbable element, so
+  // traversal is DOM order — each one takes focus, and none needs a tabindex.
+  it("takes a keyboard pass through every control in DOM order", () => {
+    const { container } = render(<FolderTree bookmarks={bookmarks} onSelect={vi.fn()} />);
+
+    const tabbables = container.querySelectorAll(
+      "button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href]"
+    );
+    expect(tabbables.length).toBeGreaterThan(0);
+    for (const el of tabbables) {
+      el.focus();
+      expect(document.activeElement).toBe(el);
+    }
+    const hacks = [...tabbables].filter(
+      (el) => el.hasAttribute("tabindex") && el.getAttribute("tabindex") !== "0"
+    );
+    expect(hacks).toEqual([]);
+  });
+});
