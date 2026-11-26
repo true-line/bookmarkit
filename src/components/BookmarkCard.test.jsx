@@ -79,10 +79,10 @@ describe("BookmarkCard recipe (#251)", () => {
     expect(screen.getByRole("img", { name: "URL could not be reached" })).toBeInTheDocument();
   });
 
-  it("renders the title on headline-sm and the URL on the mono line", () => {
+  it("renders the title on label-lg and the URL on the mono line", () => {
     setup();
     const title = screen.getByRole("heading", { name: BOOKMARK.title });
-    expect(title).toHaveClass("ui-type-headline-sm");
+    expect(title).toHaveClass("ui-type-label-lg");
     expect(title).toHaveAttribute("dir", "auto");
     const url = screen.getByText(BOOKMARK.url);
     expect(url).toHaveClass("ui-url");
@@ -152,5 +152,77 @@ describe("BookmarkCard recipe (#251)", () => {
   it("turns draggable once the folder pane gives a drop target", () => {
     setup({ onDragStart: vi.fn() });
     expect(screen.getByRole("button")).toHaveAttribute("draggable", "true");
+  });
+});
+
+// #288: the mockups' card anatomy — the per-bookmark Edit control named after
+// its bookmark, and below `lg` the mobile meta footer (folder chip, # tags,
+// Unrated where a count would sit) against the desktop card's plainer row.
+describe("BookmarkCard anatomy and selection parity (#288)", () => {
+  it("names the Edit control after the bookmark and keeps it the card's own", () => {
+    const onEdit = vi.fn();
+    const handlers = setup({ onEdit });
+    const button = screen.getByRole("button", { name: "Edit Ghostty docs bookmark" });
+
+    // The nested-control rule (#239): the button's click is the edit, and the
+    // guarded card handlers it bubbles into never also fire.
+    fireEvent.click(button);
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledWith(BOOKMARK);
+    expect(handlers.onClick).not.toHaveBeenCalled();
+  });
+
+  it("keeps the Edit control's keyboard out of the card's activation", () => {
+    const onEdit = vi.fn();
+    const handlers = setup({ onEdit });
+    const button = screen.getByRole("button", { name: "Edit Ghostty docs bookmark" });
+
+    button.focus();
+    fireEvent.keyDown(button, { key: "Enter" });
+    fireEvent.click(button);
+    expect(handlers.onKeyDown).not.toHaveBeenCalled();
+    expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the Edit control after the URL when the title is empty", () => {
+    const onEdit = vi.fn();
+    setup({ onEdit, bookmark: { id: "b3", url: "https://untitled.example/" } });
+    expect(screen.getByRole("button", { name: "Edit https://untitled.example/ bookmark" }));
+  });
+
+  it("renders no Edit control when the shelf gives no handler", () => {
+    setup();
+    expect(screen.queryByRole("button", { name: /^Edit / })).toBeNull();
+  });
+
+  it("reads the mobile meta: folder chip, # tags, Unrated", () => {
+    setup({
+      bookmark: { ...BOOKMARK, folderId: "Work/Docs", rating: 0, tags: ["terminal"] },
+      isMobileViewport: true,
+    });
+
+    expect(screen.getByText("Work/Docs")).toBeInTheDocument();
+    expect(screen.getByText("#terminal")).toHaveClass("ui-tag");
+    expect(screen.getByText("Unrated")).toBeInTheDocument();
+    expect(screen.queryByText(/Rated/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the desktop card's plain chips and hides folder and Unrated", () => {
+    setup({ bookmark: { ...BOOKMARK, folderId: "Work/Docs", rating: 0 } });
+
+    expect(screen.getByText("terminal")).toHaveClass("ui-tag");
+    expect(screen.queryByText("Work/Docs")).toBeNull();
+    expect(screen.queryByText("Unrated")).toBeNull();
+    expect(screen.queryByText("#terminal")).toBeNull();
+  });
+
+  it("keeps the mobile meta row even when only Unrated fills it", () => {
+    setup({
+      bookmark: { id: "b2", title: "T", url: "https://t.example/" },
+      isMobileViewport: true,
+    });
+
+    expect(document.querySelector(".ui-bookmark-meta")).not.toBeNull();
+    expect(screen.getByText("Unrated")).toBeInTheDocument();
   });
 });

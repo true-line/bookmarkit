@@ -85,7 +85,10 @@ const seedBookmark = async () => {
   });
 };
 
-const card = () => screen.getByRole("button", { name: /Context7/ });
+// #288: the card now carries an Edit control whose name is "Edit <title>
+// bookmark", so the card's own name (which starts with the title) needs the
+// anchor to stay the only match.
+const card = () => screen.getByRole("button", { name: /^Context7/ });
 
 // Select mode on, one tap: the shortest path from the shell to a set.
 const buildSelectionBelowLg = async () => {
