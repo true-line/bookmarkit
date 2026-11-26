@@ -483,6 +483,52 @@
   color: var(--ui-on-surface-variant);
 }
 
+/* --------------------------------------------------------------- rating -- */
+
+/* The rating input (edit-bookmark mockup): five 36px star targets with the
+   visible "N / 5" readout beside them. Filled stars wear the primary role,
+   as the mockup does — the retired library's amber is gone with it (#289). */
+.ui-star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: var(--ui-on-surface-variant);
+}
+
+.ui-star-rating > span,
+.ui-star-rating > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  line-height: 0;
+}
+
+.ui-star-rating > button {
+  min-width: 36px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.ui-star-rating > button:hover {
+  background: var(--ui-surface-container);
+}
+
+.ui-star-rating .is-filled {
+  color: var(--ui-primary);
+}
+
+.ui-rating-readout {
+  margin-inline-start: 0.5rem;
+  font: var(--ui-type-body-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-on-surface-variant);
+}
+
 /* ---------------------------------------------------------------- modal -- */
 
 /* Sticker sheet: modal-standard, modal-alert, modal-drawer. Panels sit above
@@ -803,11 +849,13 @@
 @media (pointer: coarse), (max-width: 40rem) {
   .ui-button,
   .ui-icon-button,
-  .ui-input {
+  .ui-input,
+  .ui-star-rating > button {
     min-height: 44px;
   }
 
-  .ui-icon-button {
+  .ui-icon-button,
+  .ui-star-rating > button {
     width: 44px;
     height: 44px;
   }

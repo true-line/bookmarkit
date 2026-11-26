@@ -7,20 +7,24 @@
 // pairing the tonal "Open BookmarkIt" with the crimson "Save Bookmark". The
 // mockup renders a desktop frame, so its spacing is adapted to the real 22rem
 // viewport rather than copied wholesale, and the pieces the save flow needs
-// that the mockup leaves out stay: the rating editor (no unified counterpart
-// yet) and the already-saved tag. Escape remains the cancel affordance.
+// that the mockup leaves out stay: the rating editor and the already-saved
+// tag. Escape remains the cancel affordance. The URL field wears the mockup's
+// input-field-valid state — success border and check icon whenever what is
+// typed is a saveable URL (#289); the save path re-checks and can still refuse.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBookmarkStore } from "../hooks/useBookmarkStore.js";
 import { useTheme } from "../hooks/useTheme.js";
 import { isSafeHttpUrl } from "../utils/url.js";
-import { Button, InputField, Tag } from "../design-system/index.js";
-import { StarRating } from "../components/StarRating.jsx";
+import { Button, InputField, StarRating, Tag } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
 
 function QuickAddFields({ form, setForm, folderOptions }) {
   const t = useMessages();
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  // Same boundary the save applies, previewed live: a public http(s) URL is
+  // saveable, so the field shows the valid state the moment it is one.
+  const urlSaveable = Boolean(form.url.trim()) && isSafeHttpUrl(form.url.trim());
   return (
     <>
       <InputField
@@ -33,7 +37,9 @@ function QuickAddFields({ form, setForm, folderOptions }) {
       />
 
       {/* Raw URL values read in Fira Code and never reverse in RTL locales —
-          the screens set dir="ltr" on URL inputs. */}
+          the screens set dir="ltr" on URL inputs. The mockup's valid state is
+          advisory: success border and a decorative check, while the save path
+          stays the gatekeeper and refuses what it always refused. */}
       <InputField
         id="qa-url"
         label={t("quickAdd.urlLabel")}
@@ -43,6 +49,7 @@ function QuickAddFields({ form, setForm, folderOptions }) {
         placeholder="https://…"
         mono
         dir="ltr"
+        validity={urlSaveable ? "valid" : "idle"}
       />
 
       <div className="grid grid-cols-2 gap-2">

@@ -99,7 +99,7 @@ while any dialog is open.
 spec (#238): `tokens.css` defines the light/dark palettes, the Red Hat Text /
 Radio Canada Big / Fira Code type scale, the 4px/8px spacing rhythm, radii,
 elevation and motion as `--ui-*` variables scoped to a `[data-ui-theme]` root,
-and the components (Button, Card, InputField, Modal, Typography) style
+and the components (Button, Card, InputField, Modal, StarRating, Typography) style
 themselves from those tokens with CSS logical properties, so `dir="rtl"`
 mirrors without per-component overrides. The app entry imports both
 stylesheets once (#240), and `useTheme`'s DOM application is the bridge: it
@@ -110,7 +110,13 @@ and maps the user's accent/accent-hover onto `--ui-brand-crimson`/`-hover`
 ship; only brand follows the user). Surfaces migrate one at a time by
 rendering under that attribute — `HelpModal` is the first (#244), in the app
 under the bridge's scope and in Storybook under the preview's scope root,
-which also supplies the UI-theme and direction toolbars. The legacy
+which also supplies the UI-theme and direction toolbars. The app root is
+itself such a surface now (#289): `BookmarkApp` renders under `.ui-root`, so
+the spec's body typeface and the shared 2px focus contract hold across the
+whole app, migrated surfaces or not — and the rating input joined the
+component set, the edit-bookmark mockup's 36px star targets with the visible
+"N / 5" readout, a radiogroup statically named "Bookmark rating" whose
+changes the readout announces. The legacy
 `DesignSystem.jsx` library is retired (#255); `useTheme` and its seven
 runtime theme variables stay — they are the theme-bridge source feeding
 `data-ui-theme` — and the unified `Modal` reuses `useFocusTrap`, so the one

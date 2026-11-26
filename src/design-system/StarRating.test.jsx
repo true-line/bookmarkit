@@ -26,6 +26,11 @@ describe("StarRating radiogroup (#24)", () => {
     ]);
   });
 
+  it("carries the mockup's static group name (#289)", () => {
+    render(<StarRating value={3} onChange={vi.fn()} />);
+    expect(screen.getByRole("radiogroup", { name: "Bookmark rating" })).toBeInTheDocument();
+  });
+
   it("raises the rating with ArrowRight and lowers it with ArrowLeft", () => {
     const onChange = vi.fn();
     render(<StarRating value={3} onChange={onChange} />);
@@ -34,7 +39,7 @@ describe("StarRating radiogroup (#24)", () => {
     expect(onChange).toHaveBeenLastCalledWith(4);
 
     fireEvent.keyDown(stars()[2], { key: "ArrowLeft" });
-    expect(onChange).toHaveBeenLastCalledWith(2);
+    expect(onChange).toHaveBeenCalledWith(2);
   });
 
   it("clears the rating when arrowing left off the first star", () => {
@@ -78,6 +83,25 @@ describe("StarRating radiogroup (#24)", () => {
     fireEvent.click(stars()[3]);
 
     expect(onChange).toHaveBeenCalledWith(0);
+  });
+});
+
+// The mockup's visible "N / 5" readout (#289). The static group name means the
+// readout is where a rating change announces, so it carries the live region.
+describe("StarRating readout (#289)", () => {
+  it("shows the current rating out of five", () => {
+    render(<StarRating value={3} onChange={vi.fn()} />);
+    expect(screen.getByText("3 / 5")).toBeInTheDocument();
+  });
+
+  it("shows zero as the unrated value, not blank", () => {
+    render(<StarRating value={0} onChange={vi.fn()} />);
+    expect(screen.getByText("0 / 5")).toBeInTheDocument();
+  });
+
+  it("announces rating changes politely", () => {
+    render(<StarRating value={3} onChange={vi.fn()} />);
+    expect(screen.getByText("3 / 5")).toHaveAttribute("aria-live", "polite");
   });
 });
 
@@ -128,5 +152,12 @@ describe("StarRating toggle-button variant (#24)", () => {
     fireEvent.keyDown(buttons[1], { key: "ArrowRight" });
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("StarRating read-only display (#24)", () => {
+  it("renders an image whose name carries the rating", () => {
+    render(<StarRating value={4} readOnly />);
+    expect(screen.getByRole("img", { name: "Rating: 4 of 5" })).toBeInTheDocument();
   });
 });

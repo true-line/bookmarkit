@@ -4,12 +4,8 @@ import { createLLM, LLM_PROVIDERS } from "../llm/index.js";
 import { useFocusTrap } from "../hooks/useFocusTrap.js";
 import { usePageMetadata } from "../hooks/usePageMetadata.js";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
-import { Button, InputField, Modal } from "../design-system/index.js";
+import { Button, InputField, Modal, StarRating } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
-// StarRating stays on the legacy library for now: it carries the #24 rating
-// contract (string clamping, radiogroup keyboard nav) and the sticker sheet
-// defines no rating control to migrate onto. Its retirement rides #255.
-import { StarRating } from "./StarRating.jsx";
 
 /**
  * #48: What the page said about itself, as prompt lines. Fetched page content is
@@ -84,6 +80,16 @@ function BackIcon() {
     >
       <path d="M19 12H5" />
       <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+// The suggestion buttons' auto_awesome sparkle (#289, edit-bookmark mockup):
+// 16px, filled, like the delete footer icon's slot.
+function AutoAwesomeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z" />
     </svg>
   );
 }
@@ -555,6 +561,7 @@ const BookmarkForm = ({
           </label>
           <Button
             intent="tertiary"
+            leadingIcon={<AutoAwesomeIcon />}
             onClick={generateDescriptionWithGemini}
             disabled={isGeneratingDescription || !formData.url || !formData.title}
             loading={isGeneratingDescription}
@@ -587,6 +594,7 @@ const BookmarkForm = ({
         trailing={
           <Button
             intent="tertiary"
+            leadingIcon={<AutoAwesomeIcon />}
             onClick={generateTagsWithGemini}
             disabled={isGeneratingTags || !formData.url || !formData.title}
             loading={isGeneratingTags}

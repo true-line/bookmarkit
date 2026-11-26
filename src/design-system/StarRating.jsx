@@ -1,17 +1,21 @@
-// The rating control, extracted verbatim from the retired legacy
-// DesignSystem.jsx library (#255) — the popup's quick-add form is its only
-// consumer, and the #24 string-coercion contract travels with it.
 import React from "react";
 import { useMessages } from "../i18n/index.js";
 
-// #24: Ratings are 0–5 integers, but stored data is not guaranteed to be one.
+// Unified UI design system rating input (#289), from the edit-bookmark
+// screen: five 36px star targets with the visible "N / 5" readout beside
+// them, filled stars in the primary role. The radiogroup carries the
+// mockup's static group label — the readout is the live announcer, so a
+// rating change reads as "4 / 5" rather than re-labeling the group.
+//
+// The #24 rating contract travels with the control: ratings are 0–5
+// integers, but stored data is not guaranteed to be one.
 const clampRating = (value) => Math.min(5, Math.max(0, Math.round(Number(value)) || 0));
 
 export function StarRating({
   value = 0,
   onChange,
   readOnly = false,
-  size = 24,
+  size = 22,
   buttonSemantics = false,
 }) {
   const t = useMessages();
@@ -39,11 +43,19 @@ export function StarRating({
     select(clampRating(rating + step));
   };
 
+  // The mockup's readout: visible value, announced politely when it changes.
+  // Read-only render puts it inside the role="img" label, so it stays decorative.
+  const readout = (
+    <span className="ui-rating-readout" aria-live={readOnly ? undefined : "polite"}>
+      {t("starRating.readout", { rating })}
+    </span>
+  );
+
   return (
     <div
       className="ui-star-rating"
       role={readOnly ? "img" : buttonSemantics ? "group" : "radiogroup"}
-      aria-label={t("starRating.groupLabel", { rating })}
+      aria-label={readOnly ? t("starRating.groupLabel", { rating }) : t("starRating.groupName")}
       onKeyDown={isRadioGroup ? handleKeyDown : undefined}
     >
       {[1, 2, 3, 4, 5].map((star) => {
@@ -88,6 +100,7 @@ export function StarRating({
           </button>
         );
       })}
+      {readout}
     </div>
   );
 }
