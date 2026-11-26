@@ -164,12 +164,25 @@ describe("BookmarkCard anatomy and selection parity (#288)", () => {
     const handlers = setup({ onEdit });
     const button = screen.getByRole("button", { name: "Edit Ghostty docs bookmark" });
 
-    // The nested-control rule (#239): the button's click is the edit, and the
-    // guarded card handlers it bubbles into never also fire.
+    // The control lives on the card's shell, so its click never reaches the
+    // card's guarded activation at all — one gesture, one meaning.
     fireEvent.click(button);
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledWith(BOOKMARK);
     expect(handlers.onClick).not.toHaveBeenCalled();
+  });
+
+  it("keeps the Edit control a sibling of the card's button role", () => {
+    const onEdit = vi.fn();
+    setup({ onEdit });
+
+    const card = screen.getByRole("button", { name: /^Ghostty docs/ });
+    const edit = screen.getByRole("button", { name: "Edit Ghostty docs bookmark" });
+
+    // Codex P2 on #288: a button inside the card's role="button" would hand
+    // assistive technology two conflicting semantics, so the control lives on
+    // the shell, outside the recipe's interactive element entirely.
+    expect(card.contains(edit)).toBe(false);
   });
 
   it("keeps the Edit control's keyboard out of the card's activation", () => {

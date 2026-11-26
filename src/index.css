@@ -1128,14 +1128,19 @@ body {
   object-fit: contain;
 }
 
+/* codex P2 on #288: the Edit control owns the end corner, so the status dot
+   takes the favicon roundel's start corner instead — its own badge, ringed
+   against the roundel's fill, and clear of every hit area in both
+   directions. inset-inline-start tracks the roundel through RTL. */
 .ui-bookmark-status {
   position: absolute;
-  top: 8px;
-  inset-inline-end: 8px;
+  top: 12px;
+  inset-inline-start: 12px;
   width: 10px;
   height: 10px;
   background: var(--ui-error);
   border-radius: var(--ui-radius-full);
+  box-shadow: 0 0 0 2px var(--ui-surface-container-lowest);
 }
 
 .ui-bookmark-body {
@@ -1183,30 +1188,33 @@ body {
   color: var(--ui-primary);
 }
 
-/* #288: the mockups' title row — the label-lg title and the card's own Edit
-   control share the line, the button pulled into the padding's corner the
-   way the manager mockup's -mt-1/-me-1 sits it. The control is the card's,
-   not the design system's button-icon: from `lg` up it is the mockup's ghost
-   (bare pencil on on-surface-variant, surfacing on hover), which the tonal
-   bordered recipe would misread. */
-.ui-bookmark-title-row {
+/* #288: the card's shell. The card is itself a button — the #251 recipe's
+   role="button" — so the Edit control is the shell's child, never the card's:
+   a button inside a button hands assistive technology two conflicting
+   semantics (codex P2 on #288). The shell takes the card's place in the
+   shelf's flex cell and anchors the control at the manager mockup's
+   pulled-in top-end corner. The control is the mockup's ghost from `lg` up
+   (bare pencil on on-surface-variant, surfacing on hover), which the design
+   system's tonal bordered button-icon would misread. */
+.ui-bookmark-card-shell {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 4px;
-}
-.ui-bookmark-title-row .ui-bookmark-title {
   flex: 1;
   min-width: 0;
 }
+/* The title keeps its end clear of the control overlaying it. */
+.ui-bookmark-card-shell--editable .ui-bookmark-title {
+  padding-inline-end: 40px;
+}
 .ui-bookmark-edit {
-  flex: none;
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  margin-block-start: -4px;
-  margin-inline-end: -4px;
   border: none;
   border-radius: var(--ui-radius-sm);
   background: transparent;
@@ -1217,7 +1225,7 @@ body {
     background-color var(--ui-duration-state) var(--ui-ease-state),
     opacity var(--ui-duration-state) var(--ui-ease-state);
 }
-.ui-bookmark-card:hover .ui-bookmark-edit,
+.ui-bookmark-card-shell:hover .ui-bookmark-edit,
 .ui-bookmark-edit:focus-visible {
   opacity: 1;
 }
@@ -1230,29 +1238,30 @@ body {
    under a hairline like the mockup's footer. The title clamps at two lines
    (the mockup's line-clamp-2), the roundel grows to its 40px, and the Edit
    control takes the shell's 44px touch target with the bordered fill. */
-.ui-bookmark-card--mobile {
+.ui-bookmark-card-shell--mobile .ui-bookmark-card {
   padding: 14px;
 }
-.ui-bookmark-card--mobile .ui-bookmark-favicon {
+.ui-bookmark-card-shell--mobile .ui-bookmark-favicon {
   width: 40px;
   height: 40px;
 }
-.ui-bookmark-card--mobile .ui-bookmark-title {
+.ui-bookmark-card-shell--mobile .ui-bookmark-title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   white-space: normal;
+  padding-inline-end: 52px;
 }
-.ui-bookmark-card--mobile .ui-bookmark-edit {
+.ui-bookmark-card-shell--mobile .ui-bookmark-edit {
+  top: 14px;
+  inset-inline-end: 14px;
   width: 44px;
   height: 44px;
-  margin-block-start: 0;
-  margin-inline-end: 0;
   border: 1px solid var(--ui-outline-variant);
   background: var(--ui-surface-container);
   opacity: 1;
 }
-.ui-bookmark-card--mobile .ui-bookmark-edit:hover {
+.ui-bookmark-card-shell--mobile .ui-bookmark-edit:hover {
   background: var(--ui-surface-container-high);
 }
 .ui-bookmark-folder {
@@ -1272,7 +1281,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ui-bookmark-card--mobile .ui-tag {
+.ui-bookmark-card-shell--mobile .ui-tag {
   background: var(--ui-surface-container-low);
   border: 1px solid var(--ui-outline-variant);
 }
@@ -1281,7 +1290,7 @@ body {
   color: var(--ui-on-surface-variant);
   font: var(--ui-type-label-sm);
 }
-.ui-bookmark-card--mobile .ui-bookmark-meta {
+.ui-bookmark-card-shell--mobile .ui-bookmark-meta {
   border-block-start: 1px solid var(--ui-outline-variant);
 }
 
