@@ -1,6 +1,9 @@
 import React from "react";
 import { Button, Modal, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
+// #292: the mockup's footer — the version/license line and the Privacy
+// Policy and Licenses links, targets shared with the options' About section.
+import { APP_LICENSE, APP_VERSION, LICENSES_URL, PRIVACY_POLICY_URL } from "../version.js";
 
 // Migrated to the unified design system (#244): the modal-standard shell at
 // the help-shortcuts screen's max-w-2xl reading (size="2xl"), the same
@@ -62,7 +65,26 @@ const HelpModal = ({ onClose }) => {
       closeLabel={t("help.closeLabel")}
       onClose={onClose}
       size="2xl"
-      footer={<Button onClick={onClose}>{t("help.gotIt")}</Button>}
+      footer={
+        <>
+          {/* #292: the mockup's legal row — version and license in the mono
+              style, then the two links, left of the Got it button. */}
+          <div className="ui-legal-row">
+            <span className="ui-url ui-legal-version" dir="ltr">
+              v{APP_VERSION} · {APP_LICENSE}
+            </span>
+            <span aria-hidden="true">·</span>
+            <a className="ui-legal-link" href={PRIVACY_POLICY_URL} target="_blank" rel="noreferrer">
+              {t("help.privacyPolicy")}
+            </a>
+            <span aria-hidden="true">·</span>
+            <a className="ui-legal-link" href={LICENSES_URL} target="_blank" rel="noreferrer">
+              {t("help.licenses")}
+            </a>
+          </div>
+          <Button onClick={onClose}>{t("help.gotIt")}</Button>
+        </>
+      }
     >
       <div
         style={{

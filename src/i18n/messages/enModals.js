@@ -17,12 +17,12 @@ export const surfaceMessages = {
     faviconLabel: "Favicon URL",
     faviconPlaceholder: "e.g., https://example.com/favicon.ico",
     folderCustom: "Custom path…",
-    folderHint: "Use / for a subfolder, e.g. Work/Project A",
+    folderHint: "Use / for nested subfolders",
     folderLabel: "Folder",
     folderList: "List",
     folderListAria: "Choose folder from list",
     folderNone: "No folder",
-    folderPlaceholder: "e.g., work, personal",
+    folderPlaceholder: "e.g., Work/Project A",
     generatingDescription: "Generating description…",
     generatingTags: "Generating tags…",
     ignore: "Ignore",
@@ -58,6 +58,8 @@ export const surfaceMessages = {
     commandRemoveDuplicates: '"remove duplicates"',
     commandShowStars: '"show 3 stars or more"',
     gotIt: "Got it",
+    licenses: "Licenses",
+    privacyPolicy: "Privacy Policy",
     searchBody:
       "The main search bar is powered by an AI agent. When a provider is configured in Options, type commands in plain English to find, sort, and manage your bookmarks. For example:",
     searchHeading: "Natural Language Search",
@@ -252,6 +254,9 @@ export const surfaceMessages = {
 
   // OptionsModal
   options: {
+    aboutBody:
+      "BookmarkIt runs locally in your browser, and your data stays on your machine. Nothing leaves it unless you turn on an optional feature — AI suggestions with your own key, site icons from the web, or the optional Firebase backend.",
+    aboutHeading: "About, Privacy & Licensing",
     activeProvider: "Active: {provider}",
     activeProviderModel: "Active: {provider} / {model}",
     agentAccessHeading: "Agent access",
@@ -290,7 +295,9 @@ export const surfaceMessages = {
       "The endpoint returned no models. Enter the key above (or start the local server), then Refresh — or type the model id.",
     noFileChosen: "No file chosen",
     onlyIfServerRequires: "Only if the server requires one",
+    openSourceLicenses: "Open-Source Licenses",
     privacyHeading: "Privacy",
+    privacyPolicy: "Privacy Policy",
     providerGemini: "Gemini",
     providerGrok: "Grok",
     providerHeading: "Provider & model",

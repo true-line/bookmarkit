@@ -9,6 +9,8 @@ import { SYSTEM_LOCALE } from "../i18n/locales.js";
 // #290: the built-in theme identities, so the select can offer them under
 // their mockup labels ahead of any uploaded themes.
 import { BUILTIN_THEME_KEYS, SYSTEM_THEME } from "../hooks/useTheme.js";
+// #292: the About section's facts and link targets.
+import { APP_LICENSE, APP_VERSION, LICENSES_URL, PRIVACY_POLICY_URL } from "../version.js";
 
 // Migrated to the unified design system (#246): the options-settings screen's
 // modal-standard shell at its max-w-2xl reading (size="2xl"), headline-sm
@@ -762,6 +764,48 @@ const OptionsModal = ({
                 </span>
               </span>
             </label>
+          </section>
+          {/* #292: the mockup's About, Privacy & Licensing section — version
+              and license beside the heading, a privacy subline aligned with
+              the README's "Privacy and storage" section, and the two links as
+              secondary anchors sharing the button recipe's classes (they open
+              public https pages in a new tab, which is the extension-allowed
+              way to leave the dialog). */}
+          <section style={sectionDivided} aria-labelledby="options-legal-heading">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Typography
+                variant="headline-sm"
+                as="h3"
+                id="options-legal-heading"
+                style={headingStyle}
+              >
+                {t("options.aboutHeading")}
+              </Typography>
+              <span className="ui-url" dir="ltr" style={{ color: "var(--ui-on-surface-variant)" }}>
+                v{APP_VERSION} · {APP_LICENSE} License
+              </span>
+            </div>
+            <Typography variant="body-sm" style={hintStyle}>
+              {t("options.aboutBody")}
+            </Typography>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <a
+                className="ui-button ui-button--secondary"
+                href={PRIVACY_POLICY_URL}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("options.privacyPolicy")}
+              </a>
+              <a
+                className="ui-button ui-button--secondary"
+                href={LICENSES_URL}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("options.openSourceLicenses")}
+              </a>
+            </div>
           </section>
         </div>
       </Modal>

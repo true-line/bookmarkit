@@ -136,6 +136,32 @@
   padding: 4px 10px;
 }
 
+/* #292: the legal row — the Help dialog's footer line (version and license
+   in the mono style, links in the primary ink) and its layout: the row takes
+   the space left of the footer's action, mirroring the mockup's
+   justify-between footer band. */
+.ui-legal-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+  margin-inline-end: auto;
+  font: var(--ui-type-body-sm);
+  color: var(--ui-on-surface-variant);
+}
+
+.ui-legal-version {
+  color: var(--ui-on-surface-variant);
+}
+
+.ui-legal-link {
+  color: var(--ui-primary);
+}
+
+.ui-legal-link:hover {
+  text-decoration: underline;
+}
+
 /* Provider status pills: mono copy in a full-radius hairline. */
 .ui-pill {
   font: var(--ui-type-mono-sm);
