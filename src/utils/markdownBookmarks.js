@@ -35,7 +35,7 @@ const escapeLinkText = (title) => String(title).replace(/[\\[\]]/g, "\\$&");
 // an unbalanced parenthesis earns an escape.
 function destinationOf(url) {
   const address = String(url);
-  if /[\s<>]/.test(address)) {
+  if (/[\s<>]/.test(address)) {
     return `<${address.replace(/[\\<>]/g, "\\$&")}>`;
   }
   if (!address.includes("\\") && balancedParens(address)) {

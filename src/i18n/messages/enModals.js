@@ -230,6 +230,10 @@ export const surfaceMessages = {
     pasteMd: "Paste Markdown Data",
     replaceRadio: "Replace all existing bookmarks",
     skipExistingLabel: "Skip URLs already in library",
+    skippedDuplicates: {
+      one: "{count} duplicate within the file will be skipped.",
+      other: "{count} duplicates within the file will be skipped.",
+    },
     skippedExisting: "{count} already in your library will be skipped.",
     skippingEntries: {
       one: "Skipping {count} entry without a usable http(s) URL.",

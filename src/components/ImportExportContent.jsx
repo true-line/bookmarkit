@@ -234,21 +234,27 @@ const ImportExportContent = ({
 
   const requestMarkdownImport = () => stageMarkdownImport(importMarkdownText);
 
-  // #287: the confirmation's count is the one that decides nothing by itself —
-  // it shows what the skip-existing choice leaves. When checked, the staged
-  // entries run through the same normalized-URL rule the store edge applies,
-  // so "adding 60" and "40 already in your library" always agree with what
-  // Import then does.
+  // #287: the confirmation's numbers are the store edge's numbers. When
+  // skip-existing is on, the staged entries run through the same
+  // normalized-URL rule the edge applies — against an emptied library under
+  // replace — and the skip count splits into what it can honestly name:
+  // duplicates the file itself carries, and entries the library already
+  // holds. Off, nothing is filtered, so nothing is promised as skipped.
   const effectiveImport = useMemo(() => {
     if (!pendingImport) return null;
-    if (!skipExisting || replaceAll) {
-      return { count: pendingImport.count, skippedCount: 0 };
+    if (!skipExisting) {
+      return { count: pendingImport.count, skippedCount: 0, duplicateCount: 0 };
     }
     const { bookmarks: kept, skippedCount } = filterDuplicateImports(
       pendingImport.entries,
-      bookmarks
+      replaceAll ? [] : bookmarks
     );
-    return { count: kept.length, skippedCount };
+    const { skippedCount: withinFile } = filterDuplicateImports(pendingImport.entries, []);
+    return {
+      count: kept.length,
+      skippedCount: skippedCount - withinFile,
+      duplicateCount: withinFile,
+    };
   }, [bookmarks, pendingImport, replaceAll, skipExisting]);
 
   // UX-04: Execute confirmed import
@@ -297,6 +303,7 @@ const ImportExportContent = ({
           fileName={pendingImport.fileName}
           count={effectiveImport.count}
           skippedCount={effectiveImport.skippedCount}
+          duplicateCount={effectiveImport.duplicateCount}
           skipExisting={skipExisting}
           onSkipExistingChange={setSkipExisting}
           replaceAll={replaceAll}

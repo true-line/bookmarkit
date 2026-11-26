@@ -3,17 +3,20 @@ import { Button, Card, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
 
 // The import confirmation (#287) — the card the staged import must be
-// approved through. Its numbers are honest about the skip-existing choice:
-// `count` is what will actually be added (the parent already ran the staged
-// entries through the store edge's normalized-URL rule when skipExisting is
-// set), and `skippedCount` names what that rule would leave behind, so the
-// count you approve is the count that is added. Import is disabled when
-// nothing would be added; there is nothing to confirm.
+// approved through. Its numbers are the store edge's numbers: `count` is
+// what will actually be added (the parent already ran the staged entries
+// through the edge's normalized-URL rule when skipExisting is set), and the
+// two skip counts name what that rule leaves behind — `skippedCount` for
+// entries the library already holds, `duplicateCount` for duplicates the
+// file itself carries — so the count you approve is the count that is added.
+// Import is disabled when nothing would be added; there is nothing to
+// confirm.
 //
 // The mockup's "Skip URLs already in library" checkbox sits first among the
 // choices, checked; under "Replace all" it is retired (disabled) — the
-// library is emptied ahead of the import, so there is nothing left to skip.
-// The file import names its chosen file; a pasted import has none to name.
+// library is emptied ahead of the import, so there is nothing left to skip
+// as already-held, while the file's own duplicates are still named. The file
+// import names its chosen file; a pasted import has none to name.
 
 const radioRow = {
   display: "flex",
@@ -28,6 +31,7 @@ const ImportConfirmCard = ({
   fileName,
   count,
   skippedCount,
+  duplicateCount,
   skipExisting,
   onSkipExistingChange,
   replaceAll,
@@ -69,6 +73,15 @@ const ImportConfirmCard = ({
           style={{ ...mutedText, marginBlockStart: "var(--ui-space-gutter-sm)" }}
         >
           {t("importExport.skippedExisting", { count: skippedCount })}
+        </Typography>
+      )}
+      {duplicateCount > 0 && (
+        <Typography
+          variant="body-sm"
+          as="p"
+          style={{ ...mutedText, marginBlockStart: "var(--ui-space-gutter-sm)" }}
+        >
+          {t("importExport.skippedDuplicates", { count: duplicateCount })}
         </Typography>
       )}
       <div

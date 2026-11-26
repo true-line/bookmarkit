@@ -203,6 +203,57 @@ describe("ImportExportContent markdown and skip-existing (#287)", () => {
     expect(onImportJson.mock.calls[0][2]).toBe(false);
   });
 
+  it("names duplicates inside the file separately from the library's", async () => {
+    const { onImportJson } = setup({
+      bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }],
+    });
+    chooseJsonFile(
+      JSON.stringify([
+        { title: "Held", url: "https://example.com/dupe" },
+        { title: "Held again", url: "https://example.com/dupe" },
+        { title: "Fresh", url: "https://example.com/fresh" },
+      ])
+    );
+
+    expect(
+      await screen.findByText("1 already in your library will be skipped.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("1 duplicate within the file will be skipped.")).toBeInTheDocument();
+    expect(screen.getByText(/bookmarks? to your collection/)).toHaveTextContent(
+      "This will add 1 bookmark"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    await waitFor(() => expect(onImportJson).toHaveBeenCalled());
+    const [imported, replaceAll, skipExisting] = onImportJson.mock.calls[0];
+    // The dialog hands every staged entry over; the store edge applies the rule.
+    expect(imported).toHaveLength(3);
+    expect(replaceAll).toBe(false);
+    expect(skipExisting).toBe(true);
+  });
+
+  it("previews replace-all through the same rule the store applies to it", async () => {
+    setup({ bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }] });
+    chooseJsonFile(
+      JSON.stringify([
+        { title: "Held", url: "https://example.com/dupe" },
+        { title: "Held again", url: "https://example.com/dupe" },
+        { title: "Fresh", url: "https://example.com/fresh" },
+      ])
+    );
+
+    fireEvent.click(await screen.findByRole("radio", { name: "Replace all existing bookmarks" }));
+
+    // The library is emptied ahead of a replace, so nothing is skipped as
+    // already-held — but the file's own duplicate still is, and the preview
+    // promises what the store will write, not every staged entry.
+    expect(screen.getByText(/bookmarks? to your collection/)).toHaveTextContent(
+      "This will add 2 bookmarks"
+    );
+    expect(screen.queryByText(/already in your library/)).toBeNull();
+    expect(screen.getByText("1 duplicate within the file will be skipped.")).toBeInTheDocument();
+  });
+
   it("cannot confirm an import whose every entry is already in the library", async () => {
     setup({ bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }] });
     chooseJsonFile(JSON.stringify([{ title: "Held", url: "https://example.com/dupe" }]));
