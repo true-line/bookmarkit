@@ -238,3 +238,52 @@ describe("useLinkSweep (#47)", () => {
     expect(sweep.checkedTotal).toBe(2);
   });
 });
+
+// #303: the freshness line — when the sweep last ran, persisted beside the
+// record of past checks and read before any sweep runs this session.
+describe("useLinkSweep's last-sweep timestamp (#303)", () => {
+  const LAST_SWEEP_AT_KEY = "bookmarkit.linkSweep.lastSweepAt";
+
+  it("starts from storage, so the line is right before any sweep runs", async () => {
+    localStorage.setItem(LAST_SWEEP_AT_KEY, "1234567890");
+    render(<Probe bookmarks={[bookmark("a")]} />);
+
+    await waitFor(() => expect(sweep.lastSweepAt).toBe(1234567890));
+  });
+
+  it("reads nothing as never, not as an error", async () => {
+    localStorage.setItem(LAST_SWEEP_AT_KEY, "garbage");
+    render(<Probe bookmarks={[bookmark("a")]} />);
+
+    await waitFor(() => expect(sweep.lastSweepAt).toBeNull());
+  });
+
+  it("stamps the time of each batch it checked", async () => {
+    answerWith(() => "valid");
+    render(<Probe bookmarks={[bookmark("a")]} />);
+
+    await act(async () => {
+      await sweep.start();
+    });
+
+    expect(Number(localStorage.getItem(LAST_SWEEP_AT_KEY))).toBeGreaterThan(0);
+    expect(sweep.lastSweepAt).toBe(Number(localStorage.getItem(LAST_SWEEP_AT_KEY)));
+  });
+
+  // A sweep stopped halfway has still refreshed everything it reached, so
+  // the freshness line says when that was — not only complete sweeps count.
+  it("keeps the stamp when the sweep is stopped mid-batch", async () => {
+    answerWith(() => "valid");
+    render(<Probe bookmarks={[bookmark("first"), bookmark("second")]} />);
+    globalThis.chrome.runtime.sendMessage.mockImplementation((message, respond) => {
+      sweep.stop();
+      respond({ status: "valid", redirectUrl: null });
+    });
+
+    await act(async () => {
+      await sweep.start();
+    });
+
+    expect(sweep.lastSweepAt).not.toBeNull();
+  });
+});

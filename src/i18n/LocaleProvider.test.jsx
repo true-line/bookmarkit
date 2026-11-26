@@ -102,17 +102,22 @@ describe("LocaleProvider (#298)", () => {
     first.unmount();
 
     mount();
-    // The stored choice loads one tick after mount, as in a real page load.
-    await waitFor(() => expect(screen.getByTestId("locale").textContent).toBe("ar"));
-    expect(root().getAttribute("dir")).toBe("rtl");
+    // The stored choice loads one tick after mount, as in a real page load —
+    // and the document's stamping is an effect behind that commit, so the
+    // wait is on the stamp itself (asserting it right after a different
+    // signal resolved once lost that race on CI, #298).
+    await waitFor(() => expect(root().getAttribute("dir")).toBe("rtl"));
+    expect(screen.getByTestId("locale").textContent).toBe("ar");
   });
 
   it("honors the persisted choice on first mount", async () => {
     localStorage.setItem("bm_locale", "ar");
     mount();
-    // The stored choice loads one tick after mount.
-    await waitFor(() => expect(screen.getByTestId("locale").textContent).toBe("ar"));
-    expect(root().getAttribute("dir")).toBe("rtl");
+    // The stored choice loads one tick after mount, and the root's stamping
+    // is the effect behind that commit — wait on the stamp itself, not on a
+    // signal that can land one render ahead of it (the CI flake, #298).
+    await waitFor(() => expect(root().getAttribute("dir")).toBe("rtl"));
+    expect(screen.getByTestId("locale").textContent).toBe("ar");
   });
 
   it("ignores a persisted choice the registry no longer ships", async () => {

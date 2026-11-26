@@ -27,12 +27,17 @@ import {
   countDue,
   nextSweepBatch,
   readCheckedAt,
+  readLastSweepAt,
   recordChecked,
   sweepPatch,
 } from "../utils/linkHealth.js";
 import { fetchUrlStatus } from "../utils/urlStatus.js";
 
 const CHECKED_AT_KEY = "bookmarkit.linkSweep.checkedAt";
+// #303: when the sweep last ran, for the view's "Last scan 2h ago" line.
+// Written per batch beside the per-link record — a sweep stopped halfway has
+// still refreshed everything it reached, and the freshness line says so.
+const LAST_SWEEP_AT_KEY = "bookmarkit.linkSweep.lastSweepAt";
 
 // Paced so a large collection does not look like a scanner to the hosts in it.
 const PACING = Object.freeze({
@@ -101,9 +106,10 @@ async function writePatches(store, patches) {
  * @param {{current: object|null}} params.storeRef The live store.
  * @param {(message: string, type?: string) => void} [params.showMessage]
  * @param {object} [params.pacing] Overridable delays and batch size, for tests.
- * @returns {{running: boolean, checked: number, total: number, checkedTotal: number, start: Function, stop: Function}}
+ * @returns {{running: boolean, checked: number, total: number, checkedTotal: number, lastSweepAt: number|null, start: Function, stop: Function}}
  *   `checkedTotal` is the record of past checks — how many links have been
- *   checked and not yet due again (#295's summary reads it).
+ *   checked and not yet due again (#295's summary reads it). `lastSweepAt` is
+ *   when the sweep last ran (#303's freshness line reads it).
  */
 export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
   const [progress, setProgress] = useState(IDLE);
@@ -111,6 +117,9 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
   // "N checked". Loaded from storage on mount rather than on first start, so
   // the summary is right before any sweep runs this session.
   const [checkedTotal, setCheckedTotal] = useState(0);
+  // #303: when the sweep last ran — the freshness line, likewise right before
+  // any sweep runs this session.
+  const [lastSweepAt, setLastSweepAt] = useState(null);
 
   const runningRef = useRef(false);
   const checkedAtRef = useRef(null);
@@ -138,6 +147,11 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
       // Display-only until a sweep runs; start() reports storage failures
       // through its own message.
     });
+    readSetting(LAST_SWEEP_AT_KEY)
+      .then((raw) => setLastSweepAt(readLastSweepAt(raw)))
+      .catch(() => {
+        // Display-only until a sweep runs, like the record of past checks.
+      });
   }, [loadCheckedAt]);
 
   useEffect(
@@ -187,9 +201,14 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
         await writePatches(storeRef.current, patches);
 
         const liveIds = new Set(latest.current.bookmarks.map((b) => b.id));
-        checkedAtRef.current = recordChecked(checkedAtRef.current, checked, Date.now(), liveIds);
+        const now = Date.now();
+        checkedAtRef.current = recordChecked(checkedAtRef.current, checked, now, liveIds);
         await writeSetting(CHECKED_AT_KEY, JSON.stringify(checkedAtRef.current));
         setCheckedTotal(Object.keys(checkedAtRef.current).length);
+        // The same stroke puts the freshness line where the record is: the
+        // verdicts on screen are as old as the newest check, no older.
+        await writeSetting(LAST_SWEEP_AT_KEY, String(now));
+        setLastSweepAt(now);
 
         // A batch where every single link failed usually means the network, not
         // the web: back off rather than condemning the collection at full speed.
@@ -206,5 +225,5 @@ export function useLinkSweep({ bookmarks, storeRef, showMessage, pacing }) {
     }
   }, [loadCheckedAt]);
 
-  return { ...progress, checkedTotal, start, stop };
+  return { ...progress, checkedTotal, lastSweepAt, start, stop };
 }

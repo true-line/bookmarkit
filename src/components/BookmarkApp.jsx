@@ -687,16 +687,11 @@ const BookmarkApp = () => {
   // every press.
   const [askedArchive, setAskedArchive] = useState(() => new Set());
 
-  // #295: the view's lookup — the whole collection's dead links, not the
-  // selection or the screen the header button works from. The same paced run
-  // and the same proposal-not-write shape; rows already staged are replaced,
-  // so a second look refreshes rather than duplicates.
-  const handleLinkHealthLookup = useCallback(async () => {
-    const outstanding = recoverableBroken.filter((b) => !askedArchive.has(b.id));
-    if (outstanding.length === 0) return;
-    const { rows, asked } = await archive.run(outstanding);
-    // The run answers with the ids it really put a question about, so a run
-    // stopped mid-pace leaves its unasked tail owed for the next press.
+  // The run's answer, staged: the ids it really put a question about join
+  // `askedArchive` — a run stopped mid-pace leaves its unasked tail owed for
+  // the next press — and its reviewable rows replace any staged ones, so a
+  // second look refreshes rather than duplicates.
+  const stageRecoveryRows = useCallback((asked, rows) => {
     setAskedArchive((prev) => {
       const next = new Set(prev);
       for (const id of asked) next.add(id);
@@ -705,7 +700,55 @@ const BookmarkApp = () => {
     if (rows.length === 0) return;
     const fresh = new Set(rows.map((row) => row.id));
     setRecoveryRows((prev) => [...prev.filter((row) => !fresh.has(row.id)), ...rows]);
-  }, [archive, askedArchive, recoverableBroken]);
+  }, []);
+
+  // #303 (codex): which staged proposals the reader unticked — held here,
+  // above the breakpoint-dependent mounts, so crossing `lg` while the view is
+  // open swaps the workspace for the sheet without re-selecting what was
+  // explicitly declined.
+  const [rejectedRecovery, setRejectedRecovery] = useState(() => new Set());
+
+  const toggleRejectedRecovery = useCallback((id) => {
+    setRejectedRecovery((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // #295: the view's lookup — the whole collection's dead links, not the
+  // selection or the screen the header button works from. The same paced run
+  // and the same proposal-not-write shape.
+  const handleLinkHealthLookup = useCallback(async () => {
+    const outstanding = recoverableBroken.filter((b) => !askedArchive.has(b.id));
+    if (outstanding.length === 0) return;
+    const { rows, asked } = await archive.run(outstanding);
+    stageRecoveryRows(asked, rows);
+  }, [archive, askedArchive, recoverableBroken, stageRecoveryRows]);
+
+  // #303: one row's Wayback — the same paced run, pointed at the one link
+  // being read. A press is the user asking, so it re-asks even a link this
+  // session already missed; a miss stages nothing and says so with the
+  // run's own "none found" message.
+  const handleRowLookup = useCallback(
+    async (bookmark) => {
+      const { rows, asked } = await archive.run([bookmark]);
+      stageRecoveryRows(asked, rows);
+    },
+    [archive, stageRecoveryRows]
+  );
+
+  // #303: the sheet's per-card "Edit URL" — the ordinary edit form. Below
+  // `lg` the sheet closes first, so the two sheets never stack (the digest's
+  // rule, #302); from `lg` the form is a dialog over the view, which stays.
+  const editFromLinkHealth = useCallback(
+    (bookmark) => {
+      if (!isSidebarViewport) setLinkHealthOpen(false);
+      handleEditBookmark(bookmark);
+    },
+    [handleEditBookmark, isSidebarViewport]
+  );
 
   // A lookup is still owed while a dead link the session has not asked about
   // remains — misses included, which is why this is not proposals versus rows.
@@ -805,12 +848,10 @@ const BookmarkApp = () => {
         showDigest();
         return;
       }
-      // #295: from `lg` the Broken Links row opens the link-health view — the
-      // broken-links mockup's main, a page of its own rather than a lens.
-      // Below `lg` the row keeps setting the brokenOnly filter: the list with
-      // its sweep bar and the review dialog are that composition today, and
-      // their dedicated mobile reading is #303's.
-      if (view === "brokenLinks" && isSidebarViewport) {
+      // #295: the Broken Links row opens the link-health view at every width —
+      // a page of its own rather than a lens. From `lg` it is the workspace
+      // composition beside the rail; below it, #303's sheet.
+      if (view === "brokenLinks") {
         closeWorkspaceViews();
         setLinkHealthOpen(true);
         return;
@@ -821,7 +862,7 @@ const BookmarkApp = () => {
       closeWorkspaceViews();
       setManualFilters((prev) => smartViewFilters(prev, view));
     },
-    [closeWorkspaceViews, isSidebarViewport, showDigest]
+    [closeWorkspaceViews, showDigest]
   );
 
   // Which sidebar row is the one on screen. Decided beside the other saved
@@ -832,19 +873,11 @@ const BookmarkApp = () => {
     [digest, linkHealthOpen, manualFilters]
   );
 
-  // #295 (codex): below `lg` the link-health view has no composition — its
-  // dedicated mobile reading is #303's. If the window shrinks while it is open,
-  // it gives way to the list with the brokenOnly filter, exactly what pressing
-  // the row below `lg` does, rather than rendering an unfiltered list while the
-  // rail still claims the view and the shortcuts stay suspended.
-  const wasSidebarViewport = useRef(isSidebarViewport);
-  useEffect(() => {
-    if (wasSidebarViewport.current && !isSidebarViewport && linkHealthOpen) {
-      setLinkHealthOpen(false);
-      setManualFilters((prev) => smartViewFilters(prev, "brokenLinks"));
-    }
-    wasSidebarViewport.current = isSidebarViewport;
-  }, [isSidebarViewport, linkHealthOpen]);
+  // #303: below `lg` the link-health view has its own composition — the
+  // mobile mockup's full-page sheet — so the view no longer yields to the
+  // brokenOnly filter when the window shrinks past the breakpoint; the same
+  // `linkHealthOpen` flag renders the sheet there, and the rail keeps
+  // claiming the page it is showing.
 
   // #294: the top bar's title is the view on screen: the smart view, or the
   // folder narrowing the list, and otherwise the whole collection.
@@ -1549,11 +1582,16 @@ const BookmarkApp = () => {
                 archiveDone={archive.done}
                 archiveTotal={archive.total}
                 applying={isApplyingChanges}
+                lastSweepAt={sweep.lastSweepAt}
                 onRecheck={sweep.start}
                 onStopSweep={sweep.stop}
                 onFindSnapshots={handleLinkHealthLookup}
                 onStopArchive={archive.stop}
                 onApply={handleApplyLinkHealth}
+                onEdit={editFromLinkHealth}
+                onWayback={handleRowLookup}
+                rejectedIds={rejectedRecovery}
+                onToggleRejected={toggleRejectedRecovery}
               />
             ) : (
               <>
@@ -1760,6 +1798,37 @@ const BookmarkApp = () => {
             onTriage={triageUntagged}
             onEdit={editFromDigest}
             onClose={() => setDigest(null)}
+          />
+        )}
+        {/* #303: below `lg` link health is the mobile mockup's full-page
+            sheet, in the digest's arrangement — one flag, one composition per
+            viewport. It renders over the list, which stays mounted behind it
+            the way the digest's does. */}
+        {linkHealthOpen && !isSidebarViewport && (
+          <LinkHealthView
+            checkedTotal={sweep.checkedTotal}
+            unreachableCount={brokenCount}
+            broken={recoverableBroken}
+            proposalUrls={proposalUrls}
+            needsLookup={lookupOwed}
+            sweepRunning={sweep.running}
+            sweepChecked={sweep.checked}
+            sweepTotal={sweep.total}
+            archiveRunning={archive.running}
+            archiveDone={archive.done}
+            archiveTotal={archive.total}
+            applying={isApplyingChanges}
+            lastSweepAt={sweep.lastSweepAt}
+            onRecheck={sweep.start}
+            onStopSweep={sweep.stop}
+            onFindSnapshots={handleLinkHealthLookup}
+            onStopArchive={archive.stop}
+            onApply={handleApplyLinkHealth}
+            onEdit={editFromLinkHealth}
+            onWayback={handleRowLookup}
+            rejectedIds={rejectedRecovery}
+            onToggleRejected={toggleRejectedRecovery}
+            onClose={() => setLinkHealthOpen(false)}
           />
         )}
         {review && (

@@ -99,6 +99,75 @@ export const statusReasonLabel = (reason, t) => {
 };
 
 /**
+ * When the sweep last ran, read back defensively — the same reason
+ * `readCheckedAt` reads the way it does (#303's "Last scan 2h ago" line).
+ * Absent or implausible means the sweep has never run where anyone can see.
+ *
+ * @param {unknown} raw
+ * @returns {number|null} Epoch ms, or null.
+ */
+export function readLastSweepAt(raw) {
+  const time = Number(raw);
+  return Number.isFinite(time) && time > 0 ? time : null;
+}
+
+/**
+ * How stale the sweep's verdicts are, as the relative-time arguments the i18n
+ * formatter takes — a negative value is time past. "now" covers the first
+ * minute, where "0 minutes ago" reads worse than the truth; null covers no
+ * sweep at all, which callers hide rather than print.
+ *
+ * @param {number|null} lastSweepAt
+ * @param {number} [now]
+ * @returns {"now"|{value: number, unit: "minute"|"hour"|"day"}|null}
+ */
+export function scanAge(lastSweepAt, now = Date.now()) {
+  const at = Number(lastSweepAt);
+  if (!Number.isFinite(at) || at <= 0) return null;
+  const elapsed = Math.max(0, now - at);
+  if (elapsed < 60_000) return "now";
+  if (elapsed < 3_600_000) return { value: -Math.floor(elapsed / 60_000), unit: "minute" };
+  if (elapsed < 86_400_000) return { value: -Math.floor(elapsed / 3_600_000), unit: "hour" };
+  return { value: -Math.floor(elapsed / 86_400_000), unit: "day" };
+}
+
+/**
+ * How long until the age's bucket turns over — the minute, hour or day
+ * boundary the words are about to cross — so a view that stays open can
+ * re-read the clock exactly when its freshness line would go stale, rather
+ * than on a timer that runs forever. Null when there is no sweep to stale.
+ *
+ * @param {number|null} lastSweepAt
+ * @param {number} [now]
+ * @returns {number|null} Milliseconds until the label's inputs change, or null.
+ */
+export function nextScanAgeChange(lastSweepAt, now = Date.now()) {
+  const at = Number(lastSweepAt);
+  if (!Number.isFinite(at) || at <= 0) return null;
+  const elapsed = Math.max(0, now - at);
+  const step = elapsed < 3_600_000 ? 60_000 : elapsed < 86_400_000 ? 3_600_000 : 86_400_000;
+  return step - (elapsed % step);
+}
+
+/**
+ * The freshness line's words: when the sweep last ran, and how long ago that
+ * was — "Last scan 2 hours ago". The age buckets are `scanAge`'s; the age
+ * itself is the locale formatter's (`t.relative`), so a locale renders its
+ * own units and order. No sweep, no line.
+ *
+ * @param {number|null} lastSweepAt
+ * @param {(key: string, params?: Record<string, unknown>) => string} t
+ * @param {number} [now] Injectable clock, so a timer re-reads one instant.
+ * @returns {string|null}
+ */
+export const lastScanLabel = (lastSweepAt, t, now = Date.now()) => {
+  const age = scanAge(lastSweepAt, now);
+  if (!age) return null;
+  if (age === "now") return t("linkHealth.lastScanJustNow");
+  return t("linkHealth.lastScanAgo", { age: t.relative(age.value, age.unit) });
+};
+
+/**
  * The stored record of past checks, read back defensively: storage is editable
  * by hand and survives across versions, so anything that is not an id mapped to
  * a plausible timestamp is dropped rather than trusted.

@@ -27,8 +27,9 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
     **Never Opened**, **Untagged**, **Broken Links** — beside the saved views and
     the folder tree. Choosing a view shows the whole collection that way and
     leaves any folder; the filter strip's toggles can still combine the two.
-    **Broken Links** is a page of its own on wide windows: the Link Health &
-    Archive Recovery view (below)
+    **Broken Links** is a page of its own: the Link Health & Archive Recovery
+    view (below) — the workspace view on wide windows, the full-page sheet on
+    narrow ones
   - A maintenance footer with **Check Links**, **Remove Duplicates**,
     **Import / Export** and **Options** — the same actions and dialogs as the
     header's buttons, in the rail and in the drawer alike
@@ -570,17 +571,27 @@ until you accept it, one row at a time or all at once.
 
 ### The Link Health & Archive Recovery view
 
-On wide windows (`lg` and up), **Broken Links** in the sidebar opens link health
-as a full workspace view beside the navigation rail, the way Weekly Digest does:
+The **Broken Links** row opens link health as a page of its own — a full
+workspace view beside the navigation rail from `lg` up, the way Weekly Digest
+does, and the mobile mockup's full-page sheet below that:
 
 - The header carries the sweep's summary — how many links have been checked and
   how many are unreachable — with **Re-check Links**, and **Apply Selected (n)**
-  once there are proposals to review.
+  once there are proposals to review. Under the summary sits the freshness
+  line, "Last scan 2 hours ago", from a timestamp the sweep writes as each
+  batch lands; a sweep stopped halfway has still refreshed what it reached.
+- When links are unreachable, a banner says so in words — "N bookmarks returned
+  HTTP errors or timeouts." — over the rows.
 - Each unreachable link is a row: its failure named in words on a chip —
   "HTTP 404", "DNS Unreachable", "Timeout", what the check actually learned —
   the dead address struck through, and the archive's proposed snapshot beside
   it. A link the archive could not help keeps its row with "No archived copy
   found" and a checkbox there is nothing to apply.
+- Every card can also act on its own: **Edit URL** opens the ordinary edit
+  form for that link, and **Wayback** asks the archive about just that row —
+  on the same paced, capped run as the batch lookup, contacting `archive.org`
+  only when you press it. A row with a snapshot staged already shows no
+  Wayback; the checkbox and **Apply Selected** are its path.
 - The proposals are the same review as the dialog: every snapshot starts
   selected, untick the ones you disagree with, and nothing is written until
   **Apply Selected** — one undo, however many links were re-pointed.
@@ -590,9 +601,9 @@ as a full workspace view beside the navigation rail, the way Weekly Digest does:
   button's run.
 - Leaving is navigation, as between any two views: another smart view, a
   folder, or a search. Proposals you have looked up stay staged while the app
-  is open, so coming back does not re-ask the archive.
-- On narrow windows the row keeps the **Broken only** filter over the list,
-  with the review dialog as the recovery path.
+  is open, so coming back does not re-ask the archive. Below `lg` the sheet
+  has a back bar for the same trip, and it makes way before the edit form
+  opens, so the two never stack.
 
 ## The weekly digest
 

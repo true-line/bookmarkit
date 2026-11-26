@@ -1436,6 +1436,32 @@ body {
   flex: none;
 }
 
+/* #303: the mobile mockup's status banner (186–193) — the alarm in words on
+   the error-container tone, the count on the row's end. */
+.ui-health-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-gutter-sm);
+  padding: 14px var(--ui-space-gutter-md);
+  border-radius: var(--ui-radius);
+  background: var(--ui-error-container);
+  color: var(--ui-on-error-container);
+}
+
+.ui-health-banner p {
+  margin: 0;
+}
+
+/* #303: the card's own actions, under the boxes — a hairline over them, as
+   the mobile mockup draws the card's footer row. */
+.ui-health-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-gutter-sm);
+  padding-top: var(--ui-space-gutter-sm);
+  border-top: 1px solid var(--ui-outline-variant);
+}
+
 /* ─── Empty shelf (#254) ──────────────────────────────────────────────────
    The manager mockup's empty-shelf centerpiece: a centered column — the
    card-stack mark, the copy block, the actions — on headline/body type with

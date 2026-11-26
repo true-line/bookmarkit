@@ -49,18 +49,24 @@ const meta = {
     unreachableCount: 3,
     broken,
     proposalUrls: snapshots,
+    // #303: the scan ran two hours ago, and every card can act on its own.
+    lastSweepAt: Date.now() - 2 * 60 * 60 * 1000,
     onRecheck: noop,
     onStopSweep: noop,
     onFindSnapshots: noop,
     onStopArchive: noop,
     onApply: noop,
+    onEdit: noop,
+    onWayback: noop,
+    onToggleRejected: noop,
   },
 };
 
 export default meta;
 
 // The mockup's composition: two proposals to review, one link the archive
-// could not help, Apply Selected over the accepted set.
+// could not help, Apply Selected over the accepted set, and the per-card
+// Edit URL / Wayback pair under every row.
 export const Proposals = {};
 
 // The idle reading: everything checked, nothing unreachable.

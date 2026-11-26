@@ -138,13 +138,27 @@ export const surfaceMessages = {
     untaggedTitle: "Untagged",
   },
 
-  // LinkHealthView (#295) — the broken-links mockup's workspace view from `lg`.
-  // The reason labels are shared with ChangeReviewModal's diff, through
-  // statusReasonLabel (utils/linkHealth.js).
+  // LinkHealthView (#295) — the broken-links mockup's workspace view from `lg`,
+  // with the mobile sheet below it (#303). The reason labels are shared with
+  // ChangeReviewModal's diff, through statusReasonLabel (utils/linkHealth.js).
   linkHealth: {
     applySelected: "Apply Selected ({count})",
+    backAria: "Back to bookmarks",
+    // #303: the error banner over the rows, per the mobile mockup.
+    banner: {
+      one: "1 bookmark returned HTTP errors or timeouts.",
+      other: "{count} bookmarks returned HTTP errors or timeouts.",
+    },
+    // The card's own action pair, named as a group for assistive tech.
+    actionsLabel: "This card's actions",
+    editUrl: "Edit URL",
+    editUrlAria: "Edit the URL of {title}",
     findSnapshots: "Find Archive Snapshots",
     findingSnapshots: "Asking the archive… {done} of {total}",
+    // The freshness line: the age comes ready-worded from the formatter
+    // (t.relative answers "2 hours ago"), so the template only names the scan.
+    lastScanAgo: "Last scan {age}",
+    lastScanJustNow: "Last scan just now",
     noBroken: "Nothing unreachable — every link the sweep could reach answered.",
     noSnapshot: "No archived copy found",
     originalLabel: "Original URL",
@@ -155,11 +169,20 @@ export const surfaceMessages = {
     reasonTimeout: "Timeout",
     recheck: "Re-check Links",
     rowsLabel: "Recovery proposals",
+    // The sheet app bar's second line, per the mobile mockup.
+    scannedFlagged: {
+      one: "1 flagged",
+      other: "{count} flagged",
+    },
+    // The sheet's title — the mobile mockup's shorter name for the page.
+    sheetTitle: "Broken Links",
     snapshotLabel: "Proposed Archive Snapshot",
     // Digit-led, so the counts ride the sentence with unicodeBidi: plaintext —
     // plaintext lets each phrase's own content set its direction in RTL locales.
     summary: "{checked} checked · {unreachable} unreachable",
     title: "Link Health & Archive Recovery",
+    wayback: "Wayback",
+    waybackAria: "Find an archived copy of {title}",
   },
 
   // ImportExportContent and ImportPanel

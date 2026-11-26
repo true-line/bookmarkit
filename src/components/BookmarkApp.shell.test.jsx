@@ -321,11 +321,11 @@ describe("BookmarkApp's weekly digest view (#296)", () => {
 });
 
 // #295: link health is a workspace view too, from the same mockup family and
-// under the same navigation rules — the Broken Links row opens it from `lg`,
-// and navigation owns leaving it. The same two paths a stuck view would
-// strand are pinned here, beside the row's below-`lg` reading, which stays
-// the brokenOnly filter until #303 re-homes it.
-describe("BookmarkApp's link health view (#295)", () => {
+// under the same navigation rules — the Broken Links row opens it at every
+// width (#303: as the mobile sheet below `lg`), and navigation owns leaving
+// it. The same two paths a stuck view would strand are pinned here, beside
+// the sheet's wiring and the per-card actions' handoffs.
+describe("BookmarkApp's link health view (#295, sheet #303)", () => {
   const seedFolderFixture = async () => {
     // The composite store adopts a bar folder titled "bookmarkit" as its root,
     // and a tree row only exists for a folder that holds something.
@@ -339,9 +339,34 @@ describe("BookmarkApp's link health view (#295)", () => {
     return folder;
   };
 
+  // One dead link, marked by the sweep's verdict in its metadata — what the
+  // link-health pages read.
+  const seedBrokenBookmark = async () => {
+    const folder = await fakeStore.bookmarks.create({ parentId: "1", title: "bookmarkit" });
+    const node = await fakeStore.bookmarks.create({
+      parentId: folder.id,
+      title: "A page the sweep lost",
+      url: "https://gone.test/page",
+    });
+    localStorage.setItem(
+      `bm_meta:${node.id}`,
+      JSON.stringify({ urlStatus: "invalid", urlStatusReason: "http:404" })
+    );
+    return node;
+  };
+
   const openLinkHealthView = async () => {
     fireEvent.click(screen.getByRole("button", { name: /Broken Links/ }));
     return screen.findByRole("heading", { name: "Link Health & Archive Recovery" });
+  };
+
+  const openLinkHealthSheet = async () => {
+    const drawer = await openDrawer();
+    fireEvent.click(within(drawer).getByRole("button", { name: /Broken Links/ }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "BookmarkIt navigation" })).toBeNull()
+    );
+    return screen.findByRole("dialog", { name: "Broken Links" });
   };
 
   it("opens from the rail, and yields when another smart view is chosen", async () => {
@@ -382,51 +407,117 @@ describe("BookmarkApp's link health view (#295)", () => {
     );
   });
 
-  it("hands the filtered list back when the window shrinks below `lg`", async () => {
+  it("swaps the workspace for the sheet when the window shrinks below `lg`", async () => {
     const viewport = installViewport();
     viewport.resizeTo(true);
-    await seedFolderFixture();
+    await seedBrokenBookmark();
     await renderShell();
 
     await openLinkHealthView();
 
     act(() => viewport.resizeTo(false));
 
-    // The view has no composition below `lg` (#303 owns one), so shrinking
-    // gives way to the list wearing the brokenOnly filter — what pressing the
-    // row down here does — rather than an unfiltered list behind a rail that
-    // still claims the view with the shortcuts suspended.
-    await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull()
-    );
-    const drawer = await openDrawer();
-    expect(within(drawer).getByRole("button", { name: /Broken Links/ })).toHaveAttribute(
+    // #303: below `lg` the view has its own composition — the mobile
+    // mockup's full-page sheet — so shrinking re-homes the same open view
+    // instead of handing an unfiltered list back under a rail that still
+    // claims it.
+    await screen.findByRole("dialog", { name: "Broken Links" });
+    expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull();
+    // The page's alarm and the card are the sheet's content now.
+    expect(screen.getByText("1 bookmark returned HTTP errors or timeouts.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Edit the URL of/ })).toBeInTheDocument();
+  });
+
+  it("opens the sheet below `lg`, and backs out to the list it covered", async () => {
+    installViewport();
+    await seedFolderFixture();
+    await renderShell();
+
+    const sheet = await openLinkHealthSheet();
+    expect(within(sheet).getByRole("button", { name: "Back to bookmarks" })).toBeInTheDocument();
+
+    fireEvent.click(within(sheet).getByRole("button", { name: "Back to bookmarks" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Broken Links" })).toBeNull());
+
+    // Backing out is not the filter: no brokenOnly lens is left on, so the
+    // drawer no longer marks the row as the screen.
+    const reopened = await openDrawer();
+    expect(within(reopened).getByRole("button", { name: /Broken Links/ })).not.toHaveAttribute(
       "aria-current",
       "page"
     );
   });
 
-  it("stays a filter below `lg`, where the list is still the broken view", async () => {
+  it("hands a card's Edit URL to the ordinary edit form, the sheet making way first", async () => {
     installViewport();
-    await seedFolderFixture();
+    await seedBrokenBookmark();
     await renderShell();
 
-    const drawer = await openDrawer();
-    fireEvent.click(within(drawer).getByRole("button", { name: /Broken Links/ }));
-
-    // Picking a destination is the end of the trip: the drawer closes on it,
-    // and no page opens — the list column, its sweep bar and the review
-    // dialog are that composition today (#303 re-homes it).
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "BookmarkIt navigation" })).toBeNull()
+    const sheet = await openLinkHealthSheet();
+    fireEvent.click(
+      within(sheet).getByRole("button", { name: "Edit the URL of A page the sweep lost" })
     );
-    expect(screen.queryByRole("heading", { name: "Link Health & Archive Recovery" })).toBeNull();
 
-    // The filter claims the row: reopening the drawer marks it as the screen.
-    const reopened = await openDrawer();
-    expect(within(reopened).getByRole("button", { name: /Broken Links/ })).toHaveAttribute(
-      "aria-current",
-      "page"
-    );
+    // #302's rule, twice over: the sheets never stack — the form replaces
+    // the sheet rather than opening on top of it.
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Broken Links" })).toBeNull());
+    expect(screen.getByRole("dialog", { name: "Edit Bookmark" })).toBeInTheDocument();
+  });
+
+  // The availability API's answer for the seeded link: one usable snapshot on
+  // the archive's own host, the shape `readSnapshot` trusts. Restored by hand:
+  // a global unstub in afterEach would also drop the ResizeObserver stub the
+  // cleanup unmount's pending effects still reach for (the second CI failure,
+  // #303).
+  const stubArchiveHit = () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        archived_snapshots: {
+          closest: {
+            available: true,
+            status: "200",
+            url: "https://web.archive.org/web/20240512/https://gone.test/page",
+            timestamp: "20240512",
+          },
+        },
+      }),
+    }));
+    return () => {
+      globalThis.fetch = original;
+    };
+  };
+
+  it("keeps a declined proposal declined when the window crosses `lg`", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await seedBrokenBookmark();
+    await renderShell();
+
+    await openLinkHealthView();
+
+    const restoreFetch = stubArchiveHit();
+    try {
+      // The archive answers with a copy, staged as the row's proposal.
+      fireEvent.click(
+        screen.getByRole("button", { name: "Find an archived copy of A page the sweep lost" })
+      );
+      await screen.findByText("https://web.archive.org/web/20240512/https://gone.test/page");
+
+      // The reader declines it: nothing left to apply.
+      fireEvent.click(screen.getByRole("checkbox", { name: "A page the sweep lost" }));
+      expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
+
+      // ...and the window shrinks: the sheet is a different mount of the view,
+      // reading the app's set of rejections, not a component-local one — so
+      // crossing the breakpoint cannot quietly re-select what was refused.
+      act(() => viewport.resizeTo(false));
+      await screen.findByRole("dialog", { name: "Broken Links" });
+      expect(screen.getByRole("button", { name: "Apply Selected (0)" })).toBeDisabled();
+      expect(screen.getByRole("checkbox", { name: "A page the sweep lost" })).not.toBeChecked();
+    } finally {
+      restoreFetch();
+    }
   });
 });
