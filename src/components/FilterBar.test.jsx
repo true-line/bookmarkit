@@ -260,3 +260,33 @@ describe("FilterBar with sort controls in the shell's row", () => {
     expect(onClear).toHaveBeenCalled();
   });
 });
+
+// #291: the keyboard-only pass — every control is a native tabbable element,
+// so traversal is DOM order; walk the order and assert focus lands on each,
+// with no tabindex steering.
+describe("FilterBar keyboard pass (#291)", () => {
+  it("reaches every control in DOM order without tabindex steering", () => {
+    const { container } = render(
+      <FilterBar
+        filters={{ ...EMPTY_FILTERS, text: "react" }}
+        tagFacets={tagFacets}
+        onChange={vi.fn()}
+        onCycleTag={vi.fn()}
+        onClear={vi.fn()}
+      />
+    );
+
+    const tabbables = container.querySelectorAll(
+      "button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href]"
+    );
+    expect(tabbables.length).toBeGreaterThan(0);
+    for (const el of tabbables) {
+      el.focus();
+      expect(document.activeElement).toBe(el);
+    }
+    const hacks = [...tabbables].filter(
+      (el) => el.hasAttribute("tabindex") && el.getAttribute("tabindex") !== "0"
+    );
+    expect(hacks).toEqual([]);
+  });
+});

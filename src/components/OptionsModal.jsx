@@ -672,7 +672,9 @@ const OptionsModal = ({
                 transition collapse the OS media query provides; unchecked, the
                 OS setting alone decides. The attribute lands on the document
                 element via useTheme, so the popup follows too. */}
-            <label className="flex items-start gap-3 cursor-pointer">
+            {/* #291: the row is the touch target under the coarse-pointer floor — the
+                label wraps the checkbox, so the floor rides on the row. */}
+            <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={Boolean(reduceMotion)}
@@ -689,7 +691,9 @@ const OptionsModal = ({
             </label>
             {/* Decorative 3D effects: pure presentation, on by default, off in
                 one click. Nothing about the collection changes with them. */}
-            <label className="flex items-start gap-3 cursor-pointer">
+            {/* #291: the row is the touch target under the coarse-pointer floor — the
+                label wraps the checkbox, so the floor rides on the row. */}
+            <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={effects}
@@ -715,7 +719,9 @@ const OptionsModal = ({
             >
               {t("options.privacyHeading")}
             </Typography>
-            <label className="flex items-start gap-3 cursor-pointer">
+            {/* #291: the row is the touch target under the coarse-pointer floor — the
+                label wraps the checkbox, so the floor rides on the row. */}
+            <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={remoteFavicons}
@@ -743,7 +749,11 @@ const OptionsModal = ({
             >
               {t("options.agentAccessHeading")}
             </Typography>
-            <label className={`flex items-start gap-3 ${webMcpAvailable ? "cursor-pointer" : ""}`}>
+            <label
+              className={`ui-settings-row flex items-start gap-3 ${
+                webMcpAvailable ? "cursor-pointer" : ""
+              }`}
+            >
               <input
                 type="checkbox"
                 checked={webMcpEnabled}

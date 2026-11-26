@@ -885,6 +885,13 @@
     width: 44px;
     height: 44px;
   }
+
+  /* #291: the settings' checkbox rows join the floor — the label wraps the
+     box, so the row is the target and carries the height, not the tiny
+     native checkbox inside it. */
+  .ui-settings-row {
+    min-height: 44px;
+  }
 }
 
 /* Motion collapses entirely under prefers-reduced-motion: reduce — hover and
