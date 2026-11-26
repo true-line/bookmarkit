@@ -210,6 +210,31 @@ rating >= 4 then sort by title asc`, the `then` compositions, the
   teach commands that do not run. The divergence is this paragraph: the
   mockup's chip copy is not the spec — the shipped chips are.
 
+### Stories coverage and the accessibility/RTL sweep (#291)
+
+- **Stories.** Every application component now carries stories under the
+  shared `UiScope` decorator (the preview's theme and direction toolbars):
+  `BulkEditBar`, `EmptyShelf`, `FilterBar`, `FolderTree`, `LinkSweepBar`,
+  `SmartViewBar` and `ViewSelector` join the migrated components', so the
+  whole catalogue renders under the same `[data-ui-theme]` root the app
+  gets from the bridge. The stories pin the stateful readings — the sweep's
+  progress and verdict, the filter bar at rest and working, the bulk bar's
+  selection with Auto-Tag armed on a keyless local provider — not just one
+  happy path.
+- **RTL.** `FolderTree`, the app's deepest mirroring surface, drops its
+  physical left-side classes for logical ones (`ms-6` for the delete
+  confirmation's indent, `text-start` for row labels), and the change-review
+  dialog's row titles take `dir="auto"` like the bookmark cards' titles:
+  user content reads its own direction.
+- **Targets and live regions.** The coarse-pointer 44px floor extends to
+  the settings' checkbox rows (`.ui-settings-row`): the label wraps the
+  box, so the row is the touch target and carries the height, not the tiny
+  native checkbox inside it. The review dialog's footer count announces
+  with `aria-live="polite"` as rows tick, instead of waiting for the reader
+  to find the footer. Every control in the tree, the filter bar and the
+  review dialog is a native button/input/select, so keyboard order is DOM
+  order under the shared focus contract.
+
 ### The manager shell (#283)
 
 `SidebarNav` is the mockup's persistent navigation sidebar: a fixed rail from
