@@ -26,6 +26,8 @@ const meta = {
     themes: { default: {} },
     onThemeChange: noop,
     onThemeUpload: noop,
+    reduceMotion: false,
+    onReduceMotionChange: noop,
     remoteFavicons: false,
     onRemoteFaviconsChange: noop,
     effects: true,

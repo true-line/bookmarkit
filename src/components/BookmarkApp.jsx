@@ -126,7 +126,8 @@ const BookmarkApp = () => {
   const t = useMessages();
 
   // ─── Theme ──────────────────────────────────────────────────────────────────
-  const { currentTheme, themes, selectTheme, uploadTheme } = useTheme();
+  const { currentTheme, themes, selectTheme, uploadTheme, reduceMotion, setReduceMotion } =
+    useTheme();
 
   // ─── Store ──────────────────────────────────────────────────────────────────
   // #56: every write records its own inverse, so undo covers whatever the store
@@ -1795,6 +1796,8 @@ const BookmarkApp = () => {
             themes={themes}
             onThemeChange={selectTheme}
             onThemeUpload={(file) => uploadTheme(file, showCustomMessage)}
+            reduceMotion={reduceMotion}
+            onReduceMotionChange={setReduceMotion}
             remoteFavicons={remoteFavicons}
             onRemoteFaviconsChange={(enabled) => {
               setRemoteFaviconsEnabled(enabled);
