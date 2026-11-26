@@ -232,7 +232,7 @@ export const dialogMessages = {
     noModel:
       'No model is selected. Open Options (type "options" in the search bar) and choose one from the list, or type its id.',
     ollamaRefused:
-      "Ollama refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure Ollama is running locally and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
+      "Ollama refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure Ollama is running and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
     ollamaUnreachable:
       "Could not reach Ollama. Make sure it is running locally and that the server address in Options matches it.",
     parse: "The AI returned an unexpected response. Try rephrasing your query.",
