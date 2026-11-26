@@ -1918,3 +1918,15 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* #290: the settings' Reduce motion toggle forces the same collapse without
+   an OS request — useTheme stamps data-ui-motion="reduce" on the document
+   element. With no attribute, the media query above alone decides. */
+[data-ui-motion="reduce"] *,
+[data-ui-motion="reduce"] *::before,
+[data-ui-motion="reduce"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

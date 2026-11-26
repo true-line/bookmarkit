@@ -62,7 +62,8 @@
 
   /* Motion — 100ms state feedback, 200ms surface enter, 150ms surface exit.
      components.css collapses every transition and animation to 0ms under
-     prefers-reduced-motion: reduce. */
+     prefers-reduced-motion: reduce, or wherever the document element carries
+     data-ui-motion="reduce" — #290's Reduce motion settings toggle. */
   --ui-duration-state: 100ms;
   --ui-duration-enter: 200ms;
   --ui-duration-exit: 150ms;
