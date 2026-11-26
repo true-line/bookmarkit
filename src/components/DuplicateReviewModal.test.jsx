@@ -46,7 +46,6 @@ const setup = (overrides = {}) => {
   return { onRemove, onCancel };
 };
 
-const RULE_CHECKBOX = "Remove Context7, keep Context7 — Docs for LLMs";
 const AI_CHECKBOX = "Remove HumanLayer: Writing a good CLAUDE.md, keep Writing a good CLAUDE.md";
 
 describe("DuplicateReviewModal", () => {

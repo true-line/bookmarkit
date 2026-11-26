@@ -24,17 +24,20 @@ export const metadataWeight = (bookmark) =>
 
 /**
  * Why the surviving copy of a pair is the survivor, as display tokens — the
- * metadata that carried the keep decision, or "earliest" when the copies are
- * equally rich (#45 keeps the first occurrence on a tie). A component resolves
- * the tokens against the message catalogue; nothing here builds a key string.
- * @param {object} bookmark
+ * metadata that decides it: present on the kept copy but not on the dropped
+ * one (#285 codex — metadata both copies share explains nothing). When the
+ * copies carry the same work the decision is #45's tie-break, so the token is
+ * "earliest". A component resolves the tokens against the message catalogue;
+ * nothing here builds a key string.
+ * @param {object} keep The surviving copy.
+ * @param {object} drop The dropped copy.
  * @returns {string[]}
  */
-export const keepReasonTokens = (bookmark) => {
+export const keepReasonTokens = (keep, drop) => {
   const tokens = [];
-  if (bookmark?.tags?.length) tokens.push("tags");
-  if (bookmark?.rating) tokens.push("rating");
-  if (bookmark?.description?.trim()) tokens.push("notes");
+  if (keep?.tags?.length && !drop?.tags?.length) tokens.push("tags");
+  if (keep?.rating && !drop?.rating) tokens.push("rating");
+  if (keep?.description?.trim() && !drop?.description?.trim()) tokens.push("notes");
   return tokens.length > 0 ? tokens : ["earliest"];
 };
 
@@ -47,18 +50,26 @@ export const keepReasonTokens = (bookmark) => {
  * @returns {{keep: object, drop: object}[]}
  */
 export const findDuplicatePairs = (list = []) => {
-  const keeping = new Map();
-  const pairs = [];
+  const groups = new Map();
   for (const bookmark of list) {
     const key = getDuplicateKey(bookmark);
-    const kept = keeping.get(key);
-    if (!kept) {
-      keeping.set(key, bookmark);
-    } else if (metadataWeight(bookmark) > metadataWeight(kept)) {
-      keeping.set(key, bookmark);
-      pairs.push({ keep: bookmark, drop: kept });
-    } else {
-      pairs.push({ keep: kept, drop: bookmark });
+    const group = groups.get(key);
+    if (group) group.push(bookmark);
+    else groups.set(key, [bookmark]);
+  }
+
+  const pairs = [];
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    // #285 codex: every copy pairs with the group's FINAL survivor. A streamed
+    // keep would leave an early row pointing at a survivor a later row deletes
+    // — unticking "keep A and B" could not save B from B-vs-C's checkbox.
+    let keep = group[0];
+    for (const bookmark of group) {
+      if (metadataWeight(bookmark) > metadataWeight(keep)) keep = bookmark;
+    }
+    for (const bookmark of group) {
+      if (bookmark !== keep) pairs.push({ keep, drop: bookmark });
     }
   }
   return pairs;

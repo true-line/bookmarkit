@@ -131,7 +131,7 @@ const DuplicateReviewModal = ({ pairs = [], onRemove, onCancel, isRemoving = fal
     >
       <ul className="max-h-96 overflow-y-auto space-y-2">
         {pairs.map((pair) => {
-          const keepReason = keepReasonTokens(pair.keep)
+          const keepReason = keepReasonTokens(pair.keep, pair.drop)
             .map((token) => t(KEEP_TOKEN_KEYS[token]))
             .join(" & ");
           return (
