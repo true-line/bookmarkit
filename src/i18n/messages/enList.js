@@ -96,8 +96,10 @@ export const listMessages = {
 
   // BookmarkCard
   bookmarkCard: {
+    edit: "Edit {title} bookmark",
     rating: "Rated {rating} out of 5 stars",
     unreachable: "URL could not be reached",
+    unrated: "Unrated",
   },
 
   // BookmarkList

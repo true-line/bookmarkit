@@ -134,6 +134,25 @@ export function EditNoteIcon({ size = 18 }) {
   );
 }
 
+/** The card's per-bookmark "Edit" (edit: the bare pencil), #288. */
+export function EditIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </svg>
+  );
+}
+
+/** The mobile card's folder chip (folder: the tabbed folder), #288. */
+export function FolderIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M20 20a2 2 0 002-2V8a2 2 0 00-2-2h-7.9a2 2 0 01-1.69-.9L9.6 3.9A2 2 0 007.93 3H4a2 2 0 00-2 2v13a2 2 0 002 2Z" />
+    </svg>
+  );
+}
+
 /** A row's per-card "Wayback" action (archive: the lidded box) in the
     link-health view (#303). */
 export function ArchiveIcon({ size = 14 }) {

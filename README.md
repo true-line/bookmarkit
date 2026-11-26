@@ -61,6 +61,9 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Multi‑select (Cmd/Ctrl+Click, or **Select** in the header's filter row on
     narrow windows), open in new tab (click the selected bookmark,
     double‑click, or Enter)
+  - Every bookmark card carries its own **Edit** pencil named after the
+    bookmark. On narrow windows the card also shows where the bookmark lives
+    — its folder, `#` tags, and **Unrated** when nothing is set
   - Detect and review duplicates pair by pair — both copies side by side,
     with where the match came from (rule or LLM) — and remove only the pairs
     you confirm; the LLM's second opinion covers the same article saved under

@@ -86,3 +86,23 @@ export const SingleColumn = {
 export const GridView = {
   args: { ...baseArgs, viewMode: "grid" },
 };
+
+// #288: the card's per-bookmark Edit pencil, and below `lg` the mobile
+// mockup's anatomy — the folder chip, # tags, and Unrated where a count
+// would sit.
+export const CardActions = {
+  args: { ...baseArgs, onBookmarkEdit: noop },
+};
+
+export const MobileCardAnatomy = {
+  args: {
+    ...baseArgs,
+    onBookmarkEdit: noop,
+    isMobileViewport: true,
+    bookmarks: [
+      { ...bookmarks[0], folderId: "Dev/Tools" },
+      { ...bookmarks[1], folderId: "Design systems" },
+      { ...bookmarks[2], folderId: "Notes", rating: 0, tags: [] },
+    ],
+  },
+};
