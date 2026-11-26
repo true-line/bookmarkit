@@ -2,12 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import ImportExportContent from "./ImportExportContent.jsx";
 
-const setup = () => {
+const setup = ({ bookmarks = [] } = {}) => {
   const showMessage = vi.fn();
   const onImportJson = vi.fn().mockResolvedValue(undefined);
   render(
     <ImportExportContent
-      bookmarks={[]}
+      bookmarks={bookmarks}
       onClose={() => {}}
       onImportJson={onImportJson}
       onImportHtml={() => {}}
@@ -84,6 +84,207 @@ describe("ImportExportContent file upload (#25)", () => {
         "error"
       )
     );
+  });
+});
+
+// #287 widened the panel: a Markdown link list imports and exports alongside
+// JSON/HTML, and the confirmation names its file and lets skip-existing be a
+// decision — with the count showing what the choice actually leaves.
+describe("ImportExportContent markdown and skip-existing (#287)", () => {
+  it("exports markdown alongside JSON and HTML, with the mockup's copy", () => {
+    setup({
+      bookmarks: [{ id: "1", title: "MDN Web Docs", url: "https://developer.mozilla.org/" }],
+    });
+
+    expect(screen.getByLabelText("Markdown Export (Link List)")).toHaveValue(
+      "- [MDN Web Docs](https://developer.mozilla.org/)\n"
+    );
+    expect(screen.getByRole("link", { name: "Export JSON" })).toHaveAttribute(
+      "download",
+      "bookmarks.json"
+    );
+    expect(screen.getByRole("link", { name: "Export HTML" })).toHaveAttribute(
+      "download",
+      "bookmarks.html"
+    );
+    expect(screen.getByRole("link", { name: "Export Markdown" })).toHaveAttribute(
+      "download",
+      "bookmarks.md"
+    );
+  });
+
+  it("stages a markdown link list through the entry path the JSON import uses", async () => {
+    const { onImportJson } = setup();
+    fireEvent.click(screen.getByRole("tab", { name: "Import Markdown" }));
+    const input = screen.getByLabelText("Upload Markdown File");
+    const file = new File(
+      ["# Reading\n- [Example](https://example.com/)\n  - [Other](https://other.test/)"],
+      "links.md",
+      { type: "text/markdown" }
+    );
+    fireEvent.change(input, { target: { files: [file] } });
+
+    const confirmation = await screen.findByText(/bookmarks? to your collection/);
+    expect(confirmation).toHaveTextContent("This will add 2 bookmarks");
+    expect(screen.getByText("Chosen file: links.md")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    await waitFor(() => expect(onImportJson).toHaveBeenCalled());
+    const [imported, replaceAll, skipExisting] = onImportJson.mock.calls[0];
+    expect(imported).toHaveLength(2);
+    expect(imported[0]).toMatchObject({ title: "Example", url: "https://example.com/" });
+    expect(replaceAll).toBe(false);
+    expect(skipExisting).toBe(true);
+  });
+
+  it("refuses markdown that holds no links", async () => {
+    const { showMessage } = setup();
+    fireEvent.click(screen.getByRole("tab", { name: "Import Markdown" }));
+    fireEvent.change(screen.getByLabelText("Paste Markdown Data"), {
+      target: { value: "Just prose, nothing to click." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Import Markdown Links" }));
+
+    await waitFor(() =>
+      expect(showMessage).toHaveBeenCalledWith(expect.stringContaining("No bookmarks"), "error")
+    );
+  });
+
+  it("counts html links it would refuse, not rows the file happens to hold", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("tab", { name: "Import HTML" }));
+    const input = screen.getByLabelText("Upload HTML File (Browser Export)");
+    const file = new File(
+      [
+        [
+          "<!DOCTYPE NETSCAPE-Bookmark-file-1><DL><p>",
+          '<DT><A HREF="https://example.com/ok">Ok</A>',
+          '<DT><A HREF="javascript:alert(1)">Unsafe</A>',
+          "</DL><p>",
+        ].join("\n"),
+      ],
+      "bookmarks.html",
+      { type: "text/html" }
+    );
+    fireEvent.change(input, { target: { files: [file] } });
+
+    const confirmation = await screen.findByText(/bookmarks? to your collection/);
+    expect(confirmation).toHaveTextContent("This will add 1 bookmark");
+  });
+
+  it("shows what skip-existing leaves and lets it be turned off", async () => {
+    const { onImportJson } = setup({
+      bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }],
+    });
+    chooseJsonFile(
+      JSON.stringify([
+        { title: "Held", url: "https://example.com/dupe" },
+        { title: "Fresh", url: "https://example.com/fresh" },
+      ])
+    );
+
+    // Checked by default — the mockup's state, and what the store edge has
+    // always done. The confirmation names the duplicate rather than promising it.
+    expect(
+      await screen.findByText("1 already in your library will be skipped.")
+    ).toBeInTheDocument();
+    expect(screen.getByText(/bookmarks? to your collection/)).toHaveTextContent(
+      "This will add 1 bookmark"
+    );
+
+    fireEvent.click(screen.getByLabelText("Skip URLs already in library"));
+    expect(screen.getByText(/bookmarks? to your collection/)).toHaveTextContent(
+      "This will add 2 bookmarks"
+    );
+    expect(screen.queryByText(/already in your library/)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    await waitFor(() => expect(onImportJson).toHaveBeenCalled());
+    expect(onImportJson.mock.calls[0][2]).toBe(false);
+  });
+
+  it("names duplicates inside the file separately from the library's", async () => {
+    const { onImportJson } = setup({
+      bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }],
+    });
+    chooseJsonFile(
+      JSON.stringify([
+        { title: "Held", url: "https://example.com/dupe" },
+        { title: "Held again", url: "https://example.com/dupe" },
+        { title: "Fresh", url: "https://example.com/fresh" },
+      ])
+    );
+
+    expect(
+      await screen.findByText("1 already in your library will be skipped.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("1 duplicate within the file will be skipped.")).toBeInTheDocument();
+    expect(screen.getByText(/bookmarks? to your collection/)).toHaveTextContent(
+      "This will add 1 bookmark"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    await waitFor(() => expect(onImportJson).toHaveBeenCalled());
+    const [imported, replaceAll, skipExisting] = onImportJson.mock.calls[0];
+    // The dialog hands every staged entry over; the store edge applies the rule.
+    expect(imported).toHaveLength(3);
+    expect(replaceAll).toBe(false);
+    expect(skipExisting).toBe(true);
+  });
+
+  it("previews replace-all through the same rule the store applies to it", async () => {
+    setup({ bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }] });
+    chooseJsonFile(
+      JSON.stringify([
+        { title: "Held", url: "https://example.com/dupe" },
+        { title: "Held again", url: "https://example.com/dupe" },
+        { title: "Fresh", url: "https://example.com/fresh" },
+      ])
+    );
+
+    fireEvent.click(await screen.findByRole("radio", { name: "Replace all existing bookmarks" }));
+
+    // The library is emptied ahead of a replace, so nothing is skipped as
+    // already-held — but the file's own duplicate still is, and the preview
+    // promises what the store will write, not every staged entry.
+    expect(screen.getByText(/bookmarks? to your collection/)).toHaveTextContent(
+      "This will add 2 bookmarks"
+    );
+    expect(screen.queryByText(/already in your library/)).toBeNull();
+    expect(screen.getByText("1 duplicate within the file will be skipped.")).toBeInTheDocument();
+  });
+
+  it("cannot confirm an import whose every entry is already in the library", async () => {
+    setup({ bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }] });
+    chooseJsonFile(JSON.stringify([{ title: "Held", url: "https://example.com/dupe" }]));
+
+    await screen.findByText(/bookmarks? to your collection/);
+    expect(screen.getByRole("button", { name: "Import" })).toBeDisabled();
+  });
+
+  it("retires the skip-existing choice when replace makes it moot", async () => {
+    setup({ bookmarks: [{ id: "1", title: "Held", url: "https://example.com/dupe" }] });
+    chooseJsonFile(JSON.stringify([{ title: "Fresh", url: "https://example.com/fresh" }]));
+
+    fireEvent.click(await screen.findByRole("radio", { name: "Replace all existing bookmarks" }));
+
+    const checkbox = screen.getByLabelText("Skip URLs already in library");
+    expect(checkbox).toBeDisabled();
+    expect(screen.getByText(/bookmarks? to your collection/)).toHaveTextContent(
+      "This will add 1 bookmark"
+    );
+  });
+
+  it("does not name a chosen file when the import was pasted", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("tab", { name: "Import JSON" }));
+    fireEvent.change(screen.getByLabelText("Paste JSON Data"), {
+      target: { value: JSON.stringify([{ title: "Typed", url: "https://example.com/typed" }]) },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Import JSON Data" }));
+
+    await screen.findByText(/bookmarks? to your collection/);
+    expect(screen.queryByText(/Chosen file:/)).toBeNull();
   });
 });
 

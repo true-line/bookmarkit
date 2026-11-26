@@ -58,3 +58,7 @@ export const ImportJson = {
 export const ImportHtml = {
   args: { initialTab: "import-html" },
 };
+
+export const ImportMarkdown = {
+  args: { initialTab: "import-markdown" },
+};

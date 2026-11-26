@@ -6,7 +6,7 @@ Key capabilities include:
 
 - Natural-language search and AI-driven actions
 - Multi-provider LLM integration (Gemini, OpenAI, Grok, Ollama, LM Studio)
-- Import/export to JSON or Netscape HTML
+- Import/export to JSON, Netscape HTML, or Markdown link lists
 - Local or optional Firebase storage backend
 
 The project is built with Vite, styled with Tailwind CSS, and designed for flexibility through runtime configuration and modular architecture.
@@ -43,6 +43,9 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Import/Export
   - JSON array of bookmarks
   - Netscape Bookmark HTML (compatible with browsers’ export files)
+  - Markdown link list (`- [Title](url)` bullets)
+  - “Skip URLs already in library” on the import confirmation, with the count
+    you approve reflecting the choice
   - Bookmark management
   - Add, edit, delete, tag, folder, rating, favicon support. On narrow windows
     (below `lg`) the form is a full-page sheet — back to bookmarks, the folder
@@ -112,7 +115,7 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
 - Top search bar: type natural language queries and hit Enter. The bar enables once an LLM provider is
   configured in Options; until then it is visibly disabled.
 - Options: button in the header. Typing “options” in the search bar works too, once the bar is enabled.
-- Import/Export: button in the header for JSON/HTML.
+- Import/Export: button in the header for JSON/HTML/Markdown.
 - Remove Duplicates: button in the header or type “remove duplicates”.
 
 ## Getting started
@@ -338,8 +341,18 @@ are hand-writing or scripting the file:
     folder paths, so exporting and re-importing keeps your folder structure
   - Tags and rating travel in `TAGS` and `RATING` attributes. Other browsers
     ignore `RATING`; Firefox understands `TAGS`
+- Markdown (link list)
+  - Export writes one `- [Title](address)` bullet per bookmark, readable in any
+    notes tool; import reads every markdown link in the document — bullets and
+    indentation are optional — so any markdown file doubles as a source
+  - Titles and addresses only: folders, tags and ratings travel in the JSON and
+    HTML formats, and only http(s) links become bookmarks
 - Imported folders are created in your real bookmark tree, so `chrome://bookmarks` and your synced
   devices see the same structure BookmarkIt shows
+- The import confirmation shows exactly what will happen: with “Skip URLs already in library” on
+  (the default), bookmarks your collection already holds are named and not re-added — uncheck it to
+  import every usable entry, duplicates included. Replacing everything skips nothing, because the
+  old collection is emptied first. An import that would add nothing cannot be confirmed.
 - Replacing all bookmarks writes the new set before removing the old one. If any bookmark cannot be
   written, nothing is replaced and your existing collection is left as it was.
 
