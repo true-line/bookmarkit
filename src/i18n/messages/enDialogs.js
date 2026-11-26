@@ -36,11 +36,39 @@ export const dialogMessages = {
     wasValid: "reachable",
   },
 
-  // DeleteConfirmModal — `removed` and `kept` are the two titles (t.rich)
+  // DeleteConfirmModal
   deleteConfirm: {
     deleting: "Deleting…",
-    samePageAs: "{removed} — same page as {kept}",
     title: "Confirm Deletion",
+  },
+
+  // DuplicateReviewModal — a rule row's headline is a token resolved through
+  // HEADLINE_KEYS; an AI row's headline is the model's own phrase. `reason`
+  // in keepBadge is the catalogue words for the survivor's metadata, joined.
+  duplicateReview: {
+    closeWithoutRemoving: "Close without removing",
+    description: {
+      one: "Both copies of every pair are shown. Untick a pair to keep both; {count} bookmark would be removed.",
+      other:
+        "Both copies of every pair are shown. Untick a pair to keep both; {count} bookmarks would be removed.",
+    },
+    deselectAll: "Deselect all pairs",
+    exactUrlMatch: "Exact URL match (normalized)",
+    keepBadge: "Keep ({reason})",
+    keepEarliest: "saved first",
+    keepNotes: "has notes",
+    keepRating: "has a rating",
+    keepTags: "has tags",
+    removeBadge: "Remove duplicate",
+    removing: "Removing…",
+    removeSelected: "Remove selected ({count})",
+    rowToggle: "Remove {remove}, keep {keep}",
+    sameTitle: "Same title",
+    selectAll: "Select all pairs",
+    selectionCount: "{selected} of {total} pairs selected",
+    sourceAi: "AI proposed",
+    sourceRule: "Rule-based",
+    title: "Review duplicates",
   },
 
   // MessageModal
@@ -204,7 +232,7 @@ export const dialogMessages = {
     noModel:
       'No model is selected. Open Options (type "options" in the search bar) and choose one from the list, or type its id.',
     ollamaRefused:
-      "Ollama refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure Ollama is running and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
+      "Ollama refused the request (HTTP {status}). If you set an API key in Options, check it; otherwise no key is needed — make sure Ollama is running locally and that it allows this app's origin: set OLLAMA_ORIGINS (e.g. chrome-extension://*) and restart Ollama.",
     ollamaUnreachable:
       "Could not reach Ollama. Make sure it is running locally and that the server address in Options matches it.",
     parse: "The AI returned an unexpected response. Try rephrasing your query.",

@@ -42,7 +42,7 @@ beforeEach(() => {
 });
 
 describe("useSemanticDedupe (#86)", () => {
-  it("proposes the copy to drop, with the model's reason", async () => {
+  it("proposes the pair to review, with the model's reason", async () => {
     generate.mockResolvedValue('[{"pair": 0, "same": true, "reason": "syndicated copy"}]');
     setup();
 
@@ -51,8 +51,11 @@ describe("useSemanticDedupe (#86)", () => {
       proposal = await dedupe.propose([canonical, syndicated]);
     });
 
-    expect(proposal.ids).toEqual(["syndicated"]);
-    expect(proposal.reasons[0].reason).toBe("syndicated copy");
+    // #285: a proposal is pairs now — both copies, the survivor first.
+    expect(proposal.pairs).toHaveLength(1);
+    expect(proposal.pairs[0].drop.id).toBe("syndicated");
+    expect(proposal.pairs[0].keep.id).toBe("canonical");
+    expect(proposal.pairs[0].reason).toBe("syndicated copy");
   });
 
   it("contains the bookmarks it asks about as untrusted data", async () => {
@@ -96,7 +99,7 @@ describe("useSemanticDedupe (#86)", () => {
       proposal = await dedupe.propose([canonical, syndicated]);
     });
 
-    expect(proposal).toEqual({ ids: [], reasons: [] });
+    expect(proposal).toEqual({ pairs: [] });
     expect(createLLM).not.toHaveBeenCalled();
   });
 
@@ -110,7 +113,7 @@ describe("useSemanticDedupe (#86)", () => {
       proposal = await dedupe.propose([canonical, syndicated]);
     });
 
-    expect(proposal).toEqual({ ids: [], reasons: [] });
+    expect(proposal).toEqual({ pairs: [] });
     expect(createLLM).not.toHaveBeenCalled();
     expect(generate).not.toHaveBeenCalled();
   });
@@ -158,7 +161,7 @@ describe("useSemanticDedupe (#86)", () => {
       proposal = await dedupe.propose([canonical, syndicated]);
     });
 
-    expect(proposal).toEqual({ ids: [], reasons: [] });
+    expect(proposal).toEqual({ pairs: [] });
   });
 
   it("ignores an answer that names a bookmark it never asked about", async () => {
@@ -170,6 +173,6 @@ describe("useSemanticDedupe (#86)", () => {
       proposal = await dedupe.propose([canonical, syndicated]);
     });
 
-    expect(proposal.ids).toEqual([]);
+    expect(proposal.pairs).toEqual([]);
   });
 });

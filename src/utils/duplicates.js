@@ -23,14 +23,32 @@ export const metadataWeight = (bookmark) =>
   (bookmark?.description?.trim() ? 1 : 0);
 
 /**
- * Returns IDs of duplicate bookmarks — every copy except the one worth keeping.
- * The copy carrying the most metadata wins; ties keep the earliest occurrence.
- * @param {Array} list
+ * Why the surviving copy of a pair is the survivor, as display tokens — the
+ * metadata that carried the keep decision, or "earliest" when the copies are
+ * equally rich (#45 keeps the first occurrence on a tie). A component resolves
+ * the tokens against the message catalogue; nothing here builds a key string.
+ * @param {object} bookmark
  * @returns {string[]}
  */
-export const findDuplicateIds = (list = []) => {
+export const keepReasonTokens = (bookmark) => {
+  const tokens = [];
+  if (bookmark?.tags?.length) tokens.push("tags");
+  if (bookmark?.rating) tokens.push("rating");
+  if (bookmark?.description?.trim()) tokens.push("notes");
+  return tokens.length > 0 ? tokens : ["earliest"];
+};
+
+/**
+ * The pairs behind the duplicates: both copies, the survivor first, one entry
+ * per copy that has to go. The copy carrying the most metadata wins; ties keep
+ * the earliest occurrence. #285 reviews these pairs individually, so the
+ * review shows both sides of every decision rather than a bare list of ids.
+ * @param {Array} list
+ * @returns {{keep: object, drop: object}[]}
+ */
+export const findDuplicatePairs = (list = []) => {
   const keeping = new Map();
-  const duplicates = [];
+  const pairs = [];
   for (const bookmark of list) {
     const key = getDuplicateKey(bookmark);
     const kept = keeping.get(key);
@@ -38,13 +56,21 @@ export const findDuplicateIds = (list = []) => {
       keeping.set(key, bookmark);
     } else if (metadataWeight(bookmark) > metadataWeight(kept)) {
       keeping.set(key, bookmark);
-      duplicates.push(kept.id);
+      pairs.push({ keep: bookmark, drop: kept });
     } else {
-      duplicates.push(bookmark.id);
+      pairs.push({ keep: kept, drop: bookmark });
     }
   }
-  return duplicates;
+  return pairs;
 };
+
+/**
+ * Returns IDs of duplicate bookmarks — every copy except the one worth keeping.
+ * The copy carrying the most metadata wins; ties keep the earliest occurrence.
+ * @param {Array} list
+ * @returns {string[]}
+ */
+export const findDuplicateIds = (list = []) => findDuplicatePairs(list).map(({ drop }) => drop.id);
 
 /**
  * Filters import candidates using the same duplicate rule as findDuplicateIds:

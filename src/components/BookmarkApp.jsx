@@ -9,7 +9,11 @@ import {
   hasActiveFilters,
   smartViewFilters,
 } from "../utils/manualFilters.js";
-import { filterDuplicateImports, findDuplicateIds } from "../utils/duplicates.js";
+import {
+  filterDuplicateImports,
+  findDuplicatePairs,
+  getDuplicateKey,
+} from "../utils/duplicates.js";
 import {
   dissolveFolderPatches,
   followFolderMove,
@@ -70,6 +74,7 @@ import LinkHealthView from "./LinkHealthView.jsx";
 import { DRAG_BOOKMARKS } from "./FolderTree.jsx";
 import LinkSweepBar from "./LinkSweepBar.jsx";
 import ChangeReviewModal from "./ChangeReviewModal.jsx";
+import DuplicateReviewModal from "./DuplicateReviewModal.jsx";
 import SidebarNav, { SMART_VIEW_LABEL_KEYS } from "./SidebarNav.jsx";
 import AgentPlan from "./AgentPlan.jsx";
 import Kbd from "./Kbd.jsx";
@@ -202,9 +207,6 @@ const BookmarkApp = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
-  // #86: why a pair was proposed, shown in the confirmation. Empty for the
-  // deterministic pass, which needs no explaining.
-  const [duplicateReasons, setDuplicateReasons] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false); // UX-09
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -247,6 +249,10 @@ const BookmarkApp = () => {
   // #44/#102: the change set waiting to be reviewed — `{title, rows}` — and whether
   // it is being written. One at a time, whoever proposed it.
   const [review, setReview] = useState(null);
+
+  // #285: the duplicate review stages pairs, not ids — the dialog shows both
+  // copies of every pair, and only the drop side of a selected pair is written.
+  const [duplicateReview, setDuplicateReview] = useState(null);
   const [isApplyingChanges, setIsApplyingChanges] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ message: "", type: "info" });
@@ -468,12 +474,11 @@ const BookmarkApp = () => {
     [saveBookmark]
   );
 
-  // #86: Staging a deletion always says why, even when the reason is "you asked".
-  // Two setters that had to move together is how a stale "same page as" line ends
-  // up explaining an unrelated delete.
-  const stageDeletion = useCallback((ids, reasons = []) => {
+  // Staging a deletion is one open call, so a staged set and its dialog can
+  // never drift apart. Duplicate pairs (#285) stage in the duplicate-review
+  // dialog instead and never route through here.
+  const stageDeletion = useCallback((ids) => {
     setBookmarksToDelete(ids);
-    setDuplicateReasons(reasons);
     setIsDeleteConfirmModalOpen(true);
   }, []);
 
@@ -596,13 +601,11 @@ const BookmarkApp = () => {
     } finally {
       setIsDeleting(false);
       setBookmarksToDelete([]);
-      setDuplicateReasons([]);
     }
   }, [bookmarksToDelete, deleteBookmarks, storeRef, clearSelectedBookmarks, t]);
 
   const handleCancelDelete = useCallback(() => {
     setBookmarksToDelete([]);
-    setDuplicateReasons([]);
     setIsDeleteConfirmModalOpen(false);
   }, []);
 
@@ -907,20 +910,74 @@ const BookmarkApp = () => {
     });
 
   // #86: the rule-based pass first, then — only if a provider is configured — a
-  // second look at the pairs no rule can settle. Both end in the same
-  // confirmation, and the model's reason for each pair is shown there.
-  const handleRemoveDuplicates = useCallback(async () => {
-    const certain = findDuplicateIds(displayedBookmarks);
-    const remaining = displayedBookmarks.filter((b) => !certain.includes(b.id));
-    const { ids: likely, reasons } = await proposeSemanticDuplicates(remaining);
-    const ids = [...certain, ...likely];
+  // second look at the pairs no rule can settle. #285: the pairs land in the
+  // duplicate-review dialog, rule rows first, each with both copies and its
+  // provenance, every pair decidable on its own; the default selection is this
+  // proposal, exactly as the old all-or-nothing staging proposed it.
+  const stageDuplicateReview = useCallback(
+    async (list) => {
+      const ruleRows = findDuplicatePairs(list).map(({ keep, drop }) => ({
+        id: drop.id,
+        keep,
+        drop,
+        source: "rule",
+        // A key with no URL is the title fallback, so the row says what matched.
+        headline: getDuplicateKey(drop).startsWith("title:") ? "sameTitle" : "exactUrl",
+      }));
+      const dropped = new Set(ruleRows.map((row) => row.id));
+      const remaining = list.filter((b) => !dropped.has(b.id));
+      const { pairs: aiRows } = await proposeSemanticDuplicates(remaining);
 
-    if (ids.length === 0) {
-      showCustomMessage(t("app.noDuplicates"), "info");
-      return;
-    }
-    stageDeletion(ids, reasons);
-  }, [displayedBookmarks, proposeSemanticDuplicates, stageDeletion, t]);
+      const rows = [
+        ...ruleRows,
+        ...aiRows.map(({ keep, drop, reason }) => ({
+          id: drop.id,
+          keep,
+          drop,
+          source: "ai",
+          headline: reason,
+        })),
+      ];
+
+      if (rows.length === 0) {
+        showCustomMessage(t("app.noDuplicates"), "info");
+        return;
+      }
+      setDuplicateReview({ rows });
+    },
+    // showCustomMessage is a stable-enough closure over the two message
+    // setters, the same way every other handler here treats it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [proposeSemanticDuplicates, t]
+  );
+
+  const handleRemoveDuplicates = useCallback(
+    () => stageDuplicateReview(displayedBookmarks),
+    [stageDuplicateReview, displayedBookmarks]
+  );
+
+  // The dialog's write, on the same path as the confirm-delete flow: one store
+  // write, the same toast, kept open on failure (UX-09) so a half-removed set
+  // cannot look finished.
+  const handleApplyDuplicateReview = useCallback(
+    async (ids) => {
+      if (!storeRef.current) return;
+      if (ids.length === 0) return;
+
+      setIsDeleting(true);
+      try {
+        await deleteBookmarks(ids);
+        setDuplicateReview(null);
+        showCustomMessage(t("app.deletedCount", { count: ids.length }), "success");
+      } catch (e) {
+        console.error("Duplicate removal failed:", e);
+        showCustomMessage(t("app.deleteFailed"), "error");
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    [deleteBookmarks, storeRef, t]
+  );
 
   const resetSearch = useCallback(() => {
     setLastAction(null);
@@ -968,6 +1025,7 @@ const BookmarkApp = () => {
     isOptionsOpen ||
     isMessageModalOpen ||
     Boolean(review) ||
+    Boolean(duplicateReview) ||
     Boolean(digest) ||
     // #295: the link-health view unmounts the list like the digest does, so
     // the shortcuts stay suspended in both compositions instead of acting on
@@ -1114,13 +1172,7 @@ const BookmarkApp = () => {
           setIsImportExportModalOpen(true);
         if (step.action === "removeDuplicates") {
           const inView = applyAgentPlan(plan, bookmarks);
-          const certain = findDuplicateIds(inView);
-          const { ids: likely, reasons } = await proposeSemanticDuplicates(
-            inView.filter((b) => !certain.includes(b.id))
-          );
-          const ids = [...certain, ...likely];
-          if (ids.length > 0) stageDeletion(ids, reasons);
-          else showCustomMessage(t("app.noDuplicates"), "info");
+          await stageDuplicateReview(inView);
         }
         if (step.action === "searchBookmarks" && step.parameters?.searchTerm)
           widenSearch(step.parameters.searchTerm);
@@ -1135,9 +1187,8 @@ const BookmarkApp = () => {
       effectiveFilters,
       handleOrganize,
       handlePersistReorderFromAgent,
-      proposeSemanticDuplicates,
+      stageDuplicateReview,
       showDigest,
-      stageDeletion,
       widenSearch,
       t,
     ]
@@ -1784,7 +1835,6 @@ const BookmarkApp = () => {
         {isDeleteConfirmModalOpen && (
           <DeleteConfirmModal
             message={t("app.deleteConfirmQuestion", { count: bookmarksToDelete.length })}
-            reasons={duplicateReasons}
             onConfirm={handleConfirmDelete}
             onCancel={handleCancelDelete}
             isLoading={isDeleting}
@@ -1841,6 +1891,14 @@ const BookmarkApp = () => {
             onApply={handleApplyReviewed}
             onCancel={() => setReview(null)}
             isApplying={isApplyingChanges}
+          />
+        )}
+        {duplicateReview && (
+          <DuplicateReviewModal
+            pairs={duplicateReview.rows}
+            onRemove={handleApplyDuplicateReview}
+            onCancel={() => setDuplicateReview(null)}
+            isRemoving={isDeleting}
           />
         )}
       </ErrorBoundary>

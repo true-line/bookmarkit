@@ -6,7 +6,8 @@
 // proposal and the deterministic behavior it always had.
 //
 // What comes back is a proposal, never a deletion. The app puts it through the
-// same confirmation the delete button uses, with the reason for each pair shown.
+// duplicate-review dialog (#285), each pair decided on its own with the reason
+// it was called the same page shown beside it.
 
 import { useCallback, useRef, useState } from "react";
 
@@ -15,10 +16,10 @@ import { createLLM, isProviderReady, LLM_PROVIDERS, resolveProviderOptions } fro
 import {
   findNearDuplicateCandidates,
   parseDuplicateVerdicts,
-  proposeDuplicateRemovals,
+  proposeDuplicatePairs,
 } from "../utils/nearDuplicates.js";
 
-const NOTHING = Object.freeze({ ids: [], reasons: [] });
+const NOTHING = Object.freeze({ pairs: [] });
 
 /**
  * Titles and URLs are untrusted input — a bookmark can be named anything at all,
@@ -47,7 +48,7 @@ Answer with ONLY a JSON array, one entry per pair you are confident about: [{"pa
  * @param {string} params.provider
  * @param {object} params.providerOptions
  * @param {boolean} params.locked #29: an encrypted key nobody unlocked this session.
- * @returns {{isAsking: boolean, propose: (list: object[]) => Promise<{ids: string[], reasons: object[]}>}}
+ * @returns {{isAsking: boolean, propose: (list: object[]) => Promise<{pairs: {keep: object, drop: object, reason: string}[]}>}}
  */
 export function useSemanticDedupe({ provider, providerOptions, locked }) {
   const [isAsking, setIsAsking] = useState(false);
@@ -71,7 +72,7 @@ export function useSemanticDedupe({ provider, providerOptions, locked }) {
       const llm = createLLM(chosen || LLM_PROVIDERS.GEMINI, options);
       const answer = await llm.generate(promptFor(pairs));
       const verdicts = parseDuplicateVerdicts(answer, pairs);
-      return proposeDuplicateRemovals(pairs, verdicts);
+      return { pairs: proposeDuplicatePairs(pairs, verdicts) };
     } catch (error) {
       // A second opinion that could not be obtained is not an error the user has
       // to act on: the rule-based pass already ran, and its result stands.

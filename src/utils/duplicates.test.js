@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { getDuplicateKey, findDuplicateIds, filterDuplicateImports } from "./duplicates.js";
+import {
+  getDuplicateKey,
+  findDuplicateIds,
+  findDuplicatePairs,
+  keepReasonTokens,
+  filterDuplicateImports,
+} from "./duplicates.js";
 
 describe("getDuplicateKey", () => {
   it("is case-insensitive and trims the url", () => {
@@ -68,6 +74,59 @@ describe("findDuplicateIds", () => {
       { id: "4", url: "https://example.com/a#install" },
     ];
     expect(findDuplicateIds(list)).toEqual([]);
+  });
+});
+
+// #285: the review shows both copies of every pair, so the pairs are a thing
+// of their own — the same keep decisions findDuplicateIds has always made,
+// with the survivor attached.
+describe("findDuplicatePairs", () => {
+  it("pairs each later copy with the one kept so far", () => {
+    const list = [
+      { id: "1", title: "A", url: "http://a.com" },
+      { id: "2", title: "a", url: "http://a.com" },
+      { id: "3", title: "B", url: "http://b.com" },
+      { id: "4", title: "b ", url: " http://b.com" },
+    ];
+
+    expect(findDuplicatePairs(list)).toEqual([
+      { keep: list[0], drop: list[1] },
+      { keep: list[2], drop: list[3] },
+    ]);
+  });
+
+  it("swaps the survivor when a richer copy arrives", () => {
+    const bare = { id: "bare", title: "A", url: "https://a.test/" };
+    const annotated = { id: "annotated", title: "A", url: "https://a.test/", tags: ["react"] };
+
+    expect(findDuplicatePairs([bare, annotated])).toEqual([{ keep: annotated, drop: bare }]);
+  });
+
+  it("agrees with findDuplicateIds about which copy goes", () => {
+    const list = [
+      { id: "first", title: "A", url: "https://a.test/", rating: 3 },
+      { id: "second", title: "A", url: "https://a.test/", tags: ["x"] },
+    ];
+
+    expect(findDuplicatePairs(list).map(({ drop }) => drop.id)).toEqual(findDuplicateIds(list));
+  });
+});
+
+describe("keepReasonTokens", () => {
+  it("names the metadata that carried the keep decision", () => {
+    expect(keepReasonTokens({ tags: ["a"], rating: 4, description: "Notes." })).toEqual([
+      "tags",
+      "rating",
+      "notes",
+    ]);
+  });
+
+  it("falls back to earliest when the copies are equally bare", () => {
+    expect(keepReasonTokens({ title: "A", url: "https://a.test/" })).toEqual(["earliest"]);
+  });
+
+  it("does not count an empty description or a zero rating", () => {
+    expect(keepReasonTokens({ tags: [], rating: 0, description: "   " })).toEqual(["earliest"]);
   });
 });
 

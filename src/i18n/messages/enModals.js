@@ -74,7 +74,7 @@ export const surfaceMessages = {
     shortcutUndo: "Undo last change",
     title: "Help & Keyboard Shortcuts",
     tipsDuplicates:
-      'Use the <strong>Remove Duplicates</strong> button (or type "remove duplicates" into the search) to find and delete duplicates by title+URL.',
+      'Use the <strong>Remove Duplicates</strong> button (or type "remove duplicates" into the search) to review duplicates pair by pair — both copies are shown, and nothing goes until you confirm.',
     tipsHeading: "Tips",
     tipsImportExport:
       "<strong>Import/Export</strong> lets you back up or restore bookmarks from JSON/HTML.",

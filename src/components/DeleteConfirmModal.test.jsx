@@ -18,15 +18,6 @@ const setup = (overrides = {}) => {
   return { onConfirm, onCancel };
 };
 
-const reasons = [
-  {
-    id: "syndicated",
-    title: "Rust ownership, explained",
-    keptTitle: "Rust ownership explained",
-    reason: "syndicated copy of the same article",
-  },
-];
-
 describe("DeleteConfirmModal", () => {
   // #243: the destructive reading of the unified modal — standard panel with a
   // filled-danger confirm and the tonal bordered Cancel. The question rides
@@ -65,21 +56,8 @@ describe("DeleteConfirmModal", () => {
     expect(onConfirm).toHaveBeenCalled();
   });
 
-  // #86: a proposal the user did not make by hand has to explain itself.
-  it("shows why each proposed pair was called the same page", () => {
-    setup({ reasons });
-
-    expect(screen.getByText("Rust ownership, explained")).toBeInTheDocument();
-    expect(screen.getByText("Rust ownership explained")).toBeInTheDocument();
-    expect(screen.getByText("syndicated copy of the same article")).toBeInTheDocument();
-  });
-
-  it("stays plain for a deletion that needs no explaining", () => {
-    setup();
-
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
-  });
-
+  // #285: the proposal explanation moved to the duplicate-review dialog; this
+  // dialog stays a plain confirm for deletions the user staged by hand.
   it("cannot be abandoned half way through a deletion", () => {
     const { onCancel } = setup({ isLoading: true });
 
