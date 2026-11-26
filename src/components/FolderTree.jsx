@@ -145,7 +145,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
           onDragStart={(event) => event.dataTransfer?.setData(DRAG_FOLDER, node.path)}
           onClick={() => actions.onSelect(active ? "" : node.path)}
           aria-pressed={active}
-          className="flex-1 min-w-0 text-left truncate"
+          className="flex-1 min-w-0 text-start truncate"
           title={node.path}
         >
           {node.name}
@@ -177,7 +177,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
 
       {/* Deleting a folder never deletes bookmarks, so the offer has to say where they go. */}
       {confirmingDelete && (
-        <div className="ml-6 my-1 text-xs text-[var(--ui-on-surface-variant)]">
+        <div className="ms-6 my-1 text-xs text-[var(--ui-on-surface-variant)]">
           <p className="mb-1">
             {t("folderTree.deleteConfirm", {
               count: node.total,
@@ -303,7 +303,7 @@ const FolderTree = React.memo(function FolderTree({
                 type="button"
                 onClick={() => onSelect("")}
                 aria-pressed={activeFolder === ""}
-                className="flex-1 min-w-0 text-left truncate"
+                className="flex-1 min-w-0 text-start truncate"
               >
                 {t("folderTree.allBookmarks")}
               </button>
@@ -337,7 +337,7 @@ const FolderTree = React.memo(function FolderTree({
                 type="button"
                 onClick={() => onSelect(activeFolder === UNFILED ? "" : UNFILED)}
                 aria-pressed={activeFolder === UNFILED}
-                className="flex-1 min-w-0 text-left truncate"
+                className="flex-1 min-w-0 text-start truncate"
               >
                 {t("folderTree.noFolder")}
               </button>

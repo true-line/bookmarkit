@@ -149,6 +149,9 @@ const ChangeReviewModal = ({ rows = [], title, onApply, onCancel, isApplying = f
           <Typography
             variant="body-sm"
             numeric
+            // #291: the count moves as rows tick, so it announces the change
+            // politely instead of relying on the reader finding the footer.
+            aria-live="polite"
             style={{
               marginInlineEnd: "auto",
               alignSelf: "center",
@@ -201,7 +204,9 @@ const ChangeReviewModal = ({ rows = [], title, onApply, onCancel, isApplying = f
                   disabled={isApplying}
                 />
                 <span className="min-w-0">
-                  <Typography variant="label-md" className="block truncate">
+                  {/* #291: titles are user content, so the row title reads its
+                      own direction like the bookmark cards' titles do. */}
+                  <Typography variant="label-md" dir="auto" className="block truncate">
                     {row.title}
                   </Typography>
                   {row.fields.map((field) => (
