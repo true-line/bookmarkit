@@ -64,6 +64,10 @@ export const dialogMessages = {
     plan: "Agent Plan:",
   },
   starRating: {
+    // The mockup's static radiogroup name; the readout below is the live
+    // announcer, and the read-only img label keeps the value in its name.
+    groupName: "Bookmark rating",
+    readout: "{rating} / 5",
     groupLabel: "Rating: {rating} of 5",
     star: {
       one: "{star} star",
