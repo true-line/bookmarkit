@@ -1,5 +1,31 @@
 # bookmarkit
 
+## 0.17.0
+
+### Minor Changes
+
+- ee1d8ec: The options modal's appearance section gains the mockups' missing settings: a
+  **System default** theme that follows your system's light/dark appearance
+  live, built-in **Dark (Slate)** and **High Contrast** palettes, a **Reduce
+  motion** toggle that forces the transition collapse even when the OS doesn't
+  ask for it, and a chosen-file status beside the custom-theme picker.
+- 621f6a6: Every bookmark card carries its own Edit pencil (`aria-label="Edit <title>
+bookmark"`), the title wears the mockups' label-lg scale, and below `lg` the
+  card shows the mobile mockup's meta — the folder chip, `#`-prefixed tag chips,
+  and **Unrated** where a rating would sit.
+- 701daf4: Import and export Markdown link lists (`bookmarks.md`), and decide skip-existing
+  on the import confirmation: "Skip URLs already in library" is checked by
+  default, the count you approve reflects the choice, skipped bookmarks are named,
+  and an import that would add nothing cannot be confirmed. Export buttons now
+  read "Export JSON" / "Export HTML" / "Export Markdown", and the confirmation
+  names the chosen file.
+- 8230baa: Legal footers and copy alignment: the Help dialog gains the version/license
+  line with Privacy Policy and Licenses links, Options gains an "About, Privacy
+  & Licensing" section with the same links, the empty shelf's CTAs read
+  "Add First Bookmark" / "Import Bookmarks", and dialog close controls, the
+  folder field's placeholder/hint, and the help example chips align with the
+  mockups where the real agent syntax allows.
+
 ## 0.16.0
 
 ### Minor Changes
