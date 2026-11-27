@@ -235,6 +235,45 @@ rating >= 4 then sort by title asc`, the `then` compositions, the
   review dialog is a native button/input/select, so keyboard order is DOM
   order under the shared focus contract.
 
+### The options draft and the narrow sheets (#293)
+
+- **Settings draft until Done.** The options dialog no longer writes as its
+  controls change. It stages a draft of everything it edits — provider, key
+  and endpoint, model, theme, language, and the toggles — and the footer's
+  **Done** replays it through the same write path as before
+  (`updateProviderOptions` still merges its patch — now named for the
+  provider it belongs to, because the dialog commits the switch and the
+  patch in one breath and the patch must not land under the provider the
+  dialog opened with — `setLocale` still persists, the callbacks are the
+  components'), then closes. Choosing a provider stages that provider's
+  stored options with it, so the fields read what the chosen provider
+  already holds. **Reset** puts
+  the dialog back the way it found it. Every other way out — the close
+  control, Escape, the sheet's back arrow — discards the draft, which the
+  dialog footer now says outright: "Changes apply when you choose Done."
+  A key the user has not touched keeps following its source (the stored
+  locale loads a tick after open), while a touched key belongs to the draft
+  alone until Reset, so nothing behind the dialog clobbers what is staged.
+- **Actions stay immediate.** Theme upload and the key-encryption and
+  unlock operations are actions, not settings, and keep writing as they
+  did; the key row's destructive **Clear** also stays immediate — it wipes
+  the stored key now, the staged field with it, and the at-open snapshot's
+  key too, so neither Done nor Reset can resurrect what Clear removed.
+- **The narrow sheets.** Below `lg` the options dialog and the import/export
+  dialog join the sheet twins (#300–#303): the mobile mockups' full-page
+  compositions — back bar, the same body — with the options sheet carrying
+  the sticky **Reset / Done** footer and the import/export sheet drawing no
+  footer at all (the mockup has none; the back arrow is the way out), while
+  keeping #287's tabbed composition. The options sheet runs the dialog's
+  two-column provider row full width (`.ui-sheet--options
+.ui-options-grid`), and the confirm card's choice rows take the 44px
+  coarse-pointer floor (#291's `.ui-settings-row`). The import/export body
+  moved out as it narrowed: `ExportPanel.jsx` (the export tab, its
+  serializations memoized as UX-03 had them) joins `ImportPanel.jsx`, and
+  the sheet chrome itself is `ImportExportSheet.jsx`. At dialog widths
+  nothing changes — the panel cap already keeps both dialogs inside the
+  viewport, which is the issue's acceptance.
+
 ### The filter row's parity items (#286)
 
 The mockup's unified search-and-filter row carries three items that stand on
@@ -775,6 +814,11 @@ duplicates included. The count you approve is the count that is added, and an
 import that would add nothing cannot be confirmed. Under "Replace all", the
 checkbox is retired — the library is emptied ahead of the import, so there is
 nothing left to skip.
+
+Below `lg` the dialog is the mobile mockup's full-page sheet (#293): the back
+bar over the same tabbed body, and no footer — the mockup draws none, and the
+back arrow is the way out. The tabs, staging and confirmation are the dialog's
+own code; only the chrome narrows.
 
 ## Duplicates
 

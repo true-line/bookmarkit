@@ -1,6 +1,31 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import ImportExportContent from "./ImportExportContent.jsx";
+
+// #293 branches on the sidebar-viewport hook, which reads matchMedia. jsdom
+// has none — the hook would default to the sheet — so every suite pins the
+// composition it means to exercise (the BookmarkForm convention). The
+// historical suites below were written for the dialog and stay there; the
+// narrow-sheet suite overrides in its own beforeEach.
+const installViewport = (isWide) => {
+  window.matchMedia = vi.fn().mockImplementation((query) => ({
+    query,
+    matches: isWide,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+};
+const clearViewport = () => {
+  delete window.matchMedia;
+};
+
+beforeEach(() => {
+  installViewport(true);
+});
+
+afterEach(() => {
+  clearViewport();
+});
 
 const setup = ({ bookmarks = [] } = {}) => {
   const showMessage = vi.fn();
@@ -356,5 +381,80 @@ describe("ImportExportContent unified dialog shell (#247)", () => {
     expect(await screen.findByRole("tab", { name: "Import JSON" })).toBeInTheDocument();
     // The staged import is fully discarded, not just hidden.
     expect(screen.getByRole("button", { name: "Import JSON Data" })).toBeDisabled();
+  });
+});
+
+// #293: below `lg` the panel is the full-page sheet — the back bar (back
+// arrow, the title over the library's size) over the same tabbed body. The
+// mockup draws no footer, so there is none: the back arrow is the way out.
+describe("ImportExportContent narrow sheet (#293)", () => {
+  beforeEach(() => {
+    installViewport(false);
+  });
+
+  const renderSheet = ({ bookmarks = [], onClose = () => {} } = {}) =>
+    render(
+      <ImportExportContent
+        bookmarks={bookmarks}
+        onClose={onClose}
+        onImportJson={() => {}}
+        onImportHtml={() => {}}
+        showMessage={() => {}}
+      />
+    );
+
+  it("is the full-page sheet twin with the back bar over the tabs", () => {
+    renderSheet();
+    const sheet = screen.getByRole("dialog");
+    expect(sheet).toHaveClass("ui-sheet");
+    expect(sheet).toHaveClass("ui-sheet--io");
+    expect(screen.getByRole("button", { name: "Back to bookmarks" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Import & Export" })).toBeInTheDocument();
+    expect(screen.getByText("0 bookmarks stored locally")).toBeInTheDocument();
+    // Same tabbed body as the dialog; no dialog footer here.
+    expect(screen.getByRole("tab", { name: "Export" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+  });
+
+  it("counts the library in the app bar's subtitle", () => {
+    renderSheet({
+      bookmarks: [
+        { id: "1", title: "One", url: "https://one.test/" },
+        { id: "2", title: "Two", url: "https://two.test/" },
+      ],
+    });
+    expect(screen.getByText("2 bookmarks stored locally")).toBeInTheDocument();
+  });
+
+  it("the back arrow closes", () => {
+    const onClose = vi.fn();
+    renderSheet({ onClose });
+    fireEvent.click(screen.getByRole("button", { name: "Back to bookmarks" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("Escape closes", () => {
+    const onClose = vi.fn();
+    renderSheet({ onClose });
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("the confirmation still runs inside the sheet body", async () => {
+    renderSheet();
+    fireEvent.click(screen.getByRole("tab", { name: "Import JSON" }));
+    const input = screen.getByLabelText("Upload JSON File");
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File([JSON.stringify([{ title: "Kept", url: "https://kept.test/" }])], "k.json"),
+        ],
+      },
+    });
+
+    const confirmation = await screen.findByText(/bookmarks? to your collection/);
+    expect(confirmation).toHaveTextContent("This will add 1 bookmark");
+    // The app bar counts the library, not the staged import.
+    expect(screen.getByText("0 bookmarks stored locally")).toBeInTheDocument();
   });
 });

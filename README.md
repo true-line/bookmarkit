@@ -46,6 +46,8 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Markdown link list (`- [Title](url)` bullets)
   - “Skip URLs already in library” on the import confirmation, with the count
     you approve reflecting the choice
+  - On narrow windows (below `lg`) Import & Export is a full-page sheet —
+    back to bookmarks over the same tabs
   - Bookmark management
   - Add, edit, delete, tag, folder, rating, favicon support. On narrow windows
     (below `lg`) the form is a full-page sheet — back to bookmarks, the folder
@@ -89,6 +91,11 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - Gemini, OpenAI (ChatGPT), Grok (x.ai), Ollama (local), LM Studio (local)
   - Model discovery (where supported), custom base URLs, stored per provider
 - Appearance
+  - Options stages your changes until you choose **Done** — **Reset** puts
+    things back the way Options found them, and closing or backing out
+    discards the staged edits. Clearing a stored API key, encrypting it, and
+    theme uploads still apply immediately. On narrow windows (below `lg`)
+    Options is a full-page sheet with **Reset**/**Done** pinned to the bottom
   - A warm "bookmark shelf" look: paper-tinted surfaces, ink text, and the
     brand mark's red as the accent; custom themes keep working
   - Themes (Options → Appearance): **System default** follows your system's
@@ -102,9 +109,9 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
     [privacy section](#privacy-and-storage) and the generated third-party
     notices
   - Interface language: Options → Appearance. "System default" follows the
-    browser's language; the interface ships English today, applies instantly,
-    and the layout mirrors itself for right-to-left locales as their
-    translations land
+    browser's language; the interface ships English today, applies with
+    Options' **Done**, and the layout mirrors itself for right-to-left locales
+    as their translations land
   - Optional 3D effects — a dimensional brand mark (in the header, or in the
     navigation sidebar on wide windows) and an
     animated card stack on an empty shelf — on by default in
