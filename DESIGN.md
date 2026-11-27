@@ -258,8 +258,11 @@ toast instead of a field, moving the #207 gate to press time. Agent search
 and manual filters keep clearing independently — two surfaces, two
 clearings. The mockup records the decision
 (`design/mockups/bookmarkit_manager/code.html`, the agent bar at the bottom)
-with one recorded divergence from the design editor's export: its Ctrl/Cmd+C
-chip and handler are corrected to the decided Cmd/Ctrl+K.
+with recorded divergences from the design editor's export: its Ctrl/Cmd+C
+chip and handler are corrected to the decided Cmd/Ctrl+K, and its demo
+state is corrected to the decision itself — the bar and the toast start
+hidden, and the shortcut branches on the provider, so nothing agent-facing
+shows until Cmd/Ctrl+K summons it.
 
 ### The manager shell (#283)
 

@@ -493,7 +493,7 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
       <!-- Floating Bottom-Center Spotlight Agent Bar + Provider Error Toast -->
       <div class="fixed bottom-6 inset-x-0 z-30 pointer-events-none px-4 flex flex-col items-center gap-2.5">
         <!-- Small Error Toast (shown when Ctrl/Cmd+K is pressed without a configured provider) -->
-        <div id="provider-error-toast" role="alert" aria-live="assertive" class="pointer-events-auto max-w-md rounded-md bg-light-error-container text-light-on-error-container border border-danger/30 px-3.5 py-2 shadow-md flex items-center gap-2.5 text-body-sm">
+        <div id="provider-error-toast" role="alert" aria-live="assertive" class="hidden pointer-events-auto max-w-md rounded-md bg-light-error-container text-light-on-error-container border border-danger/30 px-3.5 py-2 shadow-md flex items-center gap-2.5 text-body-sm">
           <span class="material-symbols-outlined text-[16px] shrink-0" aria-hidden="true">error</span>
           <span class="text-start">Configure an AI provider in Options before using the agent.</span>
           <button type="button" id="dismiss-toast-btn" aria-label="Dismiss notice" class="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-sm hover:bg-light-on-error-container/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger">
@@ -502,7 +502,7 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
         </div>
 
         <!-- Spotlight-style Agent Command Bar -->
-        <form id="agent-spotlight-form" role="search" aria-label="AI Agent command bar" class="pointer-events-auto w-full max-w-xl bg-light-surface-container-lowest border border-light-outline-variant rounded-lg shadow-xl p-2 flex items-center gap-2.5 ring-1 ring-light-scrim/5">
+        <form id="agent-spotlight-form" role="search" aria-label="AI Agent command bar" class="hidden pointer-events-auto w-full max-w-xl bg-light-surface-container-lowest border border-light-outline-variant rounded-lg shadow-xl p-2 flex items-center gap-2.5 ring-1 ring-light-scrim/5">
           <div class="w-9 h-9 rounded-md bg-light-tertiary-container text-light-on-tertiary flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">auto_awesome</span>
           </div>
@@ -565,8 +565,12 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
       document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
           e.preventDefault();
+          if (!providerConfigured) {
+            showProviderErrorToast();
+            return;
+          }
+          if (agentForm) agentForm.classList.remove('hidden');
           agentInput?.focus();
-          if (!providerConfigured) showProviderErrorToast();
         }
       });
     })();
