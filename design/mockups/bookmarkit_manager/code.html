@@ -287,20 +287,14 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
 
     <!-- Main Workspace -->
     <main class="flex-1 min-w-0 flex flex-col">
-      <!-- Unified Command & Filter Header -->
+      <!-- Filter Header -->
       <header class="bg-light-surface-container-lowest border-b border-light-outline-variant px-6 py-4 flex flex-col gap-4">
-        <!-- Unified Search Bar -->
+        <!-- Filter Bar -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <label class="relative flex-1 flex items-center" data-component-id="input-field-icon" data-component-type="input-field" data-component-variant="with-icon">
-            <span class="sr-only">Search or filter bookmarks</span>
-            <span class="material-symbols-outlined text-light-outline text-[20px] absolute start-3.5 pointer-events-none" aria-hidden="true">search</span>
-            <input id="bookmark-search" type="search" dir="auto" placeholder="Filter instantly or ask AI (e.g. &#34;docs tagged cli with 4+ stars&#34;)..." class="w-full min-h-10 rounded-md border border-light-outline bg-light-surface-container-lowest ps-10 pe-32 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
-            <div class="absolute end-2 flex items-center gap-1.5">
-              <button type="button" id="ai-mode-toggle" aria-pressed="true" class="inline-flex items-center gap-1 min-h-[28px] px-2.5 py-1 rounded-sm bg-light-tertiary-container text-light-on-tertiary hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
-                <span class="material-symbols-outlined text-[14px]" aria-hidden="true">auto_awesome</span>
-                <span data-design-text-token="label-sm" class="text-label-sm">AI Ready</span>
-              </button>
-            </div>
+            <span class="sr-only">Filter bookmarks</span>
+            <span class="material-symbols-outlined text-light-outline text-[20px] absolute start-3.5 pointer-events-none" aria-hidden="true">filter_list</span>
+            <input id="bookmark-search" type="search" dir="auto" placeholder="Filter bookmarks by title, URL, tag, or description..." class="w-full min-h-10 rounded-md border border-light-outline bg-light-surface-container-lowest ps-10 pe-4 py-2 text-body-md text-light-on-surface placeholder:text-light-outline focus:border-light-primary focus:ring-1 focus:ring-light-primary">
           </label>
         </div>
 
@@ -357,7 +351,7 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
       </div>
 
       <!-- Bookmark Collection Grid -->
-      <section aria-label="Bookmarks" class="p-6 max-w-7xl w-full mx-auto">
+      <section aria-label="Bookmarks" class="p-6 pb-36 max-w-7xl w-full mx-auto">
         <div id="bookmark-grid" class="grid grid-cols-1 md:grid-cols-2 gap-gutter-md items-stretch">
           <!-- Card 1 -->
           <article data-component-id="card-interactive" data-component-type="card" data-component-variant="interactive" tabindex="0" class="group flex items-start gap-3.5 bg-light-surface-container-lowest border border-light-outline-variant rounded p-4 shadow-sm hover:border-light-outline hover:shadow transition-all duration-state-change ease-state-change motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary">
@@ -496,6 +490,30 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
           </article>
         </div>
       </section>
+      <!-- Floating Bottom-Center Spotlight Agent Bar + Provider Error Toast -->
+      <div class="fixed bottom-6 inset-x-0 z-30 pointer-events-none px-4 flex flex-col items-center gap-2.5">
+        <!-- Small Error Toast (shown when Ctrl/Cmd+K is pressed without a configured provider) -->
+        <div id="provider-error-toast" role="alert" aria-live="assertive" class="pointer-events-auto max-w-md rounded-md bg-light-error-container text-light-on-error-container border border-danger/30 px-3.5 py-2 shadow-md flex items-center gap-2.5 text-body-sm">
+          <span class="material-symbols-outlined text-[16px] shrink-0" aria-hidden="true">error</span>
+          <span class="text-start">Configure an AI provider in Options before using the agent.</span>
+          <button type="button" id="dismiss-toast-btn" aria-label="Dismiss notice" class="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-sm hover:bg-light-on-error-container/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">close</span>
+          </button>
+        </div>
+
+        <!-- Spotlight-style Agent Command Bar -->
+        <form id="agent-spotlight-form" role="search" aria-label="AI Agent command bar" class="pointer-events-auto w-full max-w-xl bg-light-surface-container-lowest border border-light-outline-variant rounded-lg shadow-xl p-2 flex items-center gap-2.5 ring-1 ring-light-scrim/5">
+          <div class="w-9 h-9 rounded-md bg-light-tertiary-container text-light-on-tertiary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">auto_awesome</span>
+          </div>
+          <label for="agent-spotlight-input" class="sr-only">Ask AI agent</label>
+          <input id="agent-spotlight-input" type="text" dir="auto" placeholder="Ask AI agent (e.g. &#34;docs tagged cli with 4+ stars&#34;)..." class="flex-1 min-w-0 min-h-9 bg-transparent border-0 px-1 py-1.5 text-body-md text-light-on-surface placeholder:text-light-outline focus:ring-0 focus:outline-none">
+          <kbd dir="ltr" class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-sm bg-light-surface-container border border-light-outline-variant font-mono text-mono-sm text-light-on-surface-variant shrink-0">Ctrl/Cmd+K</kbd>
+          <button data-component-id="button-tertiary" data-component-type="button" data-component-variant="tertiary" type="submit" class="inline-flex items-center justify-center min-h-9 px-3.5 py-1.5 rounded bg-light-tertiary-container text-light-on-tertiary shadow-sm hover:bg-light-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-tertiary transition-colors duration-state-change ease-state-change motion-reduce:transition-none shrink-0">
+            <span data-design-text-token="label-md" class="text-label-md">Ask</span>
+          </button>
+        </form>
+      </div>
     </main>
   </div>
 
@@ -523,6 +541,33 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
                 : 'grid-cols-1 md:grid-cols-2'
           );
         });
+      });
+
+      var agentForm = document.getElementById('agent-spotlight-form');
+      var agentInput = document.getElementById('agent-spotlight-input');
+      var errorToast = document.getElementById('provider-error-toast');
+      var dismissToastBtn = document.getElementById('dismiss-toast-btn');
+      var providerConfigured = false;
+
+      function showProviderErrorToast() {
+        if (errorToast) errorToast.classList.remove('hidden');
+      }
+
+      dismissToastBtn?.addEventListener('click', function () {
+        errorToast?.classList.add('hidden');
+      });
+
+      agentForm?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!providerConfigured) showProviderErrorToast();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          agentInput?.focus();
+          if (!providerConfigured) showProviderErrorToast();
+        }
       });
     })();
   </script>

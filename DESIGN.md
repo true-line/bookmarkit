@@ -248,11 +248,18 @@ through saved views like the other flags. The summary count is a live region
 labels take the mockup's words — "Recently added", "Title (A–Z)" — while the
 field set stays the superset it is.
 
-The row's remaining item is a decision, not a task, and it stays open: the
-mockup merges instant filtering and the AI ask into one always-enabled
-field, which would touch two deliberate contracts — agent search and manual
-filters clear independently, and the search box is provider-gated (#207).
-Until that is decided the row keeps the two controls apart.
+The row's remaining item was a decision, and it is made: the mockup's merged
+field — instant filtering and the AI ask in one always-enabled input — is
+rejected, on both the mockup and today's gated strip. The agent input leaves
+the row entirely, in every provider state, and comes back as a
+Spotlight-style overlay centered toward the bottom of the window, summoned
+with Cmd/Ctrl+K; without a configured provider the shortcut answers with a
+toast instead of a field, moving the #207 gate to press time. Agent search
+and manual filters keep clearing independently — two surfaces, two
+clearings. The mockup records the decision
+(`design/mockups/bookmarkit_manager/code.html`, the agent bar at the bottom)
+with one recorded divergence from the design editor's export: its Ctrl/Cmd+C
+chip and handler are corrected to the decided Cmd/Ctrl+K.
 
 ### The manager shell (#283)
 
