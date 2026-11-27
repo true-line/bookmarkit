@@ -40,8 +40,10 @@ function useExitClose({ closing, setClosing, onClose }) {
   }, [closing, onClose, setClosing]);
 }
 
-// The overlay itself: the scrim takes the dismiss click, the form is the
-// trapped panel — role="search" with the mockup's accessible name, the
+// The overlay itself: the scrim takes the dismiss click, and the trapped
+// panel is a named role="dialog" with aria-modal="true" — assistive tech is
+// told a modal context opened, like every other trapped overlay — around the
+// mockup's form, which stays role="search" with its accessible name: the
 // sr-only label over a dir="auto" input, the kbd chip and the tertiary Ask.
 function SpotlightOverlay({ onClose, onSubmit }) {
   const t = useMessages();
@@ -67,41 +69,42 @@ function SpotlightOverlay({ onClose, onSubmit }) {
         if (event.target === event.currentTarget) requestClose();
       }}
     >
-      <form
-        ref={panelRef}
-        role="search"
-        aria-label={t("agentBar.label")}
-        className="ui-spotlight-panel"
-        onKeyDown={(event) => {
-          if (event.key !== "Escape") return;
-          event.stopPropagation();
-          requestClose();
-        }}
-        onSubmit={handleSubmit}
-      >
-        <span className="ui-spotlight-chip" aria-hidden="true">
-          <SparkIcon size={18} />
-        </span>
-        <label htmlFor="agent-spotlight-input" className="sr-only">
-          {t("agentBar.askLabel")}
-        </label>
-        <input
-          id="agent-spotlight-input"
-          type="text"
-          dir="auto"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("agentBar.placeholder")}
-          className="ui-spotlight-input"
-          autoComplete="off"
-        />
-        <kbd dir="ltr" className="ui-kbd ui-spotlight-kbd">
-          {t("agentBar.kbd")}
-        </kbd>
-        <Button type="submit" intent="tertiary" disabled={!query.trim()}>
-          {t("agentBar.ask")}
-        </Button>
-      </form>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={t("agentBar.label")}>
+        <form
+          role="search"
+          aria-label={t("agentBar.label")}
+          className="ui-spotlight-panel"
+          onKeyDown={(event) => {
+            if (event.key !== "Escape") return;
+            event.stopPropagation();
+            requestClose();
+          }}
+          onSubmit={handleSubmit}
+        >
+          <span className="ui-spotlight-chip" aria-hidden="true">
+            <SparkIcon size={18} />
+          </span>
+          <label htmlFor="agent-spotlight-input" className="sr-only">
+            {t("agentBar.askLabel")}
+          </label>
+          <input
+            id="agent-spotlight-input"
+            type="text"
+            dir="auto"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("agentBar.placeholder")}
+            className="ui-spotlight-input"
+            autoComplete="off"
+          />
+          <kbd dir="ltr" className="ui-kbd ui-spotlight-kbd">
+            {t("agentBar.kbd")}
+          </kbd>
+          <Button type="submit" intent="tertiary" disabled={!query.trim()}>
+            {t("agentBar.ask")}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

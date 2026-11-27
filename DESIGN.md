@@ -308,7 +308,9 @@ root beside the dialogs — no ancestor transform may re-anchor the fixed
 overlay, the way the selection bar stays clear of the sliding header. The
 overlay is the design system's dialog contract on the mockup's floating
 reading: the spec scrim over the whole window, the command bar floating
-bottom-center, the shared `useFocusTrap` (input focused on summon, focus
+bottom-center — a named `role="dialog"` with `aria-modal="true"` wrapped
+around the search form, so the modal context is announced like every other
+trapped overlay — the shared `useFocusTrap` (input focused on summon, focus
 restored on close), Escape stopped at the panel, and the 150ms deferred
 exit every dialog closes through. The retirement is total: the header's
 gated field, its AI-ready badge and both placeholders are gone, and with
@@ -319,7 +321,9 @@ The shortcut branches at press time. With a provider configured, Cmd/Ctrl+K
 opens the overlay; without one it answers with the mockup's `role="alert"`
 toast ("Configure an AI provider in Options before using the agent.",
 assertive, with a dismiss button) — the #207 gate at press time, so
-readiness is read from the live settings, not a mount-time snapshot. The
+readiness is read from the live settings, not a mount-time snapshot, and a
+notice already up yields the moment its answer stops being true:
+configuring a provider while it shows clears it. The
 summon is exempt from the shortcut hook's typing guard (`allowWhileTyping`):
 a modifier combo cannot collide with text entry, and the overlay is the way
 out of the field the user is already in. While the overlay is up it joins

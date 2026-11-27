@@ -85,7 +85,7 @@ import AgentSpotlightBar from "./AgentSpotlightBar.jsx";
 // re-homed verbatim when the legacy library retired (#255). Row/state
 // compositions live in index.css.
 import { Button, IconButton } from "../design-system/index.js";
-import { AddIcon, CopiesIcon, HealthIcon, SettingsIcon, SwapIcon } from "./icons.jsx";
+import { CopiesIcon, HealthIcon, SettingsIcon, SwapIcon } from "./icons.jsx";
 
 // Plan steps that write a new order to the store, rather than sorting the view.
 const REORDER_ACTIONS = ["reorder", "reorderAscending", "reorderDescending", "persistSortedOrder"];
@@ -1215,6 +1215,12 @@ const BookmarkApp = () => {
   // dedupe and embedding paths apply (#86). A locked key keeps the box open:
   // submitting a query is how the user reaches the engine's unlock prompt.
   const isAgentConfigured = isSearchEnabled(runtimeProvider, providerOptions, encryption.locked);
+  // #340 (review): the gate toast answers a press, and it yields the moment
+  // its answer stops being true — a provider configured while the notice is
+  // up must not leave it hanging once Options closes.
+  useEffect(() => {
+    if (isAgentConfigured) setAgentGateNotice(false);
+  }, [isAgentConfigured]);
   // #301: Auto-Tag asks the provider directly and has no unlock prompt to
   // offer, so its gate is the same readiness without the locked pass-through
   // search uses to reach the unlock flow — locked settings mean it is off.

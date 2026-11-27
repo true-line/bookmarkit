@@ -51,6 +51,11 @@ describe("AgentSpotlightBar's overlay (#340)", () => {
 
     const form = screen.getByRole("search", { name: "AI Agent command bar" });
     expect(form).toHaveClass("ui-spotlight-panel");
+    // #340 review: the trapped panel is announced as a modal context — a
+    // named dialog with aria-modal, carrying the search form.
+    const dialog = screen.getByRole("dialog", { name: "AI Agent command bar" });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toContainElement(form);
     const input = screen.getByLabelText("Ask AI agent");
     expect(input).toHaveAttribute("dir", "auto");
     expect(input).toHaveAttribute(
@@ -157,5 +162,6 @@ describe("AgentSpotlightBar's provider gate (#340)", () => {
     render(<Harness open={false} noticeOpen={false} />);
     expect(screen.queryByRole("search")).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

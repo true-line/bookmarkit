@@ -610,9 +610,12 @@ describe("BookmarkApp's agent bar (#340)", () => {
     const input = await screen.findByLabelText("Ask AI agent");
 
     // The overlay is a dialog to the keyboard like the rest: with it open the
-    // list shortcuts are suspended, so `d` stages nothing behind the scrim.
+    // list shortcuts are suspended, so `d` stages nothing behind the scrim —
+    // the bar's own named dialog is the only one on screen.
     fireEvent.keyDown(window, { key: "d" });
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getAllByRole("dialog").map((d) => d.getAttribute("aria-label"))).toEqual([
+      "AI Agent command bar",
+    ]);
 
     fireEvent.change(input, { target: { value: "options" } });
     fireEvent.submit(screen.getByRole("search", { name: "AI Agent command bar" }));
@@ -622,5 +625,26 @@ describe("BookmarkApp's agent bar (#340)", () => {
       expect(screen.queryByRole("search", { name: "AI Agent command bar" })).toBeNull()
     );
     expect(screen.getByRole("dialog", { name: "Options" })).toBeInTheDocument();
+  });
+
+  it("yields a stale gate notice once a provider becomes ready (#340 review)", async () => {
+    installViewport();
+    await renderShell();
+    await act(async () => {});
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(await screen.findByRole("alert")).toHaveAttribute("aria-live", "assertive");
+
+    // The user answers the notice the ordinary way: Options, the key, Done.
+    fireEvent.click(screen.getByRole("button", { name: "Options" }));
+    const options = await screen.findByRole("dialog", { name: "Options" });
+    fireEvent.change(within(options).getByLabelText("API Key"), {
+      target: { value: "test-key" },
+    });
+    fireEvent.click(within(options).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Options" })).toBeNull());
+
+    // The notice's answer stopped being true — it yields without a press.
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
 });
