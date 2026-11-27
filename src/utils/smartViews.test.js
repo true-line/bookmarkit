@@ -90,6 +90,19 @@ describe("reading views back (#49)", () => {
     expect(readViews(serializeViews(noisy))[0].filters.unratedOnly).toBe(false);
   });
 
+  // Codex P2 on #337: the two rating picks are mutually exclusive — a
+  // hand-edited view carrying both used to compound the minimum with the
+  // exact pick and match nothing. The pick survives; the minimum goes.
+  it("normalizes a stored view with both rating picks to the Unrated pick", () => {
+    const stored = serializeViews([
+      { id: "v9", name: "Both picks", plan: [], filters: { minRating: 4, unratedOnly: true } },
+    ]);
+
+    const restored = readViews(stored)[0].filters;
+    expect(restored.unratedOnly).toBe(true);
+    expect(restored.minRating).toBe(0);
+  });
+
   // The whole point of validating on load: storage is editable, and applyAgentPlan
   // should never be handed an action the parser would have refused.
   it("drops an action the parser does not know", () => {
