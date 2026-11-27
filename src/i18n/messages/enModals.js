@@ -302,6 +302,7 @@ export const surfaceMessages = {
     lockedPlaceholder: "Locked — unlock below to edit",
     modelIdPlaceholder: "Type a model id, or load the list",
     modelLabel: "Model",
+    noActiveProvider: "No active provider",
     noModelsHint:
       "The endpoint returned no models. Enter the key above (or start the local server), then Refresh — or type the model id.",
     noFileChosen: "No file chosen",

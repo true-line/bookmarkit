@@ -670,3 +670,44 @@ describe("OptionsModal narrow sheet (#293)", () => {
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+// #349: the status pill reads the asks' own readiness rule, not the raw
+// provider name — an unset provider cannot claim to be active.
+describe("OptionsModal active-provider pill (#349)", () => {
+  it("reads active when a key makes the provider ready", () => {
+    render(<OptionsModal {...baseProps} providerOptions={{ apiKey: "sk-live" }} />);
+    expect(screen.getByText("Active: gemini")).toBeInTheDocument();
+  });
+
+  it("reads the provider and model when one is staged", () => {
+    render(
+      <OptionsModal {...baseProps} providerOptions={{ apiKey: "sk-live", model: "gemini-pro" }} />
+    );
+    expect(screen.getByText("Active: gemini / gemini-pro")).toBeInTheDocument();
+  });
+
+  it("says none while no provider is configured", () => {
+    render(<OptionsModal {...baseProps} providerOptions={{}} />);
+    expect(screen.getByText("No active provider")).toBeInTheDocument();
+    expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
+  });
+
+  it("follows the draft as the key is typed, before Done", () => {
+    render(<OptionsModal {...baseProps} providerOptions={{}} />);
+    expect(screen.getByText("No active provider")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("API Key"), { target: { value: "sk-new" } });
+    expect(screen.getByText("Active: gemini")).toBeInTheDocument();
+  });
+
+  it("keeps a locked provider active — its unlock pass-through, as the asks read it", () => {
+    render(
+      <OptionsModal
+        {...baseProps}
+        providerOptions={}
+        encryption={{ encrypted: true, locked: true }}
+      />
+    );
+    expect(screen.getByText("Active: gemini")).toBeInTheDocument();
+  });
+});
