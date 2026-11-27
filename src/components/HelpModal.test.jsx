@@ -31,10 +31,18 @@ describe("HelpModal on the unified design system", () => {
   it("renders one shortcut row per real binding with ui-kbd keycaps", () => {
     renderHelp();
     const rows = document.querySelectorAll(".ui-shortcut-row");
-    expect(rows).toHaveLength(10);
+    expect(rows).toHaveLength(11);
     const undo = screen.getByText("Undo last change").closest(".ui-shortcut-row");
     const caps = [...undo.querySelectorAll(".ui-kbd")].map((cap) => cap.textContent);
     expect(caps).toEqual(["Cmd/Ctrl+Z"]);
+  });
+
+  it("leads with the agent bar's summon (#340)", () => {
+    renderHelp();
+    const summon = screen.getByText("Summon the AI agent bar").closest(".ui-shortcut-row");
+    const caps = [...summon.querySelectorAll(".ui-kbd")].map((cap) => cap.textContent);
+    expect(caps).toEqual(["Cmd/Ctrl+K"]);
+    expect(summon).toEqual(document.querySelector(".ui-shortcut-row"));
   });
 
   it("documents the shift gestures as edits, matching the app", () => {
