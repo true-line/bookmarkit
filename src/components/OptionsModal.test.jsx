@@ -704,7 +704,7 @@ describe("OptionsModal active-provider pill (#349)", () => {
     render(
       <OptionsModal
         {...baseProps}
-        providerOptions={}
+        providerOptions={{}}
         encryption={{ encrypted: true, locked: true }}
       />
     );
