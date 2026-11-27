@@ -3,6 +3,31 @@ import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import OptionsModal from "./OptionsModal.jsx";
 import { LocaleProvider } from "../i18n/LocaleProvider.js";
 
+// #293 branches on the sidebar-viewport hook, which reads matchMedia. jsdom
+// has none — the hook would default to the sheet — so every suite pins the
+// composition it means to exercise (the BookmarkForm convention). The
+// historical suites below were written for the dialog and stay there; the
+// narrow-sheet suite overrides in its own beforeEach.
+const installViewport = (isWide) => {
+  window.matchMedia = vi.fn().mockImplementation((query) => ({
+    query,
+    matches: isWide,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+};
+const clearViewport = () => {
+  delete window.matchMedia;
+};
+
+beforeEach(() => {
+  installViewport(true);
+});
+
+afterEach(() => {
+  clearViewport();
+});
+
 const { createLLM } = vi.hoisted(() => ({ createLLM: vi.fn() }));
 
 // Only the network seam is faked; the real provider-readiness gate stays in the
@@ -172,20 +197,35 @@ describe("OptionsModal clear API key", () => {
 });
 
 describe("OptionsModal effects preference", () => {
-  it("reports the 3D effects toggle and reflects the persisted state", () => {
+  it("stages the 3D effects toggle and commits it at Done", () => {
     const onEffectsChange = vi.fn();
-    const { rerender } = render(
-      <OptionsModal {...baseProps} effects onEffectsChange={onEffectsChange} />
+    const onClose = vi.fn();
+    render(
+      <OptionsModal {...baseProps} effects onEffectsChange={onEffectsChange} onClose={onClose} />
     );
 
     const checkbox = screen.getByRole("checkbox", { name: /show 3d effects/i });
     expect(checkbox).toBeChecked();
 
     fireEvent.click(checkbox);
+    // #293: the edit is staged — nothing writes until Done.
+    expect(onEffectsChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(onEffectsChange).toHaveBeenCalledWith(false);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("follows a persisted change that arrives while open when the toggle is untouched", () => {
+    const onEffectsChange = vi.fn();
+    const { rerender } = render(
+      <OptionsModal {...baseProps} effects onEffectsChange={onEffectsChange} />
+    );
+    const checkbox = screen.getByRole("checkbox", { name: /show 3d effects/i });
 
     rerender(<OptionsModal {...baseProps} effects={false} onEffectsChange={onEffectsChange} />);
-    expect(screen.getByRole("checkbox", { name: /show 3d effects/i })).not.toBeChecked();
+    expect(checkbox).not.toBeChecked();
+    expect(onEffectsChange).not.toHaveBeenCalled();
   });
 });
 
@@ -204,7 +244,7 @@ describe("OptionsModal appearance settings (#290)", () => {
     ]);
   });
 
-  it("reports theme picks and the Reduce motion override", () => {
+  it("stages theme picks and the Reduce motion override, committing both at Done", () => {
     const onThemeChange = vi.fn();
     const onReduceMotionChange = vi.fn();
     render(
@@ -217,11 +257,15 @@ describe("OptionsModal appearance settings (#290)", () => {
     );
 
     fireEvent.change(screen.getByLabelText("Theme"), { target: { value: "system" } });
-    expect(onThemeChange).toHaveBeenCalledWith("system");
-
     const motion = screen.getByRole("checkbox", { name: /reduce motion/i });
     expect(motion).not.toBeChecked();
     fireEvent.click(motion);
+    // #293: staged, not written.
+    expect(onThemeChange).not.toHaveBeenCalled();
+    expect(onReduceMotionChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(onThemeChange).toHaveBeenCalledWith("system");
     expect(onReduceMotionChange).toHaveBeenCalledWith(true);
   });
 
@@ -278,21 +322,28 @@ describe("OptionsModal accessibility sweep (#291)", () => {
 // Local providers need no key, but a server behind an authenticating proxy may
 // ask for one; the field is offered for both and stays optional.
 describe("OptionsModal local provider API key (optional)", () => {
-  it("offers an optional key field for Ollama and reports what is typed", () => {
+  it("stages an optional key for Ollama and commits it at Done", () => {
     const onChangeOptions = vi.fn();
+    const onClose = vi.fn();
     render(
       <OptionsModal
         {...baseProps}
         provider="ollama"
         providerOptions={{}}
         onChangeOptions={onChangeOptions}
+        onClose={onClose}
       />
     );
 
     fireEvent.change(screen.getByLabelText("API Key (optional)"), {
       target: { value: "proxy-key" },
     });
+    // #293: staged, not written.
+    expect(onChangeOptions).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "proxy-key" });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("offers the same field for LM Studio and locks it with the session", () => {
@@ -388,20 +439,171 @@ describe("OptionsModal interface language (#298)", () => {
     expect(languageSelect).toHaveValue("system");
   });
 
-  it("persists an explicit choice through the shared locale storage", () => {
+  it("stages an explicit choice and persists it at Done", () => {
     renderWithOptions();
     fireEvent.change(languageSelect, { target: { value: "en" } });
+    // #293: staged — the select shows it, storage does not, until Done.
+    expect(languageSelect).toHaveValue("en");
+    expect(localStorage.getItem("bm_locale")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(localStorage.getItem("bm_locale")).toBe("en");
-    expect(screen.getByLabelText("Interface Language")).toHaveValue("en");
   });
 
-  it("persists the return to the system default", async () => {
+  it("follows the late-loading stored choice and persists the return to system at Done", async () => {
     localStorage.setItem("bm_locale", "en");
     renderWithOptions();
-    // The stored choice loads one tick after mount.
+    // The stored choice loads one tick after mount; the untouched select
+    // follows it (#293's untouched-key tracking).
     const select = screen.getByLabelText("Interface Language");
     await waitFor(() => expect(select).toHaveValue("en"));
+
     fireEvent.change(select, { target: { value: "system" } });
+    expect(localStorage.getItem("bm_locale")).toBe("en");
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(localStorage.getItem("bm_locale")).toBe("system");
+  });
+});
+
+// #293: the decided save model — settings draft until Done. Edits stage
+// without writing; Done commits the whole draft through the same write path
+// as before and closes; Reset puts the dialog back the way it found it;
+// every other exit discards.
+describe("OptionsModal draft save model (#293)", () => {
+  const renderDraft = (overrides = {}) => {
+    const props = {
+      ...baseProps,
+      onChange: vi.fn(),
+      onChangeOptions: vi.fn(),
+      onThemeChange: vi.fn(),
+      onReduceMotionChange: vi.fn(),
+      onEffectsChange: vi.fn(),
+      onRemoteFaviconsChange: vi.fn(),
+      onWebMcpEnabledChange: vi.fn(),
+      onClose: vi.fn(),
+      ...overrides,
+    };
+    render(<OptionsModal {...props} />);
+    return props;
+  };
+
+  const editEverything = () => {
+    fireEvent.change(screen.getByLabelText("LLM Provider"), { target: { value: "openai" } });
+    fireEvent.change(screen.getByLabelText("API Key"), { target: { value: "sk-new" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: /show 3d effects/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /reduce motion/i }));
+  };
+
+  it("stages every edit without writing any of it", () => {
+    const props = renderDraft();
+    editEverything();
+    expect(props.onChange).not.toHaveBeenCalled();
+    expect(props.onChangeOptions).not.toHaveBeenCalled();
+    expect(props.onThemeChange).not.toHaveBeenCalled();
+    expect(props.onReduceMotionChange).not.toHaveBeenCalled();
+    expect(props.onEffectsChange).not.toHaveBeenCalled();
+    expect(props.onClose).not.toHaveBeenCalled();
+  });
+
+  it("commits the whole draft through the write path at Done, then closes", () => {
+    const props = renderDraft();
+    editEverything();
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(props.onChange).toHaveBeenCalledWith("openai");
+    expect(props.onChangeOptions).toHaveBeenCalledWith({ apiKey: "sk-new" });
+    expect(props.onEffectsChange).toHaveBeenCalledWith(false);
+    expect(props.onReduceMotionChange).toHaveBeenCalledWith(true);
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("Reset puts the dialog back the way it found it, and Done then writes that", () => {
+    const props = renderDraft({ providerOptions: { apiKey: "sk-stored" } });
+    editEverything();
+    fireEvent.click(screen.getByRole("button", { name: "Revert unsaved setting changes" }));
+    expect(screen.getByLabelText("LLM Provider")).toHaveValue("gemini");
+    expect(screen.getByLabelText("API Key")).toHaveValue("sk-stored");
+    expect(screen.getByRole("checkbox", { name: /show 3d effects/i })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /reduce motion/i })).not.toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(props.onChange).toHaveBeenCalledWith("gemini");
+    expect(props.onChangeOptions).toHaveBeenCalledWith({ apiKey: "sk-stored" });
+    expect(props.onEffectsChange).toHaveBeenCalledWith(true);
+    expect(props.onReduceMotionChange).toHaveBeenCalledWith(false);
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("Escape discards the draft and closes", () => {
+    const props = renderDraft();
+    editEverything();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+    expect(props.onChange).not.toHaveBeenCalled();
+    expect(props.onChangeOptions).not.toHaveBeenCalled();
+  });
+
+  it("names the save model in the dialog footer — changes apply at Done", () => {
+    renderDraft();
+    expect(screen.getByText("Changes apply when you choose Done.")).toBeInTheDocument();
+  });
+});
+
+// #293: below `lg` the dialog is the mockup's full-page sheet — the back
+// bar, the same body full width, and the sticky Reset/Done footer. Still a
+// dialog to the keyboard, and every route out but Done discards the draft.
+describe("OptionsModal narrow sheet (#293)", () => {
+  beforeEach(() => {
+    installViewport(false);
+  });
+
+  const renderSheet = (overrides = {}) => {
+    const props = {
+      ...baseProps,
+      onChange: vi.fn(),
+      onChangeOptions: vi.fn(),
+      onEffectsChange: vi.fn(),
+      onClose: vi.fn(),
+      ...overrides,
+    };
+    render(<OptionsModal {...props} />);
+    return props;
+  };
+
+  it("is the full-page sheet twin with the back bar and the sticky footer", () => {
+    renderSheet();
+    const sheet = screen.getByRole("dialog");
+    expect(sheet).toHaveClass("ui-sheet");
+    expect(sheet).toHaveClass("ui-sheet--options");
+    expect(screen.getByRole("button", { name: "Back to bookmarks" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Options" })).toBeInTheDocument();
+    expect(screen.getByText("Local-first configuration")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Revert unsaved setting changes" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
+  });
+
+  it("the back arrow closes with the draft discarded", () => {
+    const props = renderSheet();
+    fireEvent.change(screen.getByLabelText("API Key"), { target: { value: "sk-new" } });
+    fireEvent.click(screen.getByRole("button", { name: "Back to bookmarks" }));
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+    expect(props.onChangeOptions).not.toHaveBeenCalled();
+  });
+
+  it("Escape closes with the draft discarded", () => {
+    const props = renderSheet();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+    expect(props.onChangeOptions).not.toHaveBeenCalled();
+  });
+
+  it("Done in the sticky footer still commits", () => {
+    const props = renderSheet();
+    fireEvent.click(screen.getByRole("checkbox", { name: /show 3d effects/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(props.onEffectsChange).toHaveBeenCalledWith(false);
+    expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 });
