@@ -217,29 +217,9 @@ body {
    swaps (the screens dress filled buttons for light only). Focus rings repeat
    the ui-root contract: a 2px primary outline, ≥ 3:1 against the surface. */
 
-/* The search field's provider badge: the mockup's AI Ready chip rides the
-   input's trailing slot without taking pointer events. */
-.ui-ai-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-space-gutter-xs);
-  min-height: 28px;
-  padding: 4px 10px;
-  border-radius: var(--ui-radius-sm);
-  font: var(--ui-type-label-sm);
-  background: var(--ui-tertiary-container);
-  color: var(--ui-on-tertiary);
-  flex: none;
-  pointer-events: none;
-}
-[data-ui-theme="dark"] .ui-ai-badge {
-  color: var(--ui-on-tertiary-container);
-}
-
-.ui-search-trailing {
-  display: inline-flex;
-  align-items: center;
-}
+/* The search field's provider badge and trailing slot retired with the field
+   itself (#340): the ask lives in the agent bar now, and its chip carries the
+   tertiary reading there. */
 
 /* Filter strip: the boxed band the filter controls sit on. */
 .ui-filter-bar {
@@ -1844,6 +1824,146 @@ textarea {
 }
 .ui-toast-dismiss {
   color: var(--gray-400);
+}
+
+/* #340: the Spotlight agent bar (#339's decision landed) — the design system's
+   dialog contract on the mockup's floating reading: spec scrim over the whole
+   window, the command bar floating bottom-center. The gate toast shares the
+   mockup's spot, answering the shortcut when no provider is configured. */
+.ui-spotlight-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--ui-dialog-scrim);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--ui-space-gutter-lg) var(--space-6);
+  animation: ui-scrim-in var(--ui-duration-enter) var(--ui-ease-enter);
+}
+.ui-spotlight-scrim[data-closing="true"] {
+  animation: ui-scrim-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
+}
+.ui-spotlight-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(36rem, 100%);
+  padding: var(--space-2);
+  color: var(--ui-on-surface);
+  background: var(--ui-surface-container-lowest);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-dialog);
+  font: var(--ui-type-body-md);
+  animation: ui-spotlight-in var(--ui-duration-enter) var(--ui-ease-enter);
+}
+.ui-spotlight-scrim[data-closing="true"] .ui-spotlight-panel {
+  animation: ui-panel-out var(--ui-duration-exit) var(--ui-ease-exit) forwards;
+}
+.ui-spotlight-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  color: var(--ui-on-tertiary);
+  background: var(--ui-tertiary-container);
+  border-radius: var(--ui-radius-md);
+}
+.ui-spotlight-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 4px;
+  color: inherit;
+  background: none;
+  border: 0;
+  font: inherit;
+}
+.ui-spotlight-input::placeholder {
+  color: var(--ui-outline);
+}
+.ui-spotlight-input:focus {
+  outline: none;
+}
+.ui-spotlight-kbd {
+  display: none;
+  align-items: center;
+  padding: 2px var(--space-2);
+  color: var(--ui-on-surface-variant);
+  background: var(--ui-surface-container);
+  border: 1px solid var(--ui-outline-variant);
+  border-radius: var(--ui-radius-sm);
+  font: var(--ui-type-mono-sm);
+}
+.ui-spotlight-toast-dock {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--space-6);
+  /* Below the overlay's scrim: the gate answers the shortcut instead of the
+     bar, so even a moment's overlap must read as the toast giving way. */
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  justify-content: safe center;
+  padding-inline: var(--ui-space-gutter-lg);
+  pointer-events: none;
+  animation: ui-spotlight-in var(--ui-duration-enter) var(--ui-ease-enter);
+}
+.ui-spotlight-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 28rem;
+  padding: var(--space-2) var(--space-3);
+  color: var(--ui-on-error-container);
+  background: var(--ui-error-container);
+  border: 1px solid color-mix(in srgb, var(--ui-error) 30%, transparent);
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-card-hover);
+  font: var(--ui-type-body-sm);
+  pointer-events: auto;
+}
+.ui-spotlight-toast-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.ui-spotlight-toast-text {
+  text-align: start;
+}
+.ui-spotlight-toast-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  cursor: pointer;
+}
+.ui-spotlight-toast-dismiss:hover {
+  background: color-mix(in srgb, var(--ui-on-error-container) 10%, transparent);
+}
+@media (min-width: 640px) {
+  .ui-spotlight-kbd {
+    display: inline-flex;
+  }
+}
+@keyframes ui-spotlight-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ui-agent-plan {

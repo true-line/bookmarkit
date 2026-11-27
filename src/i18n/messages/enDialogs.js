@@ -109,7 +109,6 @@ export const dialogMessages = {
 
   // BookmarkApp
   app: {
-    aiReady: "AI Ready",
     alreadyOrganized: "Nothing to change — these bookmarks are already organized.",
     applyFailed: "Failed to apply the changes. Please try again.",
     archiveStop: "Stop ({done}/{total})",
@@ -151,9 +150,6 @@ export const dialogMessages = {
     renamedFolderCount: "{count} bookmark(s) now in {folder}.",
     reorderedAsc: "Reordered ascending by {field} and saved.",
     reorderedDesc: "Reordered descending by {field} and saved.",
-    searchAria: "Natural language search",
-    searchPlaceholderAgent: "Type natural language queries (e.g., 'find github')",
-    searchPlaceholderSetup: "Set up a provider in Options to search",
     selectToDelete: "Please select bookmark(s) to delete.",
     stopCheck: "Stop Check",
     summarySelected: "{count} selected | {summary}",
@@ -163,6 +159,19 @@ export const dialogMessages = {
     unsafeUrl: "This bookmark has an unsupported or unsafe URL and was not opened.",
     updatedCount: "Updated {count} bookmark(s).",
     urlCheckUnavailable: "URL check not available in extension context.",
+  },
+
+  // AgentSpotlightBar (#340) — the ask as a Spotlight overlay, landing #339's
+  // decision: the strip keeps no agent field in any provider state, and the
+  // gate toast answers the summon when no provider is configured.
+  agentBar: {
+    ask: "Ask",
+    askLabel: "Ask AI agent",
+    dismissNotice: "Dismiss notice",
+    gate: "Configure an AI provider in Options before using the agent.",
+    kbd: "Ctrl/Cmd+K",
+    label: "AI Agent command bar",
+    placeholder: 'Ask AI agent (e.g. "docs tagged cli with 4+ stars")...',
   },
 
   // SidebarNav
