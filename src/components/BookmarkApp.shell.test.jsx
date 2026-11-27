@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import BookmarkApp from "./BookmarkApp.jsx";
 import { installFakeChromeBookmarks } from "../test/fakeChromeBookmarks.js";
+import { SIDEBAR_COLLAPSED_KEY } from "../hooks/useSidebarCollapsed.js";
 
 // #294: the shell below `lg`, wired into the app. The pieces are tested beside
 // their components (MobileTopBar, NavDrawer); this is the app's wiring of them:
@@ -646,5 +647,60 @@ describe("BookmarkApp's agent bar (#340)", () => {
 
     // The notice's answer stopped being true — it yields without a press.
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+  });
+});
+
+// #346: the rail's fold, wired into the app — one attribute on the shell
+// re-points the width the frame, header and toast dock live by, and the
+// preference outlives the session.
+describe("BookmarkApp's collapsible rail (#346)", () => {
+  afterEach(() => {
+    localStorage.removeItem(SIDEBAR_COLLAPSED_KEY);
+  });
+
+  it("folds the rail and the frame with one press, and persists the fold", async () => {
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await renderShell();
+    const rail = () => screen.getByRole("complementary", { name: "BookmarkIt navigation" });
+
+    expect(within(rail()).getByText("All Bookmarks")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+
+    // The prose is gone, the rows name themselves, and the shell's fold
+    // attribute moves the frame, header and toast dock in the same step.
+    expect(within(rail()).queryByText("All Bookmarks")).not.toBeInTheDocument();
+    expect(within(rail()).getByRole("button", { name: /^All Bookmarks \(/ })).toHaveAttribute(
+      "title",
+      "All Bookmarks (0)"
+    );
+    expect(document.querySelector(".bookmarkit-shell")).toHaveAttribute(
+      "data-sidebar-collapsed",
+      "true"
+    );
+    expect(localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe("true");
+
+    // And back out, the rail unfolds whole.
+    fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }));
+    expect(within(rail()).getByText("All Bookmarks")).toBeInTheDocument();
+    expect(document.querySelector(".bookmarkit-shell")).not.toHaveAttribute(
+      "data-sidebar-collapsed"
+    );
+    expect(localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe("false");
+  });
+
+  it("mounts already folded when the preference says so", async () => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, "true");
+    const viewport = installViewport();
+    viewport.resizeTo(true);
+    await renderShell();
+
+    const rail = screen.getByRole("complementary", { name: "BookmarkIt navigation" });
+    expect(within(rail).queryByText("All Bookmarks")).not.toBeInTheDocument();
+    expect(within(rail).getByRole("button", { name: "Expand sidebar" })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
   });
 });

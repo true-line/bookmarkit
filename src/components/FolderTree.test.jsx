@@ -242,3 +242,51 @@ describe("FolderTree RTL mirroring (#291)", () => {
     expect(hacks).toEqual([]);
   });
 });
+
+// #346: the mini rail's reading of the tree — icon rows, flat, named by
+// tooltip, every folder visible (there are no carets to hide anything
+// behind), and the drops still landing.
+describe("FolderTree folded into the mini rail (#346)", () => {
+  it("flattens the tree into named icon rows", () => {
+    const { onSelect } = setup({ iconOnly: true });
+
+    // Every folder stands at the rail's edge — the nested Project A is
+    // visible without a press, and the carets are gone with the indents.
+    const work = screen.getByRole("button", { name: "Work" });
+    expect(work).toHaveAttribute("title", "Work");
+    expect(screen.getByRole("button", { name: "Project A" })).toBeInTheDocument();
+    expect(work).not.toHaveTextContent("Work");
+    expect(screen.queryByText("2")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse Work" })).not.toBeInTheDocument();
+
+    fireEvent.click(work);
+    expect(onSelect).toHaveBeenCalledWith("Work");
+  });
+
+  it("keeps the row a live drop target while folded", () => {
+    const { onMoveBookmarks } = setup({ iconOnly: true });
+
+    fireEvent.drop(
+      screen.getByRole("button", { name: "Personal" }).parentElement,
+      carrying(DRAG_BOOKMARKS, JSON.stringify(["1"]))
+    );
+
+    expect(onMoveBookmarks).toHaveBeenCalledWith(["1"], "Personal");
+  });
+
+  it("keeps the root row as the folded rail's way home", () => {
+    const { onSelect } = setup({ iconOnly: true });
+
+    fireEvent.click(screen.getByRole("button", { name: "All bookmarks" }));
+    expect(onSelect).toHaveBeenCalledWith("");
+    fireEvent.click(screen.getByRole("button", { name: "No folder" }));
+    expect(onSelect).toHaveBeenLastCalledWith(UNFILED);
+  });
+
+  it("manages nothing from the rail — the caller folds the switch with the caption", () => {
+    setup({ iconOnly: true, manageable: false });
+
+    expect(screen.queryByRole("button", { name: "Rename Work" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove folder Work" })).not.toBeInTheDocument();
+  });
+});
