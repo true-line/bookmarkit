@@ -11,9 +11,10 @@
 
 import React, { useMemo, useState } from "react";
 import {
-  RATING_VALUES,
+  RATING_OPTIONS,
   SORT_FIELDS,
   TAG_STATE,
+  applyRatingPick,
   getTagState,
   hasActiveFilters,
 } from "../utils/manualFilters.js";
@@ -73,15 +74,16 @@ const RatingSelect = ({ filters, onChange }) => {
   return (
     <FilterSelect
       id="filter-rating"
-      value={filters.minRating}
-      onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
+      value={filters.unratedOnly ? "unrated" : filters.minRating}
+      onChange={(e) => onChange(applyRatingPick(filters, e.target.value))}
       aria-label={t("filter.minRating")}
       className="ui-filter-select--rating"
     >
-      <option value={0}>{t("filter.anyRating")}</option>
-      {RATING_VALUES.map((n) => (
-        <option key={n} value={n}>
-          {`${"★".repeat(n)}+`}
+      {/* #286: the option ladder is shared with the shell's compact row, so
+          the two controls cannot drift. */}
+      {RATING_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.labelKey ? t(option.labelKey) : option.label}
         </option>
       ))}
     </FilterSelect>
@@ -260,7 +262,14 @@ const FilterBar = React.memo(function FilterBar({
       )}
 
       {summary && (
-        <div className="mt-2 pt-2 border-t border-[var(--ui-outline-variant)] text-sm text-[var(--ui-on-surface-variant)]">
+        // #286: the mockup's live count — the summary announces its changes
+        // (role="status" is polite by definition; spelled out beside it) and
+        // the digits wear the tabular reading.
+        <div
+          role="status"
+          aria-live="polite"
+          className="ui-numeric mt-2 pt-2 border-t border-[var(--ui-outline-variant)] text-sm text-[var(--ui-on-surface-variant)]"
+        >
           {summary}
         </div>
       )}

@@ -37,11 +37,17 @@ const asRating = (value) => {
 /** Only the filter keys the app knows, coerced to the shapes it expects. */
 function sanitizeFilters(raw) {
   if (!raw || typeof raw !== "object") return { ...EMPTY_FILTERS };
+  // #286: the rating picks are mutually exclusive — an "Unrated" view keeps
+  // no minimum. Hand-edited or imported storage that carries both loses the
+  // minimum here rather than compounding into a view that matches nothing
+  // (the minimum narrows first, the exact pick then keeps only rating 0).
+  const unratedOnly = raw.unratedOnly === true;
   return {
     text: String(raw.text ?? ""),
     includeTags: asTagList(raw.includeTags),
     excludeTags: asTagList(raw.excludeTags),
-    minRating: asRating(raw.minRating),
+    minRating: unratedOnly ? 0 : asRating(raw.minRating),
+    unratedOnly,
     brokenOnly: raw.brokenOnly === true,
     neverOpened: raw.neverOpened === true,
     untagged: raw.untagged === true,

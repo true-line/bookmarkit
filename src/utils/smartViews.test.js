@@ -80,6 +80,34 @@ describe("reading views back (#49)", () => {
     expect(readViews(serializeViews(saved))).toEqual(saved);
   });
 
+  // #286: the rating select's "Unrated" pick rides along with a saved view,
+  // and only an exact true survives the read-back. The noise arrives in raw
+  // storage form — makeView would sanitize it before it ever got stored.
+  it("keeps the Unrated pick through the round trip and drops non-boolean noise", () => {
+    const unrated = addView([], makeView("Unrated only", plan, { ...filters, unratedOnly: true }));
+    expect(readViews(serializeViews(unrated))[0].filters.unratedOnly).toBe(true);
+
+    const noisy = serializeViews([
+      { id: "v8", name: "Smuggled flag", plan: [], filters: { text: "docs", unratedOnly: "yes" } },
+    ]);
+    const smuggled = readViews(noisy)[0].filters;
+    expect(smuggled.text).toBe("docs");
+    expect(smuggled.unratedOnly).toBe(false);
+  });
+
+  // Codex P2 on #337: the two rating picks are mutually exclusive — a
+  // hand-edited view carrying both used to compound the minimum with the
+  // exact pick and match nothing. The pick survives; the minimum goes.
+  it("normalizes a stored view with both rating picks to the Unrated pick", () => {
+    const stored = serializeViews([
+      { id: "v9", name: "Both picks", plan: [], filters: { minRating: 4, unratedOnly: true } },
+    ]);
+
+    const restored = readViews(stored)[0].filters;
+    expect(restored.unratedOnly).toBe(true);
+    expect(restored.minRating).toBe(0);
+  });
+
   // The whole point of validating on load: storage is editable, and applyAgentPlan
   // should never be handed an action the parser would have refused.
   it("drops an action the parser does not know", () => {
@@ -133,6 +161,7 @@ describe("reading views back (#49)", () => {
       includeTags: [],
       excludeTags: ["ok"],
       minRating: 5,
+      unratedOnly: false,
       brokenOnly: false,
       neverOpened: false,
       untagged: false,
