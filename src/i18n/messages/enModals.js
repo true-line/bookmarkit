@@ -265,7 +265,6 @@ export const surfaceMessages = {
     aboutBody:
       "BookmarkIt runs locally in your browser, and your data stays on your machine. Nothing leaves it unless you turn on an optional feature — AI suggestions with your own key, site icons from the web, or the optional Firebase backend.",
     aboutHeading: "About, Privacy & Licensing",
-    activeProvider: "Active: {provider}",
     activeProviderModel: "Active: {provider} / {model}",
     agentAccessHeading: "Agent access",
     apiKeyLabel: "API Key",
@@ -277,6 +276,8 @@ export const surfaceMessages = {
     baseUrlOptionalLabel: "Base URL (optional)",
     // #293: the draft model — Done applies, Reset reverts, dismissal drops.
     changesSave: "Changes apply when you choose Done.",
+    // #352: the pill while the modal's discovery probe is still concluding.
+    checkingProvider: "Checking provider…",
     chooseFile: "Choose File",
     clear: "Clear",
     clearStoredKey: "Clear stored API key",
@@ -348,6 +349,9 @@ export const surfaceMessages = {
     themeSystemDefault: "System default",
     themeUploadLabel: "Upload custom theme",
     title: "Options",
+    // #352: the probe concluded against the staged options — the endpoint is
+    // unreachable or refused the key, so nothing reads as active.
+    unavailableProvider: "Provider unavailable",
     webMcpHint:
       "Off by default. When on, this tab offers two read-only tools — search and folder listing — to AI agents running in this browser, for as long as it stays open. Agents can look, never change or fetch anything. Requires a browser with WebMCP enabled.",
     webMcpLabel: "Let browser agents search my bookmarks",

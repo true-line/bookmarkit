@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from "react";
-import { LLM_PROVIDERS, createLLM, isProviderReady, isSearchEnabled } from "../llm/index.js";
+import { LLM_PROVIDERS, createLLM, isProviderReady, resolveProviderOptions } from "../llm/index.js";
 import { useDebounce } from "../hooks/useDebounce.js";
 import { useFocusTrap } from "../hooks/useFocusTrap.js";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
@@ -204,6 +204,25 @@ const baseUrlStatus = (baseUrlError) =>
     </span>
   ) : null;
 
+// An optional base URL still has to name an http(s) host; empty defers to the
+// provider's default, which is always well-formed.
+const isValidBaseUrl = (url) => {
+  if (!url) return true; // empty = use provider default, always OK
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+// The probe's identity: the provider and the two options reachability reads —
+// key and base URL. Model choice and the rest never reach the endpoint's
+// front door, so a probe concluded for one staging stays good across model
+// edits, and a stale conclusion can never green-light different options.
+const probeConfigKey = (provider, options = {}) =>
+  `${provider || ""}|${options.apiKey || ""}|${options.baseUrl || ""}`;
+
 // #293: fold the live settings into a draft-or-snapshot, skipping the keys
 // the user has touched (those belong to the draft alone) and the keys
 // already equal. Returns the same object when nothing moves, so the effect
@@ -255,6 +274,13 @@ const OptionsModal = ({
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState("");
   const [baseUrlError, setBaseUrlError] = useState("");
+  // The pill's probe tracking: probeState is the latest discovery outcome,
+  // probeKey the staging it was concluded for, and the seq counter retires
+  // outlived probes, so a slow answer for earlier options can never land on
+  // later ones.
+  const [probeState, setProbeState] = useState("idle");
+  const [probeKey, setProbeKey] = useState("");
+  const probeSeq = useRef(0);
   const [showExample, setShowExample] = useState(false);
   // #290: the mockup's chosen-file status — the picked file's name, "No file
   // chosen" before one is.
@@ -372,72 +398,112 @@ const OptionsModal = ({
   // the search gate's pass-through exists to reach the unlock prompt, and
   // a locked session may hold no key, or one for another provider — so it
   // reads "Provider locked" until the unlock says otherwise. An unset
-  // provider reads "No active provider" instead of a green lie; typing a
-  // key makes it true before Done, as the draft always has.
-  const providerActive = isSearchEnabled(draft.provider, draft.providerOptions);
+  // provider reads "No active provider" instead of a green lie.
+  // #352: and the truth is more than a toggled name. The asks' rule is only
+  // the floor — a hosted provider needs its key, every provider needs a
+  // chosen model and a well-formed endpoint, and the modal's own discovery
+  // probe (the same listModels call that fills the picker) must have
+  // concluded for exactly the staged options. An unreachable server, a
+  // refused key, a half-finished configuration — none of it reads as active.
+  // The rule reads the options a request would actually go out with —
+  // resolveProviderOptions' merge, build-time defaults included — so a
+  // build-configured deployment is not shown as inactive while its asks run.
+  const effective = resolveProviderOptions(draft.providerOptions);
+  const keyed = isProviderReady(draft.provider, effective);
+  const hasModel = Boolean(String(effective.model || "").trim());
+  const configComplete =
+    Boolean(draft.provider) && keyed && hasModel && isValidBaseUrl(effective.baseUrl);
+  const probeConcluded = probeKey === probeConfigKey(draft.provider, effective);
+  const providerActive = configComplete && probeConcluded && probeState === "ok";
+  const providerUnavailable = configComplete && probeConcluded && probeState === "failed";
+  const providerChecking = configComplete && !providerActive && !providerUnavailable;
   const activeLabel = encryption.locked
     ? t("options.lockedProvider")
     : providerActive
-      ? draft.providerOptions.model
-        ? t("options.activeProviderModel", {
-            provider: draft.provider || t("common.none"),
-            model: draft.providerOptions.model,
-          })
-        : t("options.activeProvider", { provider: draft.provider || t("common.none") })
-      : t("options.noActiveProvider");
-
-  const isValidBaseUrl = (url) => {
-    if (!url) return true; // empty = use provider default, always OK
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === "http:" || parsed.protocol === "https:";
-    } catch {
-      return false;
-    }
-  };
+      ? t("options.activeProviderModel", {
+          provider: draft.provider || t("common.none"),
+          model: effective.model,
+        })
+      : providerUnavailable
+        ? t("options.unavailableProvider")
+        : providerChecking
+          ? t("options.checkingProvider")
+          : t("options.noActiveProvider");
+  // The dot carries the same reading as the label: grey until a concluded
+  // probe says otherwise, red when the probe was refused — locked is grey
+  // too, since its label is the reading.
+  const pillDotColor = encryption.locked
+    ? "var(--ui-on-surface-variant)"
+    : providerActive
+      ? "var(--ui-success)"
+      : providerUnavailable
+        ? "var(--ui-error)"
+        : "var(--ui-on-surface-variant)";
 
   const fetchModels = async (forceRefresh = false) => {
+    // Retire any probe still in flight: only the latest staging's answer may
+    // land, so a slow response for earlier options can't outlive its config.
+    // The retired probe's finally can no longer clear the loading state, so
+    // every early path out clears it here (review: the model control must
+    // never stay stuck on Loading).
+    const seq = ++probeSeq.current;
+    setIsLoadingModels(false);
+    // The probe asks with the options a request would actually go out with —
+    // build-time defaults included — so what is verified is what the asks
+    // would use.
+    const effective = resolveProviderOptions(draft.providerOptions);
+    const cacheKey = probeConfigKey(draft.provider, effective);
     // A hosted provider without a key has no request worth sending — the
     // endpoint refuses it (Gemini answers 403) — so opening Options must not
     // read as an error. Discovery waits for the key; the local servers stay
     // always ready because their listing needs none.
-    if (!isProviderReady(draft.provider, { apiKey: draft.providerOptions.apiKey || "" })) {
+    if (!isProviderReady(draft.provider, effective)) {
       setModels([]);
       setModelsError("");
+      setProbeState("idle");
       return;
     }
 
     // ARCH-04: Check module-level cache before making a network request
-    const cacheKey = `${draft.provider}|${draft.providerOptions.apiKey || ""}|${
-      draft.providerOptions.baseUrl || ""
-    }`;
     if (!forceRefresh) {
       const cached = _modelsCache[cacheKey];
       if (cached && Date.now() < cached.expiresAt) {
         setModels(cached.models);
+        setProbeKey(cacheKey);
+        setProbeState("ok");
         return;
       }
     }
 
     setIsLoadingModels(true);
     setModelsError("");
+    setProbeKey(cacheKey);
+    setProbeState("checking");
     try {
       const opts = {
-        apiKey: draft.providerOptions.apiKey || "",
-        model: draft.providerOptions.model || "",
-        baseUrl: draft.providerOptions.baseUrl || undefined,
+        apiKey: effective.apiKey || "",
+        model: effective.model || "",
+        baseUrl: effective.baseUrl || undefined,
       };
       const llm = createLLM(draft.provider, opts);
       const list = (await llm.listModels?.()) || [];
       const models = Array.isArray(list) ? list : [];
       // Store in module-level cache with TTL
       _modelsCache[cacheKey] = { models, expiresAt: Date.now() + MODELS_CACHE_TTL };
-      setModels(models);
+      if (seq === probeSeq.current) {
+        setModels(models);
+        setProbeState("ok");
+      }
     } catch (e) {
-      setModels([]);
-      setModelsError(e?.message || t("options.failedToLoadModels"));
+      if (seq === probeSeq.current) {
+        setModels([]);
+        setModelsError(e?.message || t("options.failedToLoadModels"));
+        setProbeState("failed");
+      }
     } finally {
-      setIsLoadingModels(false);
+      if (seq === probeSeq.current) {
+        setIsLoadingModels(false);
+      }
     }
   };
 
@@ -449,7 +515,7 @@ const OptionsModal = ({
     setBaseUrlError("");
     fetchModels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider, debouncedApiKey, debouncedBaseUrl]);
+  }, [draft.provider, debouncedApiKey, debouncedBaseUrl]);
 
   const providerEntries = [
     { value: LLM_PROVIDERS.GEMINI, label: t("options.providerGemini") },
@@ -499,16 +565,19 @@ const OptionsModal = ({
           used once Done commits, as the options-settings screen's
           active-provider pill — with the asks' own readiness rule (#349),
           so an unset provider cannot read as active, and a locked one
-          reads locked rather than active. */}
+          reads locked rather than active. #352: the rule is enforced by the
+          modal's own discovery probe — an endpoint that was never reached,
+          or refused the probe, cannot read as active either; the outcome is
+          an async status, so it announces politely like the base-URL one. */}
       <div>
-        <span className="ui-pill">
+        <span className="ui-pill" role="status">
           <span
             aria-hidden="true"
             style={{
               width: 8,
               height: 8,
               borderRadius: "var(--ui-radius-full)",
-              background: providerActive ? "var(--ui-success)" : "var(--ui-on-surface-variant)",
+              background: pillDotColor,
             }}
           />
           {activeLabel}

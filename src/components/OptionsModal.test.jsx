@@ -275,11 +275,13 @@ describe("OptionsModal appearance settings (#290)", () => {
       <OptionsModal {...baseProps} themes={{ default: {} }} onThemeUpload={onThemeUpload} />
     );
 
-    expect(screen.getByRole("status")).toHaveTextContent("No file chosen");
+    // Scoped to its text: the provider pill is a status region too (#352).
+    const statusSpan = screen.getByText("No file chosen");
+    expect(statusSpan).toHaveAttribute("role", "status");
 
     const input = container.querySelector('input[type="file"]');
     fireEvent.change(input, { target: { files: [new File(["{}"], "ocean.json")] } });
-    expect(screen.getByRole("status")).toHaveTextContent("ocean.json");
+    expect(screen.getByText("ocean.json")).toHaveAttribute("role", "status");
     expect(onThemeUpload).toHaveBeenCalledTimes(1);
     expect(onThemeUpload.mock.calls[0][0].name).toBe("ocean.json");
   });
@@ -488,16 +490,19 @@ describe("OptionsModal draft save model (#293)", () => {
     return props;
   };
 
-  const editEverything = () => {
+  // #352: staging a provider switch now probes the staged options at once,
+  // so the edit helper flushes the probe's conclusion inside act.
+  const editEverything = async () => {
     fireEvent.change(screen.getByLabelText("LLM Provider"), { target: { value: "openai" } });
     fireEvent.change(screen.getByLabelText("API Key"), { target: { value: "sk-new" } });
     fireEvent.click(screen.getByRole("checkbox", { name: /show 3d effects/i }));
     fireEvent.click(screen.getByRole("checkbox", { name: /reduce motion/i }));
+    await act(async () => {});
   };
 
-  it("stages every edit without writing any of it", () => {
+  it("stages every edit without writing any of it", async () => {
     const props = renderDraft();
-    editEverything();
+    await editEverything();
     expect(props.onChange).not.toHaveBeenCalled();
     expect(props.onChangeOptions).not.toHaveBeenCalled();
     expect(props.onThemeChange).not.toHaveBeenCalled();
@@ -506,9 +511,9 @@ describe("OptionsModal draft save model (#293)", () => {
     expect(props.onClose).not.toHaveBeenCalled();
   });
 
-  it("commits the whole draft through the write path at Done, then closes", () => {
+  it("commits the whole draft through the write path at Done, then closes", async () => {
     const props = renderDraft();
-    editEverything();
+    await editEverything();
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(props.onChange).toHaveBeenCalledWith("openai");
     expect(props.onChangeOptions).toHaveBeenCalledWith({ apiKey: "sk-new" }, "openai");
@@ -517,9 +522,9 @@ describe("OptionsModal draft save model (#293)", () => {
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("Reset puts the dialog back the way it found it, and Done then writes that", () => {
+  it("Reset puts the dialog back the way it found it, and Done then writes that", async () => {
     const props = renderDraft({ providerOptions: { apiKey: "sk-stored" } });
-    editEverything();
+    await editEverything();
     fireEvent.click(screen.getByRole("button", { name: "Revert unsaved setting changes" }));
     expect(screen.getByLabelText("LLM Provider")).toHaveValue("gemini");
     expect(screen.getByLabelText("API Key")).toHaveValue("sk-stored");
@@ -534,9 +539,9 @@ describe("OptionsModal draft save model (#293)", () => {
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("Escape discards the draft and closes", () => {
+  it("Escape discards the draft and closes", async () => {
     const props = renderDraft();
-    editEverything();
+    await editEverything();
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     expect(props.onClose).toHaveBeenCalledTimes(1);
     expect(props.onChange).not.toHaveBeenCalled();
@@ -546,7 +551,7 @@ describe("OptionsModal draft save model (#293)", () => {
   // Switching providers stages a switch, not just a label: the staged
   // options become the chosen provider's stored ones, and Done commits the
   // patch under that provider — in one breath with the switch itself.
-  it("seeds the staged options from the chosen provider and commits under it", () => {
+  it("seeds the staged options from the chosen provider and commits under it", async () => {
     const props = renderDraft({
       allProviderOptions: {
         gemini: { apiKey: "sk-gemini", model: "gemini-pro" },
@@ -554,6 +559,9 @@ describe("OptionsModal draft save model (#293)", () => {
       },
     });
     fireEvent.change(screen.getByLabelText("LLM Provider"), { target: { value: "openai" } });
+    // #352: the staged switch probes the staged options at once — flush its
+    // conclusion inside act.
+    await act(async () => {});
     // The key field reads the newly chosen provider's stored key, not the
     // one the dialog opened with.
     expect(screen.getByLabelText("API Key")).toHaveValue("sk-openai-stored");
@@ -672,38 +680,136 @@ describe("OptionsModal narrow sheet (#293)", () => {
 });
 
 // #349: the status pill reads the asks' own readiness rule, not the raw
-// provider name — an unset provider cannot claim to be active.
+// provider name — an unset provider cannot claim to be active. #352: and the
+// rule is enforced by the modal's own discovery probe — a provider the
+// endpoint never confirmed (refused key, dead local server, half-finished
+// configuration) cannot claim to be active either. The probe is the same
+// listModels call that fills the picker, faked here through createLLM.
 describe("OptionsModal active-provider pill (#349)", () => {
-  it("reads active when a key makes the provider ready", () => {
-    render(<OptionsModal {...baseProps} providerOptions={{ apiKey: "sk-live" }} />);
-    expect(screen.getByText("Active: gemini")).toBeInTheDocument();
-  });
-
-  it("reads the provider and model when one is staged", () => {
-    render(
-      <OptionsModal {...baseProps} providerOptions={{ apiKey: "sk-live", model: "gemini-pro" }} />
-    );
-    expect(screen.getByText("Active: gemini / gemini-pro")).toBeInTheDocument();
-  });
-
   it("says none while no provider is configured", () => {
     render(<OptionsModal {...baseProps} providerOptions={{}} />);
     expect(screen.getByText("No active provider")).toBeInTheDocument();
     expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
   });
 
-  it("follows the draft as the key is typed, before Done", () => {
+  it("withholds active until a model is chosen too — a key alone cannot serve", async () => {
+    render(<OptionsModal {...baseProps} providerOptions={{ apiKey: "sk-live" }} />);
+    await act(async () => {});
+    expect(screen.getByText("No active provider")).toBeInTheDocument();
+    expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
+  });
+
+  it("honors build-time options when nothing is stored yet", async () => {
+    // The asks merge build-time defaults through resolveProviderOptions; the
+    // pill verifies the merged effective options, not the bare stored bag.
+    globalThis.__llm_options__ = { apiKey: "sk-build", model: "gemini-build" };
+    try {
+      render(<OptionsModal {...baseProps} providerOptions={{}} />);
+      await act(async () => {});
+      expect(screen.getByText("Active: gemini / gemini-build")).toBeInTheDocument();
+    } finally {
+      delete globalThis.__llm_options__;
+    }
+  });
+
+  it("reads checking while the probe is still concluding", async () => {
+    let resolveProbe;
+    createLLM.mockImplementation(() => ({
+      listModels: () =>
+        new Promise((resolve) => {
+          resolveProbe = resolve;
+        }),
+    }));
+    render(
+      <OptionsModal
+        {...baseProps}
+        providerOptions={{ apiKey: "sk-checking", model: "gemini-pro" }}
+      />
+    );
+    expect(screen.getByText("Checking provider…")).toBeInTheDocument();
+
+    await act(async () => {
+      resolveProbe([]);
+    });
+    expect(screen.getByText("Active: gemini / gemini-pro")).toBeInTheDocument();
+    expect(screen.queryByText("Checking provider…")).toBeNull();
+  });
+
+  it("reads the provider and model once the probe concludes for them", async () => {
+    render(
+      <OptionsModal {...baseProps} providerOptions={{ apiKey: "sk-live", model: "gemini-pro" }} />
+    );
+    await act(async () => {});
+    expect(screen.getByText("Active: gemini / gemini-pro")).toBeInTheDocument();
+    expect(screen.queryByText("Checking provider…")).toBeNull();
+  });
+
+  it("reads unavailable when the endpoint refuses the probe", async () => {
+    createLLM.mockImplementation(() => ({
+      listModels: async () => {
+        throw new Error("Model list failed with status 401");
+      },
+    }));
+    render(
+      <OptionsModal
+        {...baseProps}
+        providerOptions={{ apiKey: "sk-refused", model: "gemini-pro" }}
+      />
+    );
+    await act(async () => {});
+    expect(screen.getByText("Provider unavailable")).toBeInTheDocument();
+    expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Checking provider…")).toBeNull();
+  });
+
+  // The reported bug: toggling a local provider with nothing behind it — no
+  // model, and a server that was never reached — must not read as active.
+  it("reads a toggled-but-unconfigured local provider as none", async () => {
+    render(<OptionsModal {...baseProps} provider="ollama" providerOptions={{}} />);
+    await act(async () => {});
+    expect(screen.getByText("No active provider")).toBeInTheDocument();
+    expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
+  });
+
+  it("reads a local provider whose server is unreachable as unavailable", async () => {
+    createLLM.mockImplementation(() => ({
+      listModels: async () => {
+        throw new Error("Failed to fetch");
+      },
+    }));
+    // A base URL of its own keeps this probe out of the module-level cache
+    // the keyless mount probe above may have warmed.
+    render(
+      <OptionsModal
+        {...baseProps}
+        provider="ollama"
+        providerOptions={{ model: "llama3", baseUrl: "http://localhost:9999" }}
+      />
+    );
+    await act(async () => {});
+    expect(screen.getByText("Provider unavailable")).toBeInTheDocument();
+    expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
+  });
+
+  it("follows the draft as the key and model are typed, before Done", async () => {
     render(<OptionsModal {...baseProps} providerOptions={{}} />);
     expect(screen.getByText("No active provider")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("API Key"), { target: { value: "sk-new" } });
-    expect(screen.getByText("Active: gemini")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Model"), { target: { value: "gemini-pro" } });
+    // The probe waits for the debounced key; the pill waits for the probe.
+    // Awaiting inside act keeps the debounce's updates covered.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    });
+    expect(screen.getByText("Active: gemini / gemini-pro")).toBeInTheDocument();
   });
 
   it("reads a locked session as locked, never as active — even with staged credentials", () => {
     // The search gate's locked pass-through exists to reach the unlock
     // prompt; it is not evidence (the blob may hold no key, or another
-    // provider's). Until the unlock says otherwise, the pill says locked.
+    // provider's). Until the unlock says otherwise, the pill says locked,
+    // and its dot stays neutral with it.
     render(
       <OptionsModal
         {...baseProps}
@@ -713,5 +819,9 @@ describe("OptionsModal active-provider pill (#349)", () => {
     );
     expect(screen.getByText("Provider locked — unlock to use")).toBeInTheDocument();
     expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
+    const pill = screen.getByText("Provider locked — unlock to use").closest(".ui-pill");
+    expect(pill.querySelector('span[aria-hidden="true"]').style.background).toBe(
+      "var(--ui-on-surface-variant)"
+    );
   });
 });
