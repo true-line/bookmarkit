@@ -153,6 +153,26 @@ export function FolderIcon({ size = 14 }) {
   );
 }
 
+/** The rail's collapse/expand toggle (dock_to_left / dock_to_right): the
+    window with its panel docked to the folded side, #346. */
+export function DockToLeftIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3" y="4.5" width="18" height="15" rx="2" />
+      <path d="M9.5 4.5v15" />
+    </svg>
+  );
+}
+
+export function DockToRightIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3" y="4.5" width="18" height="15" rx="2" />
+      <path d="M14.5 4.5v15" />
+    </svg>
+  );
+}
+
 /** A row's per-card "Wayback" action (archive: the lidded box) in the
     link-health view (#303). */
 export function ArchiveIcon({ size = 14 }) {

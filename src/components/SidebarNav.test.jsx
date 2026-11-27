@@ -264,3 +264,96 @@ describe("maintenance footer (#297)", () => {
     ).toBeTruthy();
   });
 });
+
+// #346: the mockup's mini rail. The fold is the rail's alone — the drawer
+// never carries it — and the folded rows keep their names on aria-label and
+// title, since their prose is gone rather than merely hidden.
+describe("the mini rail (#346)", () => {
+  const rail = () => screen.getByRole("complementary", { name: "BookmarkIt navigation" });
+
+  it("offers the fold from the rail, announced to the aside it controls", () => {
+    const onToggleCollapse = vi.fn();
+    setup({ id: "workspace-sidebar", onToggleCollapse });
+
+    const toggle = screen.getByRole("button", { name: "Collapse sidebar" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveAttribute("aria-controls", "workspace-sidebar");
+    fireEvent.click(toggle);
+    expect(onToggleCollapse).toHaveBeenCalledOnce();
+  });
+
+  it("folds to named icons: the prose goes, the rows keep their names", () => {
+    const views = [{ id: "v1", name: "Reading list", plan: [], filters: {} }];
+    setup({
+      id: "workspace-sidebar",
+      collapsed: true,
+      onToggleCollapse: vi.fn(),
+      views,
+      canSaveView: true,
+    });
+    const folded = within(rail());
+
+    // The prose is gone — brand, captions, labels, counts, saved views, help.
+    expect(folded.queryByText("BookmarkIt")).not.toBeInTheDocument();
+    expect(folded.queryByText("Views")).not.toBeInTheDocument();
+    expect(folded.queryByText("Folders")).not.toBeInTheDocument();
+    expect(folded.queryByText("All Bookmarks")).not.toBeInTheDocument();
+    expect(folded.queryByRole("group", { name: "Saved views" })).not.toBeInTheDocument();
+    expect(folded.queryByRole("button", { name: "Manage folders" })).not.toBeInTheDocument();
+    expect(
+      folded.queryByRole("button", { name: "Help and keyboard shortcuts" })
+    ).not.toBeInTheDocument();
+
+    // The rows answer to label and count, as the mockup titles them.
+    const all = folded.getByRole("button", { name: "All Bookmarks (4)" });
+    expect(all).toHaveAttribute("title", "All Bookmarks (4)");
+    expect(folded.getByRole("button", { name: "Broken Links (3)" })).toBeInTheDocument();
+
+    // The folders read as icons, named, with their path tooltip.
+    const folders = folded.getByRole("navigation", { name: "Folders" });
+    const work = within(folders).getByRole("button", { name: "Work" });
+    expect(work).not.toHaveTextContent("Work");
+
+    // The primary is its icon, still named.
+    const add = folded.getByRole("button", { name: "Add Bookmark" });
+    expect(add).not.toHaveTextContent("Add Bookmark");
+
+    // The fold's own control now promises the expansion.
+    const toggle = folded.getByRole("button", { name: "Expand sidebar" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveAttribute("aria-controls", "workspace-sidebar");
+  });
+
+  it("names the maintenance footer while folded", () => {
+    setup({ collapsed: true, onToggleCollapse: vi.fn() });
+
+    expect(screen.getByRole("button", { name: "Check Links" })).toHaveAttribute(
+      "title",
+      "Check Links"
+    );
+    expect(screen.getByRole("button", { name: "Remove Duplicates" })).toHaveAttribute(
+      "title",
+      "Remove Duplicates"
+    );
+    expect(screen.getByRole("button", { name: "Import / Export" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Options" })).toBeInTheDocument();
+  });
+
+  it("reads the sweep's state in the folded row's name", () => {
+    setup({ collapsed: true, onToggleCollapse: vi.fn(), checkLinksRunning: true });
+
+    expect(screen.getByRole("button", { name: "Stop Check" })).toHaveAttribute(
+      "title",
+      "Stop Check"
+    );
+  });
+
+  it("folds nothing out of the drawer — collapsing is the rail's alone", () => {
+    setup({ collapsed: true, onToggleCollapse: vi.fn(), onClose: vi.fn() });
+
+    expect(within(rail()).getByText("BookmarkIt")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Help and keyboard shortcuts" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse sidebar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Expand sidebar" })).not.toBeInTheDocument();
+  });
+});

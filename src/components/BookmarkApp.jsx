@@ -54,6 +54,7 @@ import { useUndoHistory } from "../hooks/useUndoHistory.js";
 import MobileTopBar from "./MobileTopBar.jsx";
 import MobileFilterRow from "./MobileFilterRow.jsx";
 import NavDrawer from "./NavDrawer.jsx";
+import { useSidebarCollapsed } from "../hooks/useSidebarCollapsed.js";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 
 import { useMessages } from "../i18n/index.js";
@@ -218,6 +219,8 @@ const BookmarkApp = () => {
   // is the navigation drawer, opened from the top bar's menu button, so the
   // folder tree and the saved views have exactly one home at every width.
   const isSidebarViewport = useSidebarViewport();
+  // #346: the rail's fold, persisted — the drawer never reads it.
+  const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   // Crossing into the rail's viewport takes the drawer away, and its state must
   // not outlive it: the page would stay inert with no dialog on screen. The
@@ -1377,6 +1380,9 @@ const BookmarkApp = () => {
       // this component's loading and load-error returns; the shell keeps only
       // its own canvas background.
       className="bookmarkit-shell h-screen overflow-hidden flex flex-col"
+      // #346: one attribute re-points --app-sidebar-width, so the shell's
+      // padding and the fixed header and toast dock fold with the rail.
+      data-sidebar-collapsed={sidebarCollapsed || undefined}
       style={{ backgroundColor: "var(--bg-secondary)" }}
     >
       {/* UX-06: Import progress bar */}
@@ -1406,6 +1412,10 @@ const BookmarkApp = () => {
       {isSidebarViewport && (
         <SidebarNav
           effectsEnabled={effects}
+          // #346: the fold rides the rail alone — the drawer mounts without it.
+          id="workspace-sidebar"
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapsed}
           onHelp={() => setIsHelpModalOpen(true)}
           onAddBookmark={handleAddNewBookmark}
           bookmarks={bookmarks}

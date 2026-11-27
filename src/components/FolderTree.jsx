@@ -20,6 +20,7 @@ import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
 import { UNFILED, buildFolderTree, folderName, parentFolder } from "../utils/folderTree.js";
 import { Button, IconButton, InputField } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
+import { FolderIcon } from "./icons.jsx";
 
 // #250: the folder pane migrates with the chrome region — mockup sidebar rows
 // (36px minimum, tonal hover, the active folder on surface-container-highest),
@@ -41,10 +42,12 @@ const draggedIds = (event) => {
   }
 };
 
-const Row = ({ depth = 0, active, children, ...props }) => (
+// #346: `flat` drops the depth indent — the mini rail's icon rows all stand
+// at the rail's edge, the nesting living only in the rows' tooltips.
+const Row = ({ depth = 0, active, flat = false, children, ...props }) => (
   <div
     className={`ui-tree-row ${active ? "ui-tree-row--active" : ""}`}
-    style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
+    style={flat ? undefined : { paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
     {...props}
   >
     {children}
@@ -67,7 +70,16 @@ const Count = ({ node, active }) => {
  * One folder and everything under it. Renaming is inline: the row becomes the
  * field, so the tree keeps its place instead of a dialog taking over.
  */
-function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, manageable }) {
+function FolderNode({
+  node,
+  depth,
+  activeFolder,
+  collapsed,
+  onToggle,
+  actions,
+  manageable,
+  iconOnly,
+}) {
   const t = useMessages();
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(node.name);
@@ -89,7 +101,9 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
     actions.onDropInto(event, node.path);
   };
 
-  if (renaming) {
+  // The mini rail carries no rename field — a 64px input is unreadable, and
+  // its caller has already folded the manage switch away with the caption.
+  if (renaming && !iconOnly) {
     return (
       <li>
         <Row depth={depth}>
@@ -115,6 +129,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
     <li>
       <Row
         depth={depth}
+        flat={iconOnly}
         active={active || dropping}
         onDragOver={(event) => {
           event.preventDefault();
@@ -123,21 +138,22 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
         onDragLeave={() => setDropping(false)}
         onDrop={drop}
       >
-        {node.children.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => onToggle(node.path)}
-            aria-label={t(isCollapsed ? "folderTree.expand" : "folderTree.collapse", {
-              name: node.name,
-            })}
-            aria-expanded={!isCollapsed}
-            className="ui-tree-toggle"
-          >
-            {isCollapsed ? "▸" : "▾"}
-          </button>
-        ) : (
-          <span className="ui-tree-toggle" aria-hidden="true" />
-        )}
+        {!iconOnly &&
+          (node.children.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => onToggle(node.path)}
+              aria-label={t(isCollapsed ? "folderTree.expand" : "folderTree.collapse", {
+                name: node.name,
+              })}
+              aria-expanded={!isCollapsed}
+              className="ui-tree-toggle"
+            >
+              {isCollapsed ? "▸" : "▾"}
+            </button>
+          ) : (
+            <span className="ui-tree-toggle" aria-hidden="true" />
+          ))}
 
         <button
           type="button"
@@ -145,16 +161,22 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
           onDragStart={(event) => event.dataTransfer?.setData(DRAG_FOLDER, node.path)}
           onClick={() => actions.onSelect(active ? "" : node.path)}
           aria-pressed={active}
-          className="flex-1 min-w-0 text-start truncate"
+          className={
+            iconOnly
+              ? "flex flex-1 min-w-0 items-center justify-center truncate"
+              : "flex-1 min-w-0 text-start truncate"
+          }
           title={node.path}
+          aria-label={iconOnly ? node.name : undefined}
         >
-          {node.name}
+          {iconOnly ? <FolderIcon size={18} /> : node.name}
         </button>
 
-        <Count node={node} active={active || dropping} />
+        {!iconOnly && <Count node={node} active={active || dropping} />}
 
-        {/* The row's actions wait for "Manage folders" where the caller has one. */}
-        {manageable && (
+        {/* The row's actions wait for "Manage folders" where the caller has one —
+            and stand down folded, like the switch that names them (#346). */}
+        {manageable && !iconOnly && (
           <>
             <IconButton
               label={t("folderTree.rename", { path: node.path })}
@@ -175,8 +197,10 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
         )}
       </Row>
 
-      {/* Deleting a folder never deletes bookmarks, so the offer has to say where they go. */}
-      {confirmingDelete && (
+      {/* Deleting a folder never deletes bookmarks, so the offer has to say where they go.
+          Folded, the offer stands down with the actions — prose and two buttons have
+          no 64px reading, and it comes back when the rail unfolds. */}
+      {confirmingDelete && !iconOnly && (
         <div className="ms-6 my-1 text-xs text-[var(--ui-on-surface-variant)]">
           <p className="mb-1">
             {t("folderTree.deleteConfirm", {
@@ -202,7 +226,9 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
         </div>
       )}
 
-      {!isCollapsed && node.children.length > 0 && (
+      {/* Folded, the rail shows every folder flat — the collapse carets are
+          gone, so the tree cannot hide anything from 64px of icons. */}
+      {(iconOnly || !isCollapsed) && node.children.length > 0 && (
         <ul>
           {node.children.map((child) => (
             <FolderNode
@@ -214,6 +240,7 @@ function FolderNode({ node, depth, activeFolder, collapsed, onToggle, actions, m
               onToggle={onToggle}
               actions={actions}
               manageable={manageable}
+              iconOnly={iconOnly}
             />
           ))}
         </ul>
@@ -240,6 +267,9 @@ const FolderTree = React.memo(function FolderTree({
   alwaysShowUnfiled = false,
   /** Whether each row shows its rename and remove actions. */
   manageable = true,
+  /** #346: the mini rail's reading — icon rows, flat, named by tooltip,
+      every folder visible (there are no carets to hide behind). */
+  iconOnly = false,
 }) {
   const t = useMessages();
   const [collapsed, setCollapsed] = useState(() => new Set());
@@ -297,21 +327,29 @@ const FolderTree = React.memo(function FolderTree({
       <ul>
         {showRoot && (
           <li onDragOver={(event) => event.preventDefault()} onDrop={dropOnRoot}>
-            <Row active={activeFolder === ""}>
-              <span className="w-4 shrink-0" aria-hidden="true" />
+            <Row active={activeFolder === ""} flat={iconOnly}>
+              {!iconOnly && <span className="w-4 shrink-0" aria-hidden="true" />}
               <button
                 type="button"
                 onClick={() => onSelect("")}
                 aria-pressed={activeFolder === ""}
-                className="flex-1 min-w-0 text-start truncate"
+                className={
+                  iconOnly
+                    ? "flex flex-1 min-w-0 items-center justify-center truncate"
+                    : "flex-1 min-w-0 text-start truncate"
+                }
+                aria-label={iconOnly ? t("folderTree.allBookmarks") : undefined}
+                title={iconOnly ? t("folderTree.allBookmarks") : undefined}
               >
-                {t("folderTree.allBookmarks")}
+                {iconOnly ? <FolderIcon size={18} /> : t("folderTree.allBookmarks")}
               </button>
-              <span
-                className={`ui-tree-count ${activeFolder === "" ? "ui-tree-count--active" : ""}`}
-              >
-                {t.count(total)}
-              </span>
+              {!iconOnly && (
+                <span
+                  className={`ui-tree-count ${activeFolder === "" ? "ui-tree-count--active" : ""}`}
+                >
+                  {t.count(total)}
+                </span>
+              )}
             </Row>
           </li>
         )}
@@ -326,28 +364,37 @@ const FolderTree = React.memo(function FolderTree({
             onToggle={onToggle}
             actions={actions}
             manageable={manageable}
+            iconOnly={iconOnly}
           />
         ))}
 
         {(unfiled > 0 || alwaysShowUnfiled) && (
           <li onDragOver={(event) => event.preventDefault()} onDrop={dropOnRoot}>
-            <Row active={activeFolder === UNFILED}>
-              <span className="w-4 shrink-0" aria-hidden="true" />
+            <Row active={activeFolder === UNFILED} flat={iconOnly}>
+              {!iconOnly && <span className="w-4 shrink-0" aria-hidden="true" />}
               <button
                 type="button"
                 onClick={() => onSelect(activeFolder === UNFILED ? "" : UNFILED)}
                 aria-pressed={activeFolder === UNFILED}
-                className="flex-1 min-w-0 text-start truncate"
+                className={
+                  iconOnly
+                    ? "flex flex-1 min-w-0 items-center justify-center truncate"
+                    : "flex-1 min-w-0 text-start truncate"
+                }
+                aria-label={iconOnly ? t("folderTree.noFolder") : undefined}
+                title={iconOnly ? t("folderTree.noFolder") : undefined}
               >
-                {t("folderTree.noFolder")}
+                {iconOnly ? <FolderIcon size={18} /> : t("folderTree.noFolder")}
               </button>
-              <span
-                className={`ui-tree-count ${
-                  activeFolder === UNFILED ? "ui-tree-count--active" : ""
-                }`}
-              >
-                {t.count(unfiled)}
-              </span>
+              {!iconOnly && (
+                <span
+                  className={`ui-tree-count ${
+                    activeFolder === UNFILED ? "ui-tree-count--active" : ""
+                  }`}
+                >
+                  {t.count(unfiled)}
+                </span>
+              )}
             </Row>
           </li>
         )}

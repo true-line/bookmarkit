@@ -33,6 +33,11 @@ The project is built with Vite, styled with Tailwind CSS, and designed for flexi
   - A maintenance footer with **Check Links**, **Remove Duplicates**,
     **Import / Export** and **Options** — the same actions and dialogs as the
     header's buttons, in the rail and in the drawer alike
+  - A collapse toggle that folds the rail to a 64px mini rail — icon rows that
+    name themselves on hover, the folder tree and the maintenance footer among
+    them — folding the workspace, header and toast dock inward with it. The
+    fold persists across sessions and expanding restores the full rail; the
+    drawer on narrower windows never collapses
 - Semantic search
   - Finds “that article about vector databases” even when none of those words are
     in the bookmark, and keeps the exact matches at the top

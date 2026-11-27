@@ -376,6 +376,23 @@ Two boundaries are worth keeping straight:
   is open; choosing a view or a folder from it closes it. Its width is the
   rail's, capped at 85vw. Under 40rem every control is a 44px target whatever
   the pointer reports, and the list is one column in every view mode.
+- **The rail folds (#346).** A toggle in the brand header (`aria-expanded`,
+  `aria-controls="workspace-sidebar"`) folds the rail to the mockup's mini
+  rail. `useSidebarCollapsed` persists the preference (`bm_sidebar_collapsed`,
+  read before the first paint like the view mode is), BookmarkApp stamps
+  `data-sidebar-collapsed` on the shell, and one CSS variable re-pointed —
+  `--app-sidebar-width: 4rem` — moves the rail, the shell's padding and the
+  fixed header and toast dock in the same step, the width animating on the
+  surface-enter motion under the global reduced-motion rules. Folded, the
+  prose is unmounted, not hidden: each row keeps its name on `aria-label` and
+  `title` (label and count, as the mockup titles it), the saved views fold
+  away whole, and `FolderTree`'s `iconOnly` reading flattens the tree into
+  named icon rows — no carets, no indent, every folder visible, selection and
+  drops still live. The drawer never carries the flag: collapsing is the
+  rail's alone, and the preference only ever speaks where the rail exists.
+  The checked-in mockups carry the state pair (`bookmarkit_manager`,
+  `bookmarkit_manager_sidebar_collapsed`), ported from the design export with
+  the recorded #339 corrections kept.
 - **The shell's rows below `lg` (#299).** The header's next row is the compact
   filter row (`MobileFilterRow`): the rating filter, the date quick sort, and
   the select-mode toggle. It owns rating and sort below `lg` — `FilterBar` is
