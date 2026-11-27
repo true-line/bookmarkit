@@ -312,3 +312,15 @@ export function CloseIcon({ size = 20 }) {
     </svg>
   );
 }
+
+/** The sheet app bar's back arrow (arrow_back) — the narrow sheets' way out.
+ *  The options and import/export sheets draw from the shared set (#293); the
+ *  older sheet twins still carry the same glyph inline. */
+export function BackIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}

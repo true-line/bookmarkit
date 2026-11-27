@@ -91,7 +91,9 @@ const ImportConfirmCard = ({
           marginBlockStart: "var(--ui-space-gutter-md)",
         }}
       >
-        <label style={radioRow}>
+        {/* #293: the choice rows are touch targets too — the coarse-pointer
+            floor rides the row, as it does on the options rows. */}
+        <label style={radioRow} className="ui-settings-row">
           <input
             type="checkbox"
             checked={skipExisting}
@@ -115,7 +117,7 @@ const ImportConfirmCard = ({
             set: () => onReplaceAllChange(true),
           },
         ].map(({ label, checked, set }) => (
-          <label key={label} style={radioRow}>
+          <label key={label} style={radioRow} className="ui-settings-row">
             <input
               type="radio"
               name="import-mode"

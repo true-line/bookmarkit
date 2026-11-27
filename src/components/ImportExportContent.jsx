@@ -1,13 +1,17 @@
-import React, { useMemo, useRef, useState } from "react";
-import { generateNetscapeHtml, parseNetscapeHtml } from "../utils/netscapeBookmarks.js";
+import React, { useId, useMemo, useRef, useState } from "react";
+import { parseNetscapeHtml } from "../utils/netscapeBookmarks.js";
 import { readImportedBookmarks } from "../utils/importedBookmarks.js";
-import { generateMarkdownLinks, parseMarkdownLinks } from "../utils/markdownBookmarks.js";
+import { parseMarkdownLinks } from "../utils/markdownBookmarks.js";
 import { filterDuplicateImports } from "../utils/duplicates.js";
 import { isSafeHttpUrl } from "../utils/url.js";
-import { Button, Modal, Tag, Typography } from "../design-system/index.js";
+import { Button, Modal } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
+import { useFocusTrap } from "../hooks/useFocusTrap.js";
+import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 import { ImportPanel } from "./ImportPanel.jsx";
+import ExportPanel from "./ExportPanel.jsx";
 import ImportConfirmCard from "./ImportConfirmCard.jsx";
+import ImportExportSheet from "./ImportExportSheet.jsx";
 
 // Migrated to the unified design system (#247): the import/export panel runs
 // as the modal-standard dialog itself (title plus the mockup's description
@@ -35,9 +39,10 @@ import ImportConfirmCard from "./ImportConfirmCard.jsx";
 // .ui-textarea) alongside the help screen's shortcut rows. The tab keyboard
 // contract is the legacy Tabs' exactly — roving tabindex and the
 // Arrow/Home/End rotations — carried over rather than re-decided. The
-// per-format import body lives in ImportPanel.jsx.
+// per-format bodies live in ImportPanel.jsx (import) and ExportPanel.jsx
+// (export), and the narrow sheet chrome in ImportExportSheet.jsx.
 
-// UX-03: Memoize JSON/HTML export strings and data URIs to prevent recomputing on every render.
+// UX-03: the export serializations are memoized in ExportPanel.jsx.
 // UX-04: Add confirmation step before import with append vs replace option.
 
 // Tab labels are catalogue keys, resolved with t() at render time.
@@ -47,30 +52,6 @@ const TABS = [
   { value: "import-html", label: "importExport.importHtmlTab" },
   { value: "import-markdown", label: "importExport.importMarkdownTab" },
 ];
-
-// The export buttons' download/code glyphs, per the mockup's icons.
-const ICON_PATHS = {
-  download:
-    "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-  code: "M16 18l6-6-6-6M8 6l-6 6 6 6",
-};
-
-function IoIcon({ path }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path} />
-    </svg>
-  );
-}
-
-const mutedText = { margin: 0, color: "var(--ui-on-surface-variant)" };
 
 const ImportExportContent = ({
   bookmarks,
@@ -121,25 +102,6 @@ const ImportExportContent = ({
       activateTabAt(TABS.length - 1);
     }
   };
-
-  // UX-03: Memoize expensive serializations so they run at most once per bookmarks change
-  const jsonExport = useMemo(() => JSON.stringify(bookmarks, null, 2), [bookmarks]);
-
-  const htmlExport = useMemo(() => generateNetscapeHtml(bookmarks), [bookmarks]);
-  const markdownExport = useMemo(() => generateMarkdownLinks(bookmarks), [bookmarks]);
-  // UX-03: Memoize data URIs for download links
-  const jsonDataUri = useMemo(
-    () => `data:application/json;charset=utf-8,${encodeURIComponent(jsonExport)}`,
-    [jsonExport]
-  );
-  const htmlDataUri = useMemo(
-    () => `data:text/html;charset=utf-8,${encodeURIComponent(htmlExport)}`,
-    [htmlExport]
-  );
-  const markdownDataUri = useMemo(
-    () => `data:text/markdown;charset=utf-8,${encodeURIComponent(markdownExport)}`,
-    [markdownExport]
-  );
 
   /**
    * #25: Validate before confirming, not after. The array's raw length used to be
@@ -285,6 +247,119 @@ const ImportExportContent = ({
     setSkipExisting(true);
   };
 
+  // #293: below `lg` the panel is the mockup's full-page sheet, not the
+  // centered dialog — same keyboard contract (the shared focus trap, Escape
+  // through the close guard), different chrome. The viewport hook reads
+  // before first paint, so the right composition mounts from the start; the
+  // trap only arms for the sheet, the Modal brings its own. The sheet has no
+  // footer: the mockup draws none, and the back arrow is the way out.
+  const isDialogViewport = useSidebarViewport();
+  const sheetRef = useRef(null);
+  useFocusTrap(sheetRef, !isDialogViewport);
+  const sheetTitleId = useId();
+
+  // The panel's body: one reading for both chromes. The confirmation step
+  // (UX-04) replaces the tabs while it is staged.
+  const content =
+    pendingImport && effectiveImport ? (
+      <ImportConfirmCard
+        fileName={pendingImport.fileName}
+        count={effectiveImport.count}
+        skippedCount={effectiveImport.skippedCount}
+        duplicateCount={effectiveImport.duplicateCount}
+        skipExisting={skipExisting}
+        onSkipExistingChange={setSkipExisting}
+        replaceAll={replaceAll}
+        onReplaceAllChange={setReplaceAll}
+        onConfirm={executeImport}
+        onCancel={cancelImport}
+      />
+    ) : (
+      <div className="grid gap-4">
+        <div role="tablist" aria-label={t("importExport.tablistAria")} className="ui-tabs">
+          {TABS.map((tab, index) => {
+            const selected = tab.value === activeTab;
+            return (
+              <button
+                key={tab.value}
+                ref={(node) => {
+                  tabRefs.current[index] = node;
+                }}
+                type="button"
+                role="tab"
+                id={`io-tab-${tab.value}`}
+                aria-selected={selected}
+                aria-controls={`io-panel-${tab.value}`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setActiveTab(tab.value)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
+                className="ui-tab"
+              >
+                {t(tab.label)}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeTab === "export" && <ExportPanel bookmarks={bookmarks} />}
+
+        {activeTab !== "export" && (
+          <ImportPanel
+            format={activeTab}
+            text={
+              activeTab === "import-json"
+                ? importJsonText
+                : activeTab === "import-html"
+                  ? importHtmlText
+                  : importMarkdownText
+            }
+            onTextChange={(e) => {
+              if (activeTab === "import-json") setImportJsonText(e.target.value);
+              else if (activeTab === "import-html") setImportHtmlText(e.target.value);
+              else setImportMarkdownText(e.target.value);
+            }}
+            onImport={
+              activeTab === "import-json"
+                ? requestJsonImport
+                : activeTab === "import-html"
+                  ? requestHtmlImport
+                  : requestMarkdownImport
+            }
+            isParsing={activeTab === "import-json" && isParsing}
+            onFileText={(text, fileName) => {
+              if (text === null) return;
+              if (activeTab === "import-json") stageJsonImport(text, fileName);
+              else if (activeTab === "import-html") stageHtmlImport(text, fileName);
+              else stageMarkdownImport(text, fileName);
+            }}
+            onFileError={() =>
+              showMessage(
+                activeTab === "import-json"
+                  ? t("importExport.jsonFileError")
+                  : activeTab === "import-html"
+                    ? t("importExport.htmlFileError")
+                    : t("importExport.mdFileError"),
+                "error"
+              )
+            }
+          />
+        )}
+      </div>
+    );
+
+  if (!isDialogViewport) {
+    return (
+      <ImportExportSheet
+        sheetRef={sheetRef}
+        sheetTitleId={sheetTitleId}
+        count={bookmarks.length}
+        onClose={onClose}
+      >
+        {content}
+      </ImportExportSheet>
+    );
+  }
+
   return (
     <Modal
       title={t("importExport.title")}
@@ -297,176 +372,7 @@ const ImportExportContent = ({
         </Button>
       }
     >
-      {/* UX-04: Confirmation step shown instead of the normal tabs UI */}
-      {pendingImport && effectiveImport ? (
-        <ImportConfirmCard
-          fileName={pendingImport.fileName}
-          count={effectiveImport.count}
-          skippedCount={effectiveImport.skippedCount}
-          duplicateCount={effectiveImport.duplicateCount}
-          skipExisting={skipExisting}
-          onSkipExistingChange={setSkipExisting}
-          replaceAll={replaceAll}
-          onReplaceAllChange={setReplaceAll}
-          onConfirm={executeImport}
-          onCancel={cancelImport}
-        />
-      ) : (
-        <div className="grid gap-4">
-          <div role="tablist" aria-label={t("importExport.tablistAria")} className="ui-tabs">
-            {TABS.map((tab, index) => {
-              const selected = tab.value === activeTab;
-              return (
-                <button
-                  key={tab.value}
-                  ref={(node) => {
-                    tabRefs.current[index] = node;
-                  }}
-                  type="button"
-                  role="tab"
-                  id={`io-tab-${tab.value}`}
-                  aria-selected={selected}
-                  aria-controls={`io-panel-${tab.value}`}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => setActiveTab(tab.value)}
-                  onKeyDown={(event) => handleTabKeyDown(event, index)}
-                  className="ui-tab"
-                >
-                  {t(tab.label)}
-                </button>
-              );
-            })}
-          </div>
-
-          {activeTab === "export" && (
-            <div role="tabpanel" id="io-panel-export" aria-labelledby="io-tab-export">
-              <section aria-labelledby="io-export-heading" className="grid gap-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Typography
-                    variant="headline-sm"
-                    as="h3"
-                    id="io-export-heading"
-                    style={{ margin: 0 }}
-                  >
-                    {t("importExport.exportHeading")}
-                  </Typography>
-                  <Tag className="ui-numeric">
-                    {t("importExport.exportCount", { count: bookmarks.length })}
-                  </Tag>
-                </div>
-                <Typography variant="body-sm" as="p" style={mutedText}>
-                  {t("importExport.exportHint")}
-                </Typography>
-                <div className="ui-field">
-                  <label htmlFor="export-json">{t("importExport.jsonExportLabel")}</label>
-                  <textarea
-                    id="export-json"
-                    readOnly
-                    value={jsonExport}
-                    className="ui-textarea ui-textarea--mono"
-                    rows={8}
-                  />
-                </div>
-                {/* Download needs the anchor's native download attribute, so the
-                    link wears the ui-button recipe directly — the Button component
-                    can only render a real <button>. */}
-                <div>
-                  <a
-                    href={jsonDataUri}
-                    download="bookmarks.json"
-                    className="ui-button ui-button--primary"
-                  >
-                    <IoIcon path={ICON_PATHS.download} />
-                    {t("importExport.exportJson")}
-                  </a>
-                </div>
-                <div className="ui-field">
-                  <label htmlFor="export-html">{t("importExport.htmlExportLabel")}</label>
-                  <textarea
-                    id="export-html"
-                    readOnly
-                    value={htmlExport}
-                    className="ui-textarea ui-textarea--mono"
-                    rows={8}
-                  />
-                </div>
-                <div>
-                  <a
-                    href={htmlDataUri}
-                    download="bookmarks.html"
-                    className="ui-button ui-button--secondary"
-                  >
-                    <IoIcon path={ICON_PATHS.code} />
-                    {t("importExport.exportHtml")}
-                  </a>
-                </div>
-                <div className="ui-field">
-                  <label htmlFor="export-md">{t("importExport.markdownExportLabel")}</label>
-                  <textarea
-                    id="export-md"
-                    readOnly
-                    value={markdownExport}
-                    className="ui-textarea ui-textarea--mono"
-                    rows={8}
-                  />
-                </div>
-                <div>
-                  <a
-                    href={markdownDataUri}
-                    download="bookmarks.md"
-                    className="ui-button ui-button--secondary"
-                  >
-                    <IoIcon path={ICON_PATHS.download} />
-                    {t("importExport.exportMarkdown")}
-                  </a>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {activeTab !== "export" && (
-            <ImportPanel
-              format={activeTab}
-              text={
-                activeTab === "import-json"
-                  ? importJsonText
-                  : activeTab === "import-html"
-                    ? importHtmlText
-                    : importMarkdownText
-              }
-              onTextChange={(e) => {
-                if (activeTab === "import-json") setImportJsonText(e.target.value);
-                else if (activeTab === "import-html") setImportHtmlText(e.target.value);
-                else setImportMarkdownText(e.target.value);
-              }}
-              onImport={
-                activeTab === "import-json"
-                  ? requestJsonImport
-                  : activeTab === "import-html"
-                    ? requestHtmlImport
-                    : requestMarkdownImport
-              }
-              isParsing={activeTab === "import-json" && isParsing}
-              onFileText={(text, fileName) => {
-                if (text === null) return;
-                if (activeTab === "import-json") stageJsonImport(text, fileName);
-                else if (activeTab === "import-html") stageHtmlImport(text, fileName);
-                else stageMarkdownImport(text, fileName);
-              }}
-              onFileError={() =>
-                showMessage(
-                  activeTab === "import-json"
-                    ? t("importExport.jsonFileError")
-                    : activeTab === "import-html"
-                      ? t("importExport.htmlFileError")
-                      : t("importExport.mdFileError"),
-                  "error"
-                )
-              }
-            />
-          )}
-        </div>
-      )}
+      {content}
     </Modal>
   );
 };

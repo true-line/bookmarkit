@@ -1,7 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { LLM_PROVIDERS, createLLM, isProviderReady } from "../llm/index.js";
 import { useDebounce } from "../hooks/useDebounce.js";
+import { useFocusTrap } from "../hooks/useFocusTrap.js";
+import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
 import KeyEncryptionSection from "./KeyEncryptionSection.jsx";
+import { BackIcon } from "./icons.jsx";
 import { Button, IconButton, InputField, Modal, Typography } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
 import { useLocale } from "../i18n/LocaleProvider.js";
@@ -21,6 +24,16 @@ import { APP_LICENSE, APP_VERSION, LICENSES_URL, PRIVACY_POLICY_URL } from "../v
 // exits, destructive clears the API key, tertiary drives the model-list (AI)
 // action, secondary takes the discards. Provider model lists, key management
 // and encryption flows are unchanged — presentation only.
+//
+// #293: settings draft; they no longer save as they are typed. The modal
+// holds a draft of everything it edits (provider, key and endpoint, model,
+// temperature, theme, language, the four toggles) — Done commits it through
+// the same write path as before, Reset puts it back the way the dialog found
+// it, and every other way out (close, Escape, the sheet's back arrow)
+// discards it. Theme uploads and the encryption operations stay immediate:
+// they are actions, not settings. Below `lg` the dialog is the mobile
+// mockup's full-page sheet (#300's composition) — a back bar, the same body
+// with full-width fields, and the sticky Reset/Done footer.
 
 // ARCH-04: Module-level cache for listModels() results, keyed by "provider|apiKey|baseUrl".
 // A 5-minute TTL prevents hammering the models endpoint when the modal is repeatedly opened.
@@ -191,6 +204,21 @@ const baseUrlStatus = (baseUrlError) =>
     </span>
   ) : null;
 
+// #293: fold the live settings into a draft-or-snapshot, skipping the keys
+// the user has touched (those belong to the draft alone) and the keys
+// already equal. Returns the same object when nothing moves, so the effect
+// that calls it settles. `providerOptions` is itself a patch bag, so it
+// clones on the way in.
+const syncUntouched = (snapshot, dirtyKeys, source) => {
+  let next = null;
+  for (const [key, value] of Object.entries(source)) {
+    if (dirtyKeys.has(key) || snapshot[key] === value) continue;
+    if (!next) next = { ...snapshot };
+    next[key] = key === "providerOptions" ? { ...value } : value;
+  }
+  return next ?? snapshot;
+};
+
 // Options modal that displays and allows changing the current LLM provider and its options
 const OptionsModal = ({
   provider,
@@ -228,11 +256,95 @@ const OptionsModal = ({
   const [chosenFileName, setChosenFileName] = useState(null);
   const fileInputRef = useRef(null);
 
-  const debouncedApiKey = useDebounce(providerOptions.apiKey || "", 600);
-  const debouncedBaseUrl = useDebounce(providerOptions.baseUrl || "", 600);
+  // #293: the draft. One snapshot of the at-open settings; every field edits
+  // the draft, Done replays it through the write path, Reset restores the
+  // snapshot, and any other way out simply drops it. The modal mounts fresh
+  // on each open, so the two initializers are the at-open state. A key the
+  // user has not touched keeps following its source — settings can still be
+  // arriving after open (the stored locale loads a tick after mount) — while
+  // a touched key belongs to the draft alone until Reset, so a live prop
+  // change behind the dialog (an uploaded theme joining the library) never
+  // clobbers what is staged.
+  const isDialogViewport = useSidebarViewport();
+  const sheetRef = useRef(null);
+  useFocusTrap(sheetRef, !isDialogViewport);
+  const sheetTitleId = useId();
+  const dirtyKeys = useRef(new Set());
+  const [openValues, setOpenValues] = useState(() => ({
+    provider,
+    providerOptions: { ...providerOptions },
+    currentTheme,
+    localeChoice,
+    reduceMotion,
+    effects,
+    remoteFavicons,
+    webMcpEnabled,
+  }));
+  const [draft, setDraft] = useState(() => ({
+    provider,
+    providerOptions: { ...providerOptions },
+    currentTheme,
+    localeChoice,
+    reduceMotion,
+    effects,
+    remoteFavicons,
+    webMcpEnabled,
+  }));
+  const patchDraft = (patch) => {
+    for (const key of Object.keys(patch)) dirtyKeys.current.add(key);
+    setDraft((prev) => ({ ...prev, ...patch }));
+  };
+  const patchDraftOptions = (patch) => {
+    dirtyKeys.current.add("providerOptions");
+    setDraft((prev) => ({ ...prev, providerOptions: { ...prev.providerOptions, ...patch } }));
+  };
+  const resetDraft = () => {
+    dirtyKeys.current.clear();
+    setDraft({ ...openValues, providerOptions: { ...openValues.providerOptions } });
+  };
+  // The untouched-key tracking, both snapshots at once. Runs only when a
+  // source value changes; fold-in returns the same object when nothing
+  // moves, so it settles.
+  useEffect(() => {
+    const source = {
+      provider,
+      providerOptions,
+      currentTheme,
+      localeChoice,
+      reduceMotion,
+      effects,
+      remoteFavicons,
+      webMcpEnabled,
+    };
+    setOpenValues((prev) => syncUntouched(prev, dirtyKeys.current, source));
+    setDraft((prev) => syncUntouched(prev, dirtyKeys.current, source));
+  }, [
+    provider,
+    providerOptions,
+    currentTheme,
+    localeChoice,
+    reduceMotion,
+    effects,
+    remoteFavicons,
+    webMcpEnabled,
+  ]);
+  const commitDraft = () => {
+    onChange?.(draft.provider);
+    onChangeOptions?.(draft.providerOptions);
+    onThemeChange?.(draft.currentTheme);
+    setLocale(draft.localeChoice);
+    onReduceMotionChange?.(draft.reduceMotion);
+    onEffectsChange?.(draft.effects);
+    onRemoteFaviconsChange?.(draft.remoteFavicons);
+    onWebMcpEnabledChange?.(draft.webMcpEnabled);
+    onClose?.();
+  };
+
+  const debouncedApiKey = useDebounce(draft.providerOptions.apiKey || "", 600);
+  const debouncedBaseUrl = useDebounce(draft.providerOptions.baseUrl || "", 600);
   // A locked session reads no key value, so the clear affordance follows the
   // same visibility as the field's contents.
-  const hasApiKey = Boolean(providerOptions.apiKey);
+  const hasApiKey = Boolean(draft.providerOptions.apiKey);
 
   const isValidBaseUrl = (url) => {
     if (!url) return true; // empty = use provider default, always OK
@@ -249,14 +361,16 @@ const OptionsModal = ({
     // endpoint refuses it (Gemini answers 403) — so opening Options must not
     // read as an error. Discovery waits for the key; the local servers stay
     // always ready because their listing needs none.
-    if (!isProviderReady(provider, { apiKey: providerOptions.apiKey || "" })) {
+    if (!isProviderReady(draft.provider, { apiKey: draft.providerOptions.apiKey || "" })) {
       setModels([]);
       setModelsError("");
       return;
     }
 
     // ARCH-04: Check module-level cache before making a network request
-    const cacheKey = `${provider}|${providerOptions.apiKey || ""}|${providerOptions.baseUrl || ""}`;
+    const cacheKey = `${draft.provider}|${draft.providerOptions.apiKey || ""}|${
+      draft.providerOptions.baseUrl || ""
+    }`;
     if (!forceRefresh) {
       const cached = _modelsCache[cacheKey];
       if (cached && Date.now() < cached.expiresAt) {
@@ -269,11 +383,11 @@ const OptionsModal = ({
     setModelsError("");
     try {
       const opts = {
-        apiKey: providerOptions.apiKey || "",
-        model: providerOptions.model || "",
-        baseUrl: providerOptions.baseUrl || undefined,
+        apiKey: draft.providerOptions.apiKey || "",
+        model: draft.providerOptions.model || "",
+        baseUrl: draft.providerOptions.baseUrl || undefined,
       };
-      const llm = createLLM(provider, opts);
+      const llm = createLLM(draft.provider, opts);
       const list = (await llm.listModels?.()) || [];
       const models = Array.isArray(list) ? list : [];
       // Store in module-level cache with TTL
@@ -314,12 +428,595 @@ const OptionsModal = ({
   };
 
   const hosted =
-    provider === LLM_PROVIDERS.GEMINI ||
-    provider === LLM_PROVIDERS.OPENAI ||
-    provider === LLM_PROVIDERS.GROK;
-  const local = provider === LLM_PROVIDERS.OLLAMA || provider === LLM_PROVIDERS.LMSTUDIO;
-  const modelChange = (e) => onChangeOptions?.({ model: e.target.value });
-  const clearApiKey = () => onChangeOptions?.({ apiKey: "" });
+    draft.provider === LLM_PROVIDERS.GEMINI ||
+    draft.provider === LLM_PROVIDERS.OPENAI ||
+    draft.provider === LLM_PROVIDERS.GROK;
+  const local =
+    draft.provider === LLM_PROVIDERS.OLLAMA || draft.provider === LLM_PROVIDERS.LMSTUDIO;
+  const modelChange = (e) => patchDraftOptions({ model: e.target.value });
+  // Clearing the stored key is an action, not a setting (#293): it wipes the
+  // store now — the destructive path it has always been — and the staged
+  // field with it, so Done cannot resurrect what Clear removed.
+  const clearApiKey = () => {
+    onChangeOptions?.({ apiKey: "" });
+    patchDraftOptions({ apiKey: "" });
+  };
+
+  // The settings body: one reading for both chromes. Every control edits the
+  // draft (#293), and the pill reads the draft too — Done is what makes it
+  // true.
+  const body = (
+    <div style={{ display: "grid", gap: "var(--ui-space-gutter-lg)" }}>
+      {/* Read-only status: shows what provider + model will actually be
+          used once Done commits, as the options-settings screen's
+          active-provider pill. */}
+      <div>
+        <span className="ui-pill">
+          <span
+            aria-hidden="true"
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "var(--ui-radius-full)",
+              background: "var(--ui-success)",
+            }}
+          />
+          {draft.providerOptions.model
+            ? t("options.activeProviderModel", {
+                provider: draft.provider || t("common.none"),
+                model: draft.providerOptions.model,
+              })
+            : t("options.activeProvider", { provider: draft.provider || t("common.none") })}
+        </span>
+      </div>
+
+      <section style={sectionGap} aria-labelledby="options-provider-heading">
+        <div>
+          <Typography
+            variant="headline-sm"
+            as="h3"
+            id="options-provider-heading"
+            style={headingStyle}
+          >
+            {t("options.providerHeading")}
+          </Typography>
+          <Typography variant="body-sm" style={sublineStyle}>
+            {t("options.providerSubline")}
+          </Typography>
+        </div>
+
+        {/* #293: the dialog's two-column row; the sheet runs the same fields
+            full width (`.ui-sheet--options .ui-options-grid`). */}
+        <div className="ui-options-grid grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <TokenSelect
+            label={t("options.llmProviderLabel")}
+            id="llm-provider"
+            value={draft.provider}
+            onChange={(e) => patchDraft({ provider: e.target.value })}
+            options={providerEntries}
+          />
+          {/* Provider-specific key field, beside the provider select as on
+              the mockup's two-column row. */}
+          {hosted && (
+            <ApiKeyField
+              label={t("options.apiKeyLabel")}
+              id="api-key"
+              placeholder={
+                encryption.locked ? t("options.lockedPlaceholder") : t("options.enterApiKey")
+              }
+              value={draft.providerOptions.apiKey || ""}
+              disabled={encryption.locked}
+              onChange={(e) => patchDraftOptions({ apiKey: e.target.value })}
+              hasApiKey={hasApiKey}
+              onClear={clearApiKey}
+            />
+          )}
+          {local && (
+            <ApiKeyField
+              label={t("options.apiKeyOptionalLabel")}
+              id="local-api-key"
+              placeholder={
+                encryption.locked
+                  ? t("options.lockedPlaceholder")
+                  : t("options.onlyIfServerRequires")
+              }
+              value={draft.providerOptions.apiKey || ""}
+              disabled={encryption.locked}
+              onChange={(e) => patchDraftOptions({ apiKey: e.target.value })}
+              hasApiKey={hasApiKey}
+              onClear={clearApiKey}
+              hint={t("options.localKeyHint")}
+            />
+          )}
+        </div>
+
+        {hosted && (
+          <>
+            <ModelField
+              id="model"
+              value={draft.providerOptions.model}
+              onChange={modelChange}
+              models={models}
+              error={modelsError}
+              loading={isLoadingModels}
+              onRefresh={() => fetchModels(true)}
+            />
+            {(draft.provider === LLM_PROVIDERS.OPENAI || draft.provider === LLM_PROVIDERS.GROK) && (
+              <div className="ui-field">
+                <InputField
+                  label={t("options.baseUrlOptionalLabel")}
+                  id="base-url"
+                  type="text"
+                  dir="ltr"
+                  mono
+                  placeholder={
+                    draft.provider === LLM_PROVIDERS.OPENAI
+                      ? "https://api.openai.com/v1"
+                      : "https://api.x.ai/v1"
+                  }
+                  value={draft.providerOptions.baseUrl || ""}
+                  onChange={(e) => patchDraftOptions({ baseUrl: e.target.value })}
+                  error={baseUrlError || undefined}
+                />
+                {baseUrlStatus(baseUrlError)}
+              </div>
+            )}
+          </>
+        )}
+        {local && (
+          <>
+            <ModelField
+              id="ollama-model"
+              value={draft.providerOptions.model}
+              onChange={modelChange}
+              models={models}
+              error={modelsError}
+              loading={isLoadingModels}
+              onRefresh={() => fetchModels(true)}
+            />
+            <div className="ui-field">
+              <InputField
+                label={t("options.baseUrlLabel")}
+                id="ollama-url"
+                type="text"
+                dir="ltr"
+                mono
+                placeholder={
+                  draft.provider === LLM_PROVIDERS.OLLAMA
+                    ? "http://localhost:11434"
+                    : "http://localhost:1234"
+                }
+                value={draft.providerOptions.baseUrl || ""}
+                onChange={(e) => patchDraftOptions({ baseUrl: e.target.value })}
+                error={baseUrlError || undefined}
+              />
+              {baseUrlStatus(baseUrlError)}
+            </div>
+          </>
+        )}
+        {/* Temperature */}
+        {(() => {
+          const supportsTemp = modelSupportsTemperature(
+            draft.provider,
+            draft.providerOptions.model
+          );
+          const isEnabled = supportsTemp && !!draft.providerOptions.enableTemperature;
+          const tempValue =
+            typeof draft.providerOptions.temperature === "number"
+              ? draft.providerOptions.temperature
+              : 1;
+          return (
+            <div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="enable-temperature"
+                  checked={isEnabled}
+                  disabled={!supportsTemp}
+                  onChange={(e) => patchDraftOptions({ enableTemperature: e.target.checked })}
+                  className="cursor-pointer disabled:cursor-not-allowed"
+                  style={{ accentColor: "var(--ui-primary-container)" }}
+                />
+                <label
+                  htmlFor="enable-temperature"
+                  className="ui-type-label-md cursor-pointer"
+                  style={{
+                    color: supportsTemp ? "var(--ui-on-surface)" : "var(--ui-on-surface-variant)",
+                  }}
+                >
+                  {t("options.setTemperature")}
+                </label>
+                {!supportsTemp && (
+                  <Typography variant="body-sm" as="span" style={hintStyle}>
+                    {t("options.temperatureUnsupported")}
+                  </Typography>
+                )}
+                {isEnabled && (
+                  <span className="ui-numeric ui-type-body-md ms-auto">{tempValue.toFixed(1)}</span>
+                )}
+              </div>
+              <Typography variant="body-sm" style={{ margin: "8px 0 0", ...hintStyle }}>
+                {t("options.temperatureHint")}
+              </Typography>
+              {isEnabled && (
+                <div className="mt-2 flex items-center gap-3">
+                  <Typography variant="body-sm" as="span" style={hintStyle}>
+                    0
+                  </Typography>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.1"
+                    value={tempValue}
+                    onChange={(e) => patchDraftOptions({ temperature: parseFloat(e.target.value) })}
+                    className="flex-1"
+                    style={{ accentColor: "var(--ui-primary-container)" }}
+                    aria-label={t("options.temperatureAria")}
+                  />
+                  <Typography variant="body-sm" as="span" style={hintStyle}>
+                    2
+                  </Typography>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </section>
+      {/* #29: encryption controls — shown for every provider so a locked key
+          can always be unlocked, even on providers that need no key
+          (ollama/lmstudio, whose optional proxy key is protected too). The
+          operations run live: they are actions, not settings. */}
+      <KeyEncryptionSection
+        encryption={encryption}
+        onEnableEncryption={onEnableEncryption}
+        onDisableEncryption={onDisableEncryption}
+        onUnlock={onUnlock}
+      />
+      {/* Theme settings */}
+      <section style={sectionDivided} aria-labelledby="options-appearance-heading">
+        <Typography
+          variant="headline-sm"
+          as="h3"
+          id="options-appearance-heading"
+          style={headingStyle}
+        >
+          {t("options.appearanceHeading")}
+        </Typography>
+        {/* #290: the mockups' built-in entries first — "System default"
+            resolves through the OS scheme; the palettes carry the mobile
+            mockup's "Scheme (Palette)" labels — then uploaded themes by
+            their file names. */}
+        <TokenSelect
+          label={t("options.themeLabel")}
+          id="theme-select"
+          value={draft.currentTheme}
+          onChange={(e) => patchDraft({ currentTheme: e.target.value })}
+          options={[
+            { value: SYSTEM_THEME, label: t("options.themeSystemDefault") },
+            { value: "default", label: t("options.themeLightAlabaster") },
+            { value: "dark", label: t("options.themeDarkSlate") },
+            { value: "high-contrast", label: t("options.themeHighContrast") },
+            ...Object.keys(themes)
+              .filter((name) => !BUILTIN_THEME_KEYS.includes(name))
+              .map((name) => ({ value: name, label: name })),
+          ]}
+          hint={t("options.themeHint")}
+        />
+        {/* #298: the interface language, the mockup's Appearance & i18n
+            row. "System default" defers to the browser's own preference;
+            the other entries are the locales the catalogue ships. The choice
+            is part of the draft (#293) — Done applies it at the document
+            root: copy, number formats and the dir the layout mirrors by. */}
+        <TokenSelect
+          label={t("options.languageLabel")}
+          id="language-select"
+          value={draft.localeChoice}
+          onChange={(e) => patchDraft({ localeChoice: e.target.value })}
+          options={[
+            { value: SYSTEM_LOCALE, label: t("options.languageSystemDefault") },
+            ...locales.map((locale) => ({ value: locale.code, label: locale.label })),
+          ]}
+          hint={t("options.languageHint")}
+        />
+        <div className="ui-field">
+          <div className="flex items-center justify-between gap-2">
+            <span className="ui-type-label-md">{t("options.themeUploadLabel")}</span>
+            <IconButton label={t("options.themeExample")} onClick={() => setShowExample(true)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 115.82 1c-.44.86-1.26 1.3-1.91 1.63-.51.26-.75.52-.75.87v.5" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </IconButton>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* The mockup's Choose File row: the visible button carries the
+                picker action; the native input stays the event source so
+                re-picking the same file keeps firing change (#25). The
+                upload itself stays immediate (#293) — it joins the library,
+                it sets nothing. */}
+            <Button intent="secondary" onClick={() => fileInputRef.current?.click()}>
+              {t("options.chooseFile")}
+            </Button>
+            {/* #290: the mockup's status span beside the picker — the
+                picked file's name, announced as a status since the upload
+                result also lands elsewhere. */}
+            <span
+              className="ui-type-body-sm"
+              style={{ color: "var(--ui-on-surface-variant)" }}
+              role="status"
+            >
+              {chosenFileName ?? t("options.noFileChosen")}
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,.yaml,.yml"
+              onChange={(e) => {
+                // #25: Clear the input so re-picking the same file after a
+                // rejected theme fires another change event.
+                const [file] = e.target.files;
+                e.target.value = "";
+                setChosenFileName(file ? file.name : null);
+                if (file) onThemeUpload?.(file);
+              }}
+              style={{ display: "none" }}
+            />
+          </div>
+          <Typography variant="body-sm" style={hintStyle}>
+            {t("options.themeFileHint")}
+          </Typography>
+        </div>
+        {/* #290: the mobile mockup's Reduce motion row. Checked forces the
+            transition collapse the OS media query provides; unchecked, the
+            OS setting alone decides. The attribute lands on the document
+            element via useTheme, so the popup follows too. */}
+        {/* #291: the row is the touch target under the coarse-pointer floor — the
+            label wraps the checkbox, so the floor rides on the row. */}
+        <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={Boolean(draft.reduceMotion)}
+            onChange={(e) => patchDraft({ reduceMotion: e.target.checked })}
+            className="mt-0.5"
+            style={{ accentColor: "var(--ui-primary-container)" }}
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="ui-type-label-md">{t("options.reduceMotionLabel")}</span>
+            <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+              {t("options.reduceMotionHint")}
+            </span>
+          </span>
+        </label>
+        {/* Decorative 3D effects: pure presentation, on by default, off in
+            one click. Nothing about the collection changes with them. */}
+        {/* #291: the row is the touch target under the coarse-pointer floor — the
+            label wraps the checkbox, so the floor rides on the row. */}
+        <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={draft.effects}
+            onChange={(e) => patchDraft({ effects: e.target.checked })}
+            className="mt-0.5"
+            style={{ accentColor: "var(--ui-primary-container)" }}
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="ui-type-label-md">{t("options.effectsLabel")}</span>
+            <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+              {t("options.effectsHint")}
+            </span>
+          </span>
+        </label>
+      </section>
+      {/* #39: favicons are a privacy decision, so the choice is explicit and off by default. */}
+      <section style={sectionDivided} aria-labelledby="options-privacy-heading">
+        <Typography variant="headline-sm" as="h3" id="options-privacy-heading" style={headingStyle}>
+          {t("options.privacyHeading")}
+        </Typography>
+        {/* #291: the row is the touch target under the coarse-pointer floor — the
+            label wraps the checkbox, so the floor rides on the row. */}
+        <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={draft.remoteFavicons}
+            onChange={(e) => patchDraft({ remoteFavicons: e.target.checked })}
+            className="mt-0.5"
+            style={{ accentColor: "var(--ui-primary-container)" }}
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="ui-type-label-md">{t("options.remoteFaviconsLabel")}</span>
+            <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+              {t("options.remoteFaviconsHint")}
+            </span>
+          </span>
+        </label>
+      </section>
+      {/* #212: agent access — who may read the collection is the user's
+          call, so like favicons it is a choice, made explicitly, and off
+          until made. */}
+      <section style={sectionDivided} aria-labelledby="options-agents-heading">
+        <Typography variant="headline-sm" as="h3" id="options-agents-heading" style={headingStyle}>
+          {t("options.agentAccessHeading")}
+        </Typography>
+        <label
+          className={`ui-settings-row flex items-start gap-3 ${
+            webMcpAvailable ? "cursor-pointer" : ""
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={draft.webMcpEnabled}
+            disabled={!webMcpAvailable}
+            onChange={(e) => patchDraft({ webMcpEnabled: e.target.checked })}
+            className="mt-0.5 disabled:cursor-not-allowed"
+            style={{ accentColor: "var(--ui-primary-container)" }}
+          />
+          <span className="flex flex-col gap-0.5">
+            <span
+              className="ui-type-label-md"
+              style={webMcpAvailable ? undefined : { color: "var(--ui-on-surface-variant)" }}
+            >
+              {t("options.webMcpLabel")}
+            </span>
+            <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
+              {webMcpAvailable ? t("options.webMcpHint") : t("options.webMcpUnavailable")}
+            </span>
+          </span>
+        </label>
+      </section>
+      {/* #292: the mockup's About, Privacy & Licensing section — version
+          and license beside the heading, a privacy subline aligned with
+          the README's "Privacy and storage" section, and the two links as
+          secondary anchors sharing the button recipe's classes (they open
+          public https pages in a new tab, which is the extension-allowed
+          way to leave the dialog). */}
+      <section style={sectionDivided} aria-labelledby="options-legal-heading">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Typography variant="headline-sm" as="h3" id="options-legal-heading" style={headingStyle}>
+            {t("options.aboutHeading")}
+          </Typography>
+          <span className="ui-url" dir="ltr" style={{ color: "var(--ui-on-surface-variant)" }}>
+            v{APP_VERSION} · {APP_LICENSE} License
+          </span>
+        </div>
+        <Typography variant="body-sm" style={hintStyle}>
+          {t("options.aboutBody")}
+        </Typography>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            className="ui-button ui-button--secondary"
+            href={PRIVACY_POLICY_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("options.privacyPolicy")}
+          </a>
+          <a
+            className="ui-button ui-button--secondary"
+            href={LICENSES_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("options.openSourceLicenses")}
+          </a>
+        </div>
+      </section>
+    </div>
+  );
+
+  // #293: the mockup's footer actions, shared by both chromes — Reset puts
+  // the draft back the way the dialog found it, Done commits it and closes.
+  const footerActions = (
+    <>
+      <Button
+        type="button"
+        intent="secondary"
+        onClick={resetDraft}
+        aria-label={t("options.resetAria")}
+      >
+        {t("options.reset")}
+      </Button>
+      <Button type="button" onClick={commitDraft}>
+        {t("options.done")}
+      </Button>
+    </>
+  );
+
+  const exampleDialog = showExample ? (
+    <Modal
+      title={t("options.themeExampleTitle")}
+      closeLabel={t("options.closeExample")}
+      onClose={() => setShowExample(false)}
+      footer={<Button onClick={() => setShowExample(false)}>{t("common.close")}</Button>}
+    >
+      <div style={{ display: "grid", gap: "var(--ui-space-gutter-md)" }}>
+        <Typography variant="body-md" style={{ margin: 0 }}>
+          {t("options.exampleIntro")}
+        </Typography>
+        <pre
+          style={{
+            margin: 0,
+            padding: "var(--ui-space-gutter-md)",
+            font: "var(--ui-type-mono-sm)",
+            background: "var(--ui-surface-container)",
+            border: "1px solid var(--ui-outline-variant)",
+            borderRadius: "var(--ui-radius)",
+            overflowX: "auto",
+            color: "var(--ui-on-surface)",
+          }}
+        >
+          {`{
+  "bgPrimary": "#1f2937",
+  "bgSecondary": "#111827",
+  "textPrimary": "#f9fafb",
+  "textSecondary": "#d1d5db",
+  "border": "#374151",
+  "accent": "#3b82f7",
+  "accentHover": "#2563eb"
+}`}
+        </pre>
+        <Typography variant="body-sm" style={hintStyle}>
+          {t("options.exampleFormatHint")}
+        </Typography>
+      </div>
+    </Modal>
+  ) : null;
+
+  // #293: below `lg` the dialog is the mockup's full-page sheet — a back
+  // bar, the same body with the fields run full width, and the sticky
+  // Reset/Done footer. Still a dialog to the keyboard: role, aria-modal,
+  // the shared focus trap and Escape behave as the Modal's do, and every
+  // route out but the footer's Done discards the draft.
+  if (!isDialogViewport) {
+    return (
+      <>
+        <div
+          ref={sheetRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={sheetTitleId}
+          tabIndex={-1}
+          className="ui-sheet ui-sheet--options"
+          onKeyDown={(event) => {
+            if (event.key !== "Escape") return;
+            // Like the dialog's panel: never let the app's shortcuts hear it.
+            event.stopPropagation();
+            onClose?.();
+          }}
+        >
+          <header className="ui-sheet-bar">
+            <button
+              type="button"
+              className="ui-icon-button"
+              aria-label={t("options.backAria")}
+              onClick={onClose}
+            >
+              <BackIcon />
+            </button>
+            <div className="ui-sheet-heading">
+              <h2 id={sheetTitleId}>{t("options.title")}</h2>
+              <p className="ui-sheet-subtitle">{t("options.sheetSubtitle")}</p>
+            </div>
+          </header>
+          <main className="ui-sheet-body">{body}</main>
+          <footer className="ui-sheet-footer">{footerActions}</footer>
+        </div>
+        {exampleDialog}
+      </>
+    );
+  }
 
   return (
     <>
@@ -336,529 +1033,13 @@ const OptionsModal = ({
             >
               {t("options.changesSave")}
             </Typography>
-            <Button onClick={onClose}>{t("options.done")}</Button>
+            {footerActions}
           </>
         }
       >
-        <div style={{ display: "grid", gap: "var(--ui-space-gutter-lg)" }}>
-          {/* Read-only status: shows what provider + model will actually be
-              used, as the options-settings screen's active-provider pill. */}
-          <div>
-            <span className="ui-pill">
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "var(--ui-radius-full)",
-                  background: "var(--ui-success)",
-                }}
-              />
-              {providerOptions.model
-                ? t("options.activeProviderModel", {
-                    provider: provider || t("common.none"),
-                    model: providerOptions.model,
-                  })
-                : t("options.activeProvider", { provider: provider || t("common.none") })}
-            </span>
-          </div>
-
-          <section style={sectionGap} aria-labelledby="options-provider-heading">
-            <div>
-              <Typography
-                variant="headline-sm"
-                as="h3"
-                id="options-provider-heading"
-                style={headingStyle}
-              >
-                {t("options.providerHeading")}
-              </Typography>
-              <Typography variant="body-sm" style={sublineStyle}>
-                {t("options.providerSubline")}
-              </Typography>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <TokenSelect
-                label={t("options.llmProviderLabel")}
-                id="llm-provider"
-                value={provider}
-                onChange={(e) => onChange?.(e.target.value)}
-                options={providerEntries}
-              />
-              {/* Provider-specific key field, beside the provider select as on
-                  the mockup's two-column row. */}
-              {hosted && (
-                <ApiKeyField
-                  label={t("options.apiKeyLabel")}
-                  id="api-key"
-                  placeholder={
-                    encryption.locked ? t("options.lockedPlaceholder") : t("options.enterApiKey")
-                  }
-                  value={providerOptions.apiKey || ""}
-                  disabled={encryption.locked}
-                  onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
-                  hasApiKey={hasApiKey}
-                  onClear={clearApiKey}
-                />
-              )}
-              {local && (
-                <ApiKeyField
-                  label={t("options.apiKeyOptionalLabel")}
-                  id="local-api-key"
-                  placeholder={
-                    encryption.locked
-                      ? t("options.lockedPlaceholder")
-                      : t("options.onlyIfServerRequires")
-                  }
-                  value={providerOptions.apiKey || ""}
-                  disabled={encryption.locked}
-                  onChange={(e) => onChangeOptions?.({ apiKey: e.target.value })}
-                  hasApiKey={hasApiKey}
-                  onClear={clearApiKey}
-                  hint={t("options.localKeyHint")}
-                />
-              )}
-            </div>
-
-            {hosted && (
-              <>
-                <ModelField
-                  id="model"
-                  value={providerOptions.model}
-                  onChange={modelChange}
-                  models={models}
-                  error={modelsError}
-                  loading={isLoadingModels}
-                  onRefresh={() => fetchModels(true)}
-                />
-                {(provider === LLM_PROVIDERS.OPENAI || provider === LLM_PROVIDERS.GROK) && (
-                  <div className="ui-field">
-                    <InputField
-                      label={t("options.baseUrlOptionalLabel")}
-                      id="base-url"
-                      type="text"
-                      dir="ltr"
-                      mono
-                      placeholder={
-                        provider === LLM_PROVIDERS.OPENAI
-                          ? "https://api.openai.com/v1"
-                          : "https://api.x.ai/v1"
-                      }
-                      value={providerOptions.baseUrl || ""}
-                      onChange={(e) => onChangeOptions?.({ baseUrl: e.target.value })}
-                      error={baseUrlError || undefined}
-                    />
-                    {baseUrlStatus(baseUrlError)}
-                  </div>
-                )}
-              </>
-            )}
-            {local && (
-              <>
-                <ModelField
-                  id="ollama-model"
-                  value={providerOptions.model}
-                  onChange={modelChange}
-                  models={models}
-                  error={modelsError}
-                  loading={isLoadingModels}
-                  onRefresh={() => fetchModels(true)}
-                />
-                <div className="ui-field">
-                  <InputField
-                    label={t("options.baseUrlLabel")}
-                    id="ollama-url"
-                    type="text"
-                    dir="ltr"
-                    mono
-                    placeholder={
-                      provider === LLM_PROVIDERS.OLLAMA
-                        ? "http://localhost:11434"
-                        : "http://localhost:1234"
-                    }
-                    value={providerOptions.baseUrl || ""}
-                    onChange={(e) => onChangeOptions?.({ baseUrl: e.target.value })}
-                    error={baseUrlError || undefined}
-                  />
-                  {baseUrlStatus(baseUrlError)}
-                </div>
-              </>
-            )}
-            {/* Temperature */}
-            {(() => {
-              const supportsTemp = modelSupportsTemperature(provider, providerOptions.model);
-              const isEnabled = supportsTemp && !!providerOptions.enableTemperature;
-              const tempValue =
-                typeof providerOptions.temperature === "number" ? providerOptions.temperature : 1;
-              return (
-                <div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="enable-temperature"
-                      checked={isEnabled}
-                      disabled={!supportsTemp}
-                      onChange={(e) => onChangeOptions?.({ enableTemperature: e.target.checked })}
-                      className="cursor-pointer disabled:cursor-not-allowed"
-                      style={{ accentColor: "var(--ui-primary-container)" }}
-                    />
-                    <label
-                      htmlFor="enable-temperature"
-                      className="ui-type-label-md cursor-pointer"
-                      style={{
-                        color: supportsTemp
-                          ? "var(--ui-on-surface)"
-                          : "var(--ui-on-surface-variant)",
-                      }}
-                    >
-                      {t("options.setTemperature")}
-                    </label>
-                    {!supportsTemp && (
-                      <Typography variant="body-sm" as="span" style={hintStyle}>
-                        {t("options.temperatureUnsupported")}
-                      </Typography>
-                    )}
-                    {isEnabled && (
-                      <span className="ui-numeric ui-type-body-md ms-auto">
-                        {tempValue.toFixed(1)}
-                      </span>
-                    )}
-                  </div>
-                  <Typography variant="body-sm" style={{ margin: "8px 0 0", ...hintStyle }}>
-                    {t("options.temperatureHint")}
-                  </Typography>
-                  {isEnabled && (
-                    <div className="mt-2 flex items-center gap-3">
-                      <Typography variant="body-sm" as="span" style={hintStyle}>
-                        0
-                      </Typography>
-                      <input
-                        type="range"
-                        min="0"
-                        max="2"
-                        step="0.1"
-                        value={tempValue}
-                        onChange={(e) =>
-                          onChangeOptions?.({ temperature: parseFloat(e.target.value) })
-                        }
-                        className="flex-1"
-                        style={{ accentColor: "var(--ui-primary-container)" }}
-                        aria-label={t("options.temperatureAria")}
-                      />
-                      <Typography variant="body-sm" as="span" style={hintStyle}>
-                        2
-                      </Typography>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </section>
-          {/* #29: encryption controls — shown for every provider so a locked key
-                can always be unlocked, even on providers that need no key
-                (ollama/lmstudio, whose optional proxy key is protected too). */}
-          <KeyEncryptionSection
-            encryption={encryption}
-            onEnableEncryption={onEnableEncryption}
-            onDisableEncryption={onDisableEncryption}
-            onUnlock={onUnlock}
-          />
-          {/* Theme settings */}
-          <section style={sectionDivided} aria-labelledby="options-appearance-heading">
-            <Typography
-              variant="headline-sm"
-              as="h3"
-              id="options-appearance-heading"
-              style={headingStyle}
-            >
-              {t("options.appearanceHeading")}
-            </Typography>
-            {/* #290: the mockups' built-in entries first — "System default"
-                resolves through the OS scheme; the palettes carry the mobile
-                mockup's "Scheme (Palette)" labels — then uploaded themes by
-                their file names. */}
-            <TokenSelect
-              label={t("options.themeLabel")}
-              id="theme-select"
-              value={currentTheme}
-              onChange={(e) => onThemeChange?.(e.target.value)}
-              options={[
-                { value: SYSTEM_THEME, label: t("options.themeSystemDefault") },
-                { value: "default", label: t("options.themeLightAlabaster") },
-                { value: "dark", label: t("options.themeDarkSlate") },
-                { value: "high-contrast", label: t("options.themeHighContrast") },
-                ...Object.keys(themes)
-                  .filter((name) => !BUILTIN_THEME_KEYS.includes(name))
-                  .map((name) => ({ value: name, label: name })),
-              ]}
-              hint={t("options.themeHint")}
-            />
-            {/* #298: the interface language, the mockup's Appearance & i18n
-                row. "System default" defers to the browser's own preference;
-                the other entries are the locales the catalogue ships. The
-                provider applies the choice at the document root — copy,
-                number formats and the dir the layout mirrors by. */}
-            <TokenSelect
-              label={t("options.languageLabel")}
-              id="language-select"
-              value={localeChoice}
-              onChange={(e) => setLocale(e.target.value)}
-              options={[
-                { value: SYSTEM_LOCALE, label: t("options.languageSystemDefault") },
-                ...locales.map((locale) => ({ value: locale.code, label: locale.label })),
-              ]}
-              hint={t("options.languageHint")}
-            />
-            <div className="ui-field">
-              <div className="flex items-center justify-between gap-2">
-                <span className="ui-type-label-md">{t("options.themeUploadLabel")}</span>
-                <IconButton label={t("options.themeExample")} onClick={() => setShowExample(true)}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 115.82 1c-.44.86-1.26 1.3-1.91 1.63-.51.26-.75.52-.75.87v.5" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                </IconButton>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* The mockup's Choose File row: the visible button carries the
-                    picker action; the native input stays the event source so
-                    re-picking the same file keeps firing change (#25). */}
-                <Button intent="secondary" onClick={() => fileInputRef.current?.click()}>
-                  {t("options.chooseFile")}
-                </Button>
-                {/* #290: the mockup's status span beside the picker — the
-                    picked file's name, announced as a status since the upload
-                    result also lands elsewhere. */}
-                <span
-                  className="ui-type-body-sm"
-                  style={{ color: "var(--ui-on-surface-variant)" }}
-                  role="status"
-                >
-                  {chosenFileName ?? t("options.noFileChosen")}
-                </span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json,.yaml,.yml"
-                  onChange={(e) => {
-                    // #25: Clear the input so re-picking the same file after a
-                    // rejected theme fires another change event.
-                    const [file] = e.target.files;
-                    e.target.value = "";
-                    setChosenFileName(file ? file.name : null);
-                    if (file) onThemeUpload?.(file);
-                  }}
-                  style={{ display: "none" }}
-                />
-              </div>
-              <Typography variant="body-sm" style={hintStyle}>
-                {t("options.themeFileHint")}
-              </Typography>
-            </div>
-            {/* #290: the mobile mockup's Reduce motion row. Checked forces the
-                transition collapse the OS media query provides; unchecked, the
-                OS setting alone decides. The attribute lands on the document
-                element via useTheme, so the popup follows too. */}
-            {/* #291: the row is the touch target under the coarse-pointer floor — the
-                label wraps the checkbox, so the floor rides on the row. */}
-            <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={Boolean(reduceMotion)}
-                onChange={(e) => onReduceMotionChange?.(e.target.checked)}
-                className="mt-0.5"
-                style={{ accentColor: "var(--ui-primary-container)" }}
-              />
-              <span className="flex flex-col gap-0.5">
-                <span className="ui-type-label-md">{t("options.reduceMotionLabel")}</span>
-                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
-                  {t("options.reduceMotionHint")}
-                </span>
-              </span>
-            </label>
-            {/* Decorative 3D effects: pure presentation, on by default, off in
-                one click. Nothing about the collection changes with them. */}
-            {/* #291: the row is the touch target under the coarse-pointer floor — the
-                label wraps the checkbox, so the floor rides on the row. */}
-            <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={effects}
-                onChange={(e) => onEffectsChange?.(e.target.checked)}
-                className="mt-0.5"
-                style={{ accentColor: "var(--ui-primary-container)" }}
-              />
-              <span className="flex flex-col gap-0.5">
-                <span className="ui-type-label-md">{t("options.effectsLabel")}</span>
-                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
-                  {t("options.effectsHint")}
-                </span>
-              </span>
-            </label>
-          </section>
-          {/* #39: favicons are a privacy decision, so the choice is explicit and off by default. */}
-          <section style={sectionDivided} aria-labelledby="options-privacy-heading">
-            <Typography
-              variant="headline-sm"
-              as="h3"
-              id="options-privacy-heading"
-              style={headingStyle}
-            >
-              {t("options.privacyHeading")}
-            </Typography>
-            {/* #291: the row is the touch target under the coarse-pointer floor — the
-                label wraps the checkbox, so the floor rides on the row. */}
-            <label className="ui-settings-row flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={remoteFavicons}
-                onChange={(e) => onRemoteFaviconsChange?.(e.target.checked)}
-                className="mt-0.5"
-                style={{ accentColor: "var(--ui-primary-container)" }}
-              />
-              <span className="flex flex-col gap-0.5">
-                <span className="ui-type-label-md">{t("options.remoteFaviconsLabel")}</span>
-                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
-                  {t("options.remoteFaviconsHint")}
-                </span>
-              </span>
-            </label>
-          </section>
-          {/* #212: agent access — who may read the collection is the user's
-                call, so like favicons it is a choice, made explicitly, and off
-                until made. */}
-          <section style={sectionDivided} aria-labelledby="options-agents-heading">
-            <Typography
-              variant="headline-sm"
-              as="h3"
-              id="options-agents-heading"
-              style={headingStyle}
-            >
-              {t("options.agentAccessHeading")}
-            </Typography>
-            <label
-              className={`ui-settings-row flex items-start gap-3 ${
-                webMcpAvailable ? "cursor-pointer" : ""
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={webMcpEnabled}
-                disabled={!webMcpAvailable}
-                onChange={(e) => onWebMcpEnabledChange?.(e.target.checked)}
-                className="mt-0.5 disabled:cursor-not-allowed"
-                style={{ accentColor: "var(--ui-primary-container)" }}
-              />
-              <span className="flex flex-col gap-0.5">
-                <span
-                  className="ui-type-label-md"
-                  style={webMcpAvailable ? undefined : { color: "var(--ui-on-surface-variant)" }}
-                >
-                  {t("options.webMcpLabel")}
-                </span>
-                <span className="ui-type-body-sm" style={{ color: "var(--ui-on-surface-variant)" }}>
-                  {webMcpAvailable ? t("options.webMcpHint") : t("options.webMcpUnavailable")}
-                </span>
-              </span>
-            </label>
-          </section>
-          {/* #292: the mockup's About, Privacy & Licensing section — version
-              and license beside the heading, a privacy subline aligned with
-              the README's "Privacy and storage" section, and the two links as
-              secondary anchors sharing the button recipe's classes (they open
-              public https pages in a new tab, which is the extension-allowed
-              way to leave the dialog). */}
-          <section style={sectionDivided} aria-labelledby="options-legal-heading">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <Typography
-                variant="headline-sm"
-                as="h3"
-                id="options-legal-heading"
-                style={headingStyle}
-              >
-                {t("options.aboutHeading")}
-              </Typography>
-              <span className="ui-url" dir="ltr" style={{ color: "var(--ui-on-surface-variant)" }}>
-                v{APP_VERSION} · {APP_LICENSE} License
-              </span>
-            </div>
-            <Typography variant="body-sm" style={hintStyle}>
-              {t("options.aboutBody")}
-            </Typography>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <a
-                className="ui-button ui-button--secondary"
-                href={PRIVACY_POLICY_URL}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("options.privacyPolicy")}
-              </a>
-              <a
-                className="ui-button ui-button--secondary"
-                href={LICENSES_URL}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("options.openSourceLicenses")}
-              </a>
-            </div>
-          </section>
-        </div>
+        {body}
       </Modal>
-
-      {showExample && (
-        <Modal
-          title={t("options.themeExampleTitle")}
-          closeLabel={t("options.closeExample")}
-          onClose={() => setShowExample(false)}
-          footer={<Button onClick={() => setShowExample(false)}>{t("common.close")}</Button>}
-        >
-          <div style={{ display: "grid", gap: "var(--ui-space-gutter-md)" }}>
-            <Typography variant="body-md" style={{ margin: 0 }}>
-              {t("options.exampleIntro")}
-            </Typography>
-            <pre
-              style={{
-                margin: 0,
-                padding: "var(--ui-space-gutter-md)",
-                font: "var(--ui-type-mono-sm)",
-                background: "var(--ui-surface-container)",
-                border: "1px solid var(--ui-outline-variant)",
-                borderRadius: "var(--ui-radius)",
-                overflowX: "auto",
-                color: "var(--ui-on-surface)",
-              }}
-            >
-              {`{
-  "bgPrimary": "#1f2937",
-  "bgSecondary": "#111827",
-  "textPrimary": "#f9fafb",
-  "textSecondary": "#d1d5db",
-  "border": "#374151",
-  "accent": "#3b82f6",
-  "accentHover": "#2563eb"
-}`}
-            </pre>
-            <Typography variant="body-sm" style={hintStyle}>
-              {t("options.exampleFormatHint")}
-            </Typography>
-          </div>
-        </Modal>
-      )}
+      {exampleDialog}
     </>
   );
 };
