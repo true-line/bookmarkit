@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from "react";
-import { LLM_PROVIDERS, createLLM, isProviderReady } from "../llm/index.js";
+import { LLM_PROVIDERS, createLLM, isProviderReady, resolveProviderOptions } from "../llm/index.js";
 import { useDebounce } from "../hooks/useDebounce.js";
 import { useFocusTrap } from "../hooks/useFocusTrap.js";
 import { useSidebarViewport } from "../hooks/useSidebarViewport.js";
@@ -405,13 +405,15 @@ const OptionsModal = ({
   // probe (the same listModels call that fills the picker) must have
   // concluded for exactly the staged options. An unreachable server, a
   // refused key, a half-finished configuration — none of it reads as active.
-  const keyed = isProviderReady(draft.provider, {
-    apiKey: draft.providerOptions.apiKey || "",
-  });
-  const hasModel = Boolean(String(draft.providerOptions.model || "").trim());
+  // The rule reads the options a request would actually go out with —
+  // resolveProviderOptions' merge, build-time defaults included — so a
+  // build-configured deployment is not shown as inactive while its asks run.
+  const effective = resolveProviderOptions(draft.providerOptions);
+  const keyed = isProviderReady(draft.provider, effective);
+  const hasModel = Boolean(String(effective.model || "").trim());
   const configComplete =
-    Boolean(draft.provider) && keyed && hasModel && isValidBaseUrl(draft.providerOptions.baseUrl);
-  const probeConcluded = probeKey === probeConfigKey(draft.provider, draft.providerOptions);
+    Boolean(draft.provider) && keyed && hasModel && isValidBaseUrl(effective.baseUrl);
+  const probeConcluded = probeKey === probeConfigKey(draft.provider, effective);
   const providerActive = configComplete && probeConcluded && probeState === "ok";
   const providerUnavailable = configComplete && probeConcluded && probeState === "failed";
   const providerChecking = configComplete && !providerActive && !providerUnavailable;
@@ -420,7 +422,7 @@ const OptionsModal = ({
     : providerActive
       ? t("options.activeProviderModel", {
           provider: draft.provider || t("common.none"),
-          model: draft.providerOptions.model,
+          model: effective.model,
         })
       : providerUnavailable
         ? t("options.unavailableProvider")
@@ -441,13 +443,21 @@ const OptionsModal = ({
   const fetchModels = async (forceRefresh = false) => {
     // Retire any probe still in flight: only the latest staging's answer may
     // land, so a slow response for earlier options can't outlive its config.
+    // The retired probe's finally can no longer clear the loading state, so
+    // every early path out clears it here (review: the model control must
+    // never stay stuck on Loading).
     const seq = ++probeSeq.current;
-    const cacheKey = probeConfigKey(draft.provider, draft.providerOptions);
+    setIsLoadingModels(false);
+    // The probe asks with the options a request would actually go out with —
+    // build-time defaults included — so what is verified is what the asks
+    // would use.
+    const effective = resolveProviderOptions(draft.providerOptions);
+    const cacheKey = probeConfigKey(draft.provider, effective);
     // A hosted provider without a key has no request worth sending — the
     // endpoint refuses it (Gemini answers 403) — so opening Options must not
     // read as an error. Discovery waits for the key; the local servers stay
     // always ready because their listing needs none.
-    if (!isProviderReady(draft.provider, { apiKey: draft.providerOptions.apiKey || "" })) {
+    if (!isProviderReady(draft.provider, effective)) {
       setModels([]);
       setModelsError("");
       setProbeState("idle");
@@ -471,9 +481,9 @@ const OptionsModal = ({
     setProbeState("checking");
     try {
       const opts = {
-        apiKey: draft.providerOptions.apiKey || "",
-        model: draft.providerOptions.model || "",
-        baseUrl: draft.providerOptions.baseUrl || undefined,
+        apiKey: effective.apiKey || "",
+        model: effective.model || "",
+        baseUrl: effective.baseUrl || undefined,
       };
       const llm = createLLM(draft.provider, opts);
       const list = (await llm.listModels?.()) || [];

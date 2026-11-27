@@ -699,6 +699,19 @@ describe("OptionsModal active-provider pill (#349)", () => {
     expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
   });
 
+  it("honors build-time options when nothing is stored yet", async () => {
+    // The asks merge build-time defaults through resolveProviderOptions; the
+    // pill verifies the merged effective options, not the bare stored bag.
+    globalThis.__llm_options__ = { apiKey: "sk-build", model: "gemini-build" };
+    try {
+      render(<OptionsModal {...baseProps} providerOptions={{}} />);
+      await act(async () => {});
+      expect(screen.getByText("Active: gemini / gemini-build")).toBeInTheDocument();
+    } finally {
+      delete globalThis.__llm_options__;
+    }
+  });
+
   it("reads checking while the probe is still concluding", async () => {
     let resolveProbe;
     createLLM.mockImplementation(() => ({
