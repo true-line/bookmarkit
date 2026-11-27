@@ -223,6 +223,11 @@ const syncUntouched = (snapshot, dirtyKeys, source) => {
 const OptionsModal = ({
   provider,
   providerOptions = {},
+  // Every provider's stored options, keyed by name. The dialog's provider
+  // select stages a switch (#293), and the staged options must be the newly
+  // chosen provider's — the current provider's slice alone can't say what
+  // the other providers already hold.
+  allProviderOptions = {},
   onChange,
   onChangeOptions,
   encryption = { encrypted: false, locked: false },
@@ -298,6 +303,21 @@ const OptionsModal = ({
     dirtyKeys.current.add("providerOptions");
     setDraft((prev) => ({ ...prev, providerOptions: { ...prev.providerOptions, ...patch } }));
   };
+  // #293: choosing a provider stages the switch wholesale — the staged
+  // options become the newly chosen provider's stored ones, so the fields
+  // read what that provider already holds and Done commits the patch under
+  // it, not under the provider the dialog opened with. Both keys go dirty:
+  // the staged bag belongs to the chosen provider now, not to whatever the
+  // dialog found.
+  const changeDraftProvider = (nextProvider) => {
+    dirtyKeys.current.add("provider");
+    dirtyKeys.current.add("providerOptions");
+    setDraft((prev) => ({
+      ...prev,
+      provider: nextProvider,
+      providerOptions: { ...(allProviderOptions?.[nextProvider] || {}) },
+    }));
+  };
   const resetDraft = () => {
     dirtyKeys.current.clear();
     setDraft({ ...openValues, providerOptions: { ...openValues.providerOptions } });
@@ -330,7 +350,9 @@ const OptionsModal = ({
   ]);
   const commitDraft = () => {
     onChange?.(draft.provider);
-    onChangeOptions?.(draft.providerOptions);
+    // The patch names its provider: it belongs to the staged choice, which
+    // this same commit is activating (#293).
+    onChangeOptions?.(draft.providerOptions, draft.provider);
     onThemeChange?.(draft.currentTheme);
     setLocale(draft.localeChoice);
     onReduceMotionChange?.(draft.reduceMotion);
@@ -436,10 +458,18 @@ const OptionsModal = ({
   const modelChange = (e) => patchDraftOptions({ model: e.target.value });
   // Clearing the stored key is an action, not a setting (#293): it wipes the
   // store now — the destructive path it has always been — and the staged
-  // field with it, so Done cannot resurrect what Clear removed.
+  // field with it, so Done cannot resurrect what Clear removed. The at-open
+  // snapshot learns of the removal too: providerOptions is dirty by then,
+  // so the source update cannot reach it, and a Reset that restored the
+  // cleared key would re-persist it at Done.
   const clearApiKey = () => {
-    onChangeOptions?.({ apiKey: "" });
+    onChangeOptions?.({ apiKey: "" }, draft.provider);
     patchDraftOptions({ apiKey: "" });
+    setOpenValues((prev) =>
+      prev.provider === draft.provider
+        ? { ...prev, providerOptions: { ...prev.providerOptions, apiKey: "" } }
+        : prev
+    );
   };
 
   // The settings body: one reading for both chromes. Every control edits the
@@ -492,7 +522,7 @@ const OptionsModal = ({
             label={t("options.llmProviderLabel")}
             id="llm-provider"
             value={draft.provider}
-            onChange={(e) => patchDraft({ provider: e.target.value })}
+            onChange={(e) => changeDraftProvider(e.target.value)}
             options={providerEntries}
           />
           {/* Provider-specific key field, beside the provider select as on

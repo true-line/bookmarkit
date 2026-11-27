@@ -124,13 +124,20 @@ export function useLLMSettings(showMessage) {
     [encrypted]
   );
 
-  /** Merge changes into the current provider's options and persist the result. */
+  /**
+   * Merge changes into a provider's options and persist the result. The
+   * provider in scope is the target unless the caller names another — the
+   * options dialog commits its draft for the newly chosen provider in the
+   * same breath that switches to it (#293), so its patch must not land
+   * under the provider the dialog opened with.
+   */
   const updateProviderOptions = useCallback(
-    (changes) => {
+    (changes, forProvider) => {
+      const target = forProvider || provider;
       setOptions((prev) => {
         const next = {
           ...(prev || {}),
-          [provider]: { ...(prev?.[provider] || {}), ...(changes || {}) },
+          [target]: { ...(prev?.[target] || {}), ...(changes || {}) },
         };
         persist(next);
         return next;

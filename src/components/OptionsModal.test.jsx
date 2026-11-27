@@ -161,7 +161,7 @@ describe("OptionsModal clear API key", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: "Clear stored API key" }));
-    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "" });
+    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "" }, "gemini");
   });
 
   it("hides Clear when no key is stored", () => {
@@ -192,7 +192,7 @@ describe("OptionsModal clear API key", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: "Clear stored API key" }));
-    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "" });
+    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "" }, "ollama");
   });
 });
 
@@ -342,7 +342,7 @@ describe("OptionsModal local provider API key (optional)", () => {
     expect(onChangeOptions).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
-    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "proxy-key" });
+    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "proxy-key" }, "ollama");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -511,7 +511,7 @@ describe("OptionsModal draft save model (#293)", () => {
     editEverything();
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(props.onChange).toHaveBeenCalledWith("openai");
-    expect(props.onChangeOptions).toHaveBeenCalledWith({ apiKey: "sk-new" });
+    expect(props.onChangeOptions).toHaveBeenCalledWith({ apiKey: "sk-new" }, "openai");
     expect(props.onEffectsChange).toHaveBeenCalledWith(false);
     expect(props.onReduceMotionChange).toHaveBeenCalledWith(true);
     expect(props.onClose).toHaveBeenCalledTimes(1);
@@ -528,7 +528,7 @@ describe("OptionsModal draft save model (#293)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(props.onChange).toHaveBeenCalledWith("gemini");
-    expect(props.onChangeOptions).toHaveBeenCalledWith({ apiKey: "sk-stored" });
+    expect(props.onChangeOptions).toHaveBeenCalledWith({ apiKey: "sk-stored" }, "gemini");
     expect(props.onEffectsChange).toHaveBeenCalledWith(true);
     expect(props.onReduceMotionChange).toHaveBeenCalledWith(false);
     expect(props.onClose).toHaveBeenCalledTimes(1);
@@ -541,6 +541,69 @@ describe("OptionsModal draft save model (#293)", () => {
     expect(props.onClose).toHaveBeenCalledTimes(1);
     expect(props.onChange).not.toHaveBeenCalled();
     expect(props.onChangeOptions).not.toHaveBeenCalled();
+  });
+
+  // Switching providers stages a switch, not just a label: the staged
+  // options become the chosen provider's stored ones, and Done commits the
+  // patch under that provider — in one breath with the switch itself.
+  it("seeds the staged options from the chosen provider and commits under it", () => {
+    const props = renderDraft({
+      allProviderOptions: {
+        gemini: { apiKey: "sk-gemini", model: "gemini-pro" },
+        openai: { apiKey: "sk-openai-stored", model: "gpt-4o" },
+      },
+    });
+    fireEvent.change(screen.getByLabelText("LLM Provider"), { target: { value: "openai" } });
+    // The key field reads the newly chosen provider's stored key, not the
+    // one the dialog opened with.
+    expect(screen.getByLabelText("API Key")).toHaveValue("sk-openai-stored");
+
+    fireEvent.change(screen.getByLabelText("API Key"), { target: { value: "sk-new-oai" } });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(props.onChange).toHaveBeenCalledWith("openai");
+    expect(props.onChangeOptions).toHaveBeenCalledWith(
+      { apiKey: "sk-new-oai", model: "gpt-4o" },
+      "openai"
+    );
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not resurrect a cleared key at Reset and Done", () => {
+    const onChange = vi.fn();
+    const onChangeOptions = vi.fn();
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <OptionsModal
+        {...baseProps}
+        providerOptions={{ apiKey: "sk-test" }}
+        onChange={onChange}
+        onChangeOptions={onChangeOptions}
+        onClose={onClose}
+      />
+    );
+    // Clear persists immediately (#293), so the parent's state moves too —
+    // as the real wiring's would.
+    fireEvent.click(screen.getByRole("button", { name: "Clear stored API key" }));
+    expect(onChangeOptions).toHaveBeenCalledWith({ apiKey: "" }, "gemini");
+    rerender(
+      <OptionsModal
+        {...baseProps}
+        providerOptions={{ apiKey: "" }}
+        onChange={onChange}
+        onChangeOptions={onChangeOptions}
+        onClose={onClose}
+      />
+    );
+
+    // The staged bag is dirty by then, so the prop update cannot reach the
+    // at-open snapshot — Clear updates it itself, and Reset must restore
+    // the cleared state, not the key the dialog opened with.
+    fireEvent.click(screen.getByRole("button", { name: "Revert unsaved setting changes" }));
+    expect(screen.getByLabelText("API Key")).toHaveValue("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(onChangeOptions).toHaveBeenLastCalledWith({ apiKey: "" }, "gemini");
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("names the save model in the dialog footer — changes apply at Done", () => {

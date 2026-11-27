@@ -241,8 +241,13 @@ rating >= 4 then sort by title asc`, the `then` compositions, the
   controls change. It stages a draft of everything it edits — provider, key
   and endpoint, model, theme, language, and the toggles — and the footer's
   **Done** replays it through the same write path as before
-  (`updateProviderOptions` still merges its patch, `setLocale` still
-  persists, the callbacks are the components'), then closes. **Reset** puts
+  (`updateProviderOptions` still merges its patch — now named for the
+  provider it belongs to, because the dialog commits the switch and the
+  patch in one breath and the patch must not land under the provider the
+  dialog opened with — `setLocale` still persists, the callbacks are the
+  components'), then closes. Choosing a provider stages that provider's
+  stored options with it, so the fields read what the chosen provider
+  already holds. **Reset** puts
   the dialog back the way it found it. Every other way out — the close
   control, Escape, the sheet's back arrow — discards the draft, which the
   dialog footer now says outright: "Changes apply when you choose Done."
@@ -252,8 +257,8 @@ rating >= 4 then sort by title asc`, the `then` compositions, the
 - **Actions stay immediate.** Theme upload and the key-encryption and
   unlock operations are actions, not settings, and keep writing as they
   did; the key row's destructive **Clear** also stays immediate — it wipes
-  the stored key now and the staged field with it, so Done cannot
-  resurrect what Clear removed.
+  the stored key now, the staged field with it, and the at-open snapshot's
+  key too, so neither Done nor Reset can resurrect what Clear removed.
 - **The narrow sheets.** Below `lg` the options dialog and the import/export
   dialog join the sheet twins (#300–#303): the mobile mockups' full-page
   compositions — back bar, the same body — with the options sheet carrying

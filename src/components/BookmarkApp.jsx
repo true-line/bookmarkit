@@ -173,6 +173,10 @@ const BookmarkApp = () => {
     provider: runtimeProvider,
     setProvider: setRuntimeProvider,
     providerOptions,
+    // Every provider's stored options — the options dialog stages a provider
+    // switch (#293), and its fields must read the chosen provider's stored
+    // settings, not just the active provider's slice.
+    options: providerOptionsMap,
     updateProviderOptions,
     encryption,
     enableEncryption,
@@ -1786,6 +1790,7 @@ const BookmarkApp = () => {
           <OptionsModal
             provider={runtimeProvider}
             providerOptions={providerOptions}
+            allProviderOptions={providerOptionsMap}
             onChange={setRuntimeProvider}
             onChangeOptions={updateProviderOptions}
             encryption={encryption}

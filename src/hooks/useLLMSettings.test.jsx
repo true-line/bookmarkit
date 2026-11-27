@@ -227,4 +227,25 @@ describe("useLLMSettings (#26)", () => {
     expect(stored.gemini).toEqual({ apiKey: "sk-gemini", baseUrl: "https://proxy.test" });
     expect(stored.openai).toEqual({ apiKey: "sk-openai" });
   });
+
+  // #293: the options dialog commits its draft for the provider it is
+  // switching to, in the same breath that switches — a patch that names its
+  // provider must land under that provider, not the one in scope.
+  it("writes a named provider's options under that provider, not the active one", async () => {
+    const local = fakeArea({
+      bm_runtime_llm_provider: "gemini",
+      bm_runtime_llm_options: JSON.stringify({ gemini: { apiKey: "sk-gemini" } }),
+    });
+    installChrome(local);
+    render(<Probe />);
+    await waitFor(() => expect(screen.getByTestId("key")).toHaveTextContent("sk-gemini"));
+
+    await act(async () => settings.updateProviderOptions({ apiKey: "sk-oai" }, "openai"));
+
+    const stored = JSON.parse(local.data.bm_runtime_llm_options);
+    expect(stored.openai).toEqual({ apiKey: "sk-oai" });
+    expect(stored.gemini).toEqual({ apiKey: "sk-gemini" });
+    expect(screen.getByTestId("provider")).toHaveTextContent("gemini");
+    expect(screen.getByTestId("key")).toHaveTextContent("sk-gemini");
+  });
 });
