@@ -364,6 +364,20 @@ describe("OptionsModal local provider API key (optional)", () => {
   });
 });
 
+// The optional-key hint makes the two-column row's second cell taller than the
+// first, and a grid's default stretch would grow the provider field's track
+// with it — inflating the select and the gap under its label. jsdom cannot
+// measure layout, so the test pins the alignment the row composes with.
+describe("OptionsModal provider row alignment", () => {
+  it("aligns the two-column provider row's fields to start", () => {
+    render(<OptionsModal {...baseProps} provider="ollama" providerOptions={{}} />);
+
+    const grid = document.querySelector(".ui-options-grid");
+    expect(grid).not.toBeNull();
+    expect(grid).toHaveClass("items-start");
+  });
+});
+
 describe("OptionsModal model refresh gating", () => {
   it("sends no model request when a hosted provider has no key yet", async () => {
     render(<OptionsModal {...baseProps} />);

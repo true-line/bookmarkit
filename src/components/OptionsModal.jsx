@@ -600,8 +600,12 @@ const OptionsModal = ({
         </div>
 
         {/* #293: the dialog's two-column row; the sheet runs the same fields
-            full width (`.ui-sheet--options .ui-options-grid`). */}
-        <div className="ui-options-grid grid grid-cols-1 gap-4 sm:grid-cols-2">
+            full width (`.ui-sheet--options .ui-options-grid`). items-start
+            keeps each field content-sized: the local providers' key hint makes
+            this row's second cell taller, and the grid's default stretch would
+            otherwise grow the provider select's track with it, inflating the
+            select and the gap under its label. */}
+        <div className="ui-options-grid grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
           <TokenSelect
             label={t("options.llmProviderLabel")}
             id="llm-provider"
