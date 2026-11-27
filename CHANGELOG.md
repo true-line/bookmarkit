@@ -1,5 +1,12 @@
 # bookmarkit
 
+## 0.19.0
+
+### Minor Changes
+
+- e256ad8: The navigation sidebar folds. From `lg` up the rail carries a collapse toggle that folds it to a 64px mini rail — icon-only rows named by tooltip, Add Bookmark squared to its icon, the saved views and the folder manage switch folded away — with the width animating on the surface-enter motion while the shell, the fixed header and the toast dock fold with it. The fold persists across sessions; the navigation drawer never collapses.
+- 7251941: The agent ask leaves the filter strip and returns as a Spotlight-style overlay: **Cmd/Ctrl+K** summons a bottom-centered command bar with the input focused — Escape and the scrim close it under the shared dialog contract, restoring focus — and without a configured provider the shortcut answers with an error toast instead of a field, moving the provider gate to press time. The header's gated search field retires, the summon works out of whatever field the user is already typing in, and the help modal documents the shortcut.
+
 ## 0.18.0
 
 ### Minor Changes
