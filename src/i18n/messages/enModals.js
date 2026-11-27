@@ -300,8 +300,10 @@ export const surfaceMessages = {
     localKeyHint:
       "Neither provider needs a key. Set one only when your server sits behind an authenticating proxy; it is sent as a Bearer token.",
     lockedPlaceholder: "Locked — unlock below to edit",
+    lockedProvider: "Provider locked — unlock to use",
     modelIdPlaceholder: "Type a model id, or load the list",
     modelLabel: "Model",
+    noActiveProvider: "No active provider",
     noModelsHint:
       "The endpoint returned no models. Enter the key above (or start the local server), then Refresh — or type the model id.",
     noFileChosen: "No file chosen",
