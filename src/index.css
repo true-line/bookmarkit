@@ -796,6 +796,13 @@ body {
   min-height: 44px;
 }
 
+/* #293: the options sheet runs the dialog's two-column provider row full
+   width — the sheet owns the whole line, as the mobile mockup draws it. The
+   two-class selector out-weights the sm: utility's media rule. */
+.ui-sheet--options .ui-options-grid {
+  grid-template-columns: 1fr;
+}
+
 /* The sheet's carded sections (mobile bulk-edit mockup): bordered, lowest
    surface, a headline-sm heading, or a label row when the section is a
    reading aid rather than a task. */

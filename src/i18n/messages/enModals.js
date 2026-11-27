@@ -193,6 +193,8 @@ export const surfaceMessages = {
     actionJson: "Import JSON Data",
     actionMarkdown: "Import Markdown Links",
     appendRadio: "Append to existing bookmarks",
+    // #293: the sheet app bar's back arrow and second line.
+    backAria: "Back to bookmarks",
     chosenFile: "Chosen file: {name}",
     closeLabel: "Close dialog",
     description: "Back up your collection or migrate from another browser.",
@@ -231,6 +233,11 @@ export const surfaceMessages = {
     pasteJson: "Paste JSON Data",
     pasteMd: "Paste Markdown Data",
     replaceRadio: "Replace all existing bookmarks",
+    // #293: the sheet app bar's second line, per the mobile mockup.
+    sheetSubtitle: {
+      one: "1 bookmark stored locally",
+      other: "{count} bookmarks stored locally",
+    },
     skipExistingLabel: "Skip URLs already in library",
     skippedDuplicates: {
       one: "{count} duplicate within the file will be skipped.",
@@ -263,9 +270,12 @@ export const surfaceMessages = {
     apiKeyLabel: "API Key",
     apiKeyOptionalLabel: "API Key (optional)",
     appearanceHeading: "Appearance",
+    // #293: the sheet app bar's back arrow.
+    backAria: "Back to bookmarks",
     baseUrlLabel: "Base URL",
     baseUrlOptionalLabel: "Base URL (optional)",
-    changesSave: "Changes save to this browser.",
+    // #293: the draft model — Done applies, Reset reverts, dismissal drops.
+    changesSave: "Changes apply when you choose Done.",
     chooseFile: "Choose File",
     clear: "Clear",
     clearStoredKey: "Clear stored API key",
@@ -281,7 +291,7 @@ export const surfaceMessages = {
     failedToLoadModels: "Failed to load models",
     invalidBaseUrl: "Not a Valid Url Pattern",
     languageHint:
-      "Menus, labels and messages switch immediately. “System default” follows the browser’s language.",
+      "Menus, labels and messages follow this choice once you choose Done. “System default” follows the browser’s language.",
     languageLabel: "Interface Language",
     languageSystemDefault: "System default",
     loading: "Loading…",
@@ -304,7 +314,7 @@ export const surfaceMessages = {
     providerLmstudio: "LM Studio (Local)",
     providerOllama: "Ollama (Local)",
     providerOpenai: "OpenAI (ChatGPT)",
-    providerSubline: "Changes apply immediately and persist to this browser.",
+    providerSubline: "Applied when you choose Done; stored in this browser.",
     reduceMotionHint:
       "Collapse drawer, dialog and card transitions to instant cuts, even when your system doesn’t ask for reduced motion.",
     reduceMotionLabel: "Reduce motion",
@@ -313,8 +323,13 @@ export const surfaceMessages = {
     remoteFaviconsHint:
       "Off by default: no icon is fetched over the network. BookmarkIt uses your browser’s own icon cache when the extension can, and a neutral placeholder otherwise. When on, each visible bookmark fetches its icon — from the address saved with it, or from google.com by domain when it has none.",
     remoteFaviconsLabel: "Load site icons from the web",
+    reset: "Reset",
+    resetAria: "Revert unsaved setting changes",
+    resetAria: "Revert unsaved setting changes",
     selectModel: "Select a model…",
     setTemperature: "Set temperature",
+    // #293: the sheet app bar's second line, per the mobile mockup.
+    sheetSubtitle: "Local-first configuration",
     temperatureAria: "Temperature value",
     temperatureHint:
       "Higher values make responses more varied. Leave off to use the provider default.",
