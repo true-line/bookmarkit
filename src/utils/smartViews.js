@@ -42,6 +42,9 @@ function sanitizeFilters(raw) {
     includeTags: asTagList(raw.includeTags),
     excludeTags: asTagList(raw.excludeTags),
     minRating: asRating(raw.minRating),
+    // #286: the rating select's "Unrated" pick rides along with saved views
+    // like the other flags; anything not exactly true is unset.
+    unratedOnly: raw.unratedOnly === true,
     brokenOnly: raw.brokenOnly === true,
     neverOpened: raw.neverOpened === true,
     untagged: raw.untagged === true,

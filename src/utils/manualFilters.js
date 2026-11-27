@@ -27,6 +27,11 @@ export const EMPTY_FILTERS = Object.freeze({
   includeTags: [],
   excludeTags: [],
   minRating: 0,
+  // #286: the rating select's "Unrated" pick — the bookmarks nothing has
+  // rated (rating 0) rather than a minimum. Its own flag, so minRating keeps
+  // meaning "any" and the pick round-trips through saved views like the
+  // other observed-state flags below.
+  unratedOnly: false,
   // #47: only the links the last check could not reach.
   brokenOnly: false,
   // #55: a folder path, `UNFILED`, or "" for the whole collection. Clicking a
@@ -67,6 +72,28 @@ export const isSortableField = (value) => SORT_FIELDS.some((field) => field.valu
  * (#299) share it, so the two cannot drift.
  */
 export const RATING_VALUES = Object.freeze([1, 2, 3, 4, 5]);
+
+/**
+ * The rating select's option ladder — Any, the mockup's Unrated (#286), then
+ * the stars. Both controls that render the ladder (the filter bar and the
+ * shell's compact row, #299) build their options from this one list so the
+ * two cannot drift; labelKeys resolve through the catalogue at render.
+ */
+export const RATING_OPTIONS = Object.freeze([
+  { value: 0, labelKey: "filter.anyRating" },
+  { value: "unrated", labelKey: "filter.unrated" },
+  ...RATING_VALUES.map((n) => ({ value: n, label: `${"★".repeat(n)}+` })),
+]);
+
+/**
+ * The rating select's pick: "Unrated" is its own flag and every other pick is
+ * a minimum on minRating. One function for both controls, for the same reason.
+ */
+export function applyRatingPick(filters, value) {
+  return value === "unrated"
+    ? { ...filters, unratedOnly: true, minRating: 0 }
+    : { ...filters, unratedOnly: false, minRating: Number(value) };
+}
 
 // Tag chips cycle through three states rather than offering separate include/exclude
 // controls: unset → include → exclude → unset.
@@ -113,6 +140,7 @@ export function hasActiveFilters(filters) {
     filters.includeTags?.length ||
     filters.excludeTags?.length ||
     filters.minRating > 0 ||
+    filters.unratedOnly ||
     filters.brokenOnly ||
     filters.neverOpened ||
     filters.untagged ||
@@ -164,6 +192,8 @@ const NARROWERS = [
     filters.minRating > 0
       ? filterByRating({ minRating: filters.minRating, comparator: "gte" }, list)
       : list,
+  // #286: "Unrated" — the exact pick rating 0 represents, not a minimum.
+  (filters, list) => (filters.unratedOnly ? filterByRating({ exact: 0 }, list) : list),
   (filters, list) => (filters.brokenOnly ? findBrokenLinks(list) : list),
   (filters, list) => (filters.neverOpened ? findNeverOpened(list) : list),
   (filters, list) => (filters.untagged ? list.filter(isUntagged) : list),

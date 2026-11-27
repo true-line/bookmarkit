@@ -30,11 +30,15 @@ export const listMessages = {
     desc: "Desc",
     minRating: "Minimum rating",
     moreTags: "+{count} more",
+    // #286: the mockup's rating select gains the unrated pick.
+    unrated: "Unrated",
     neverOpened: "Never opened",
     showFewer: "Show fewer",
     sortBy: "Sort by",
-    // the Sort by select's options (utils/manualFilters.js SORT_FIELDS)
-    sortDateAdded: "Date added",
+    // the Sort by select's options (utils/manualFilters.js SORT_FIELDS),
+    // aligned to the mockup's words (#286): "Recently added" and the
+    // direction-reading "Title (A–Z)".
+    sortDateAdded: "Recently added",
     sortDateModified: "Date modified",
     sortDefault: "Default order",
     sortDirectionAsc: "Sort direction: ascending. Activate to reverse.",
@@ -42,7 +46,7 @@ export const listMessages = {
     sortFolder: "Folder",
     sortLastOpened: "Last opened",
     sortRating: "Rating",
-    sortTitle: "Title",
+    sortTitle: "Title (A–Z)",
     sortUrl: "URL",
     tagChip: {
       one: "Tag {tag}, {count} bookmark, {hint}. Activate to cycle include, exclude, off.",

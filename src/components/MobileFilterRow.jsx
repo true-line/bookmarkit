@@ -10,7 +10,7 @@ import React from "react";
 import { keepsSelectionProps } from "../hooks/useBookmarkSelection.js";
 import { Button } from "../design-system/index.js";
 import { useMessages } from "../i18n/index.js";
-import { RATING_VALUES } from "../utils/manualFilters.js";
+import { RATING_OPTIONS, applyRatingPick } from "../utils/manualFilters.js";
 import { SelectionIcon, SortIcon } from "./icons.jsx";
 
 const MobileFilterRow = React.memo(function MobileFilterRow({
@@ -38,14 +38,15 @@ const MobileFilterRow = React.memo(function MobileFilterRow({
       <select
         id="shell-rating"
         className="ui-input ui-filter-select ui-filter-select--rating"
-        value={filters.minRating}
-        onChange={(e) => onChange({ ...filters, minRating: Number(e.target.value) })}
+        value={filters.unratedOnly ? "unrated" : filters.minRating}
+        onChange={(e) => onChange(applyRatingPick(filters, e.target.value))}
         aria-label={t("filter.minRating")}
       >
-        <option value={0}>{t("filter.anyRating")}</option>
-        {RATING_VALUES.map((n) => (
-          <option key={n} value={n}>
-            {`${"★".repeat(n)}+`}
+        {/* #286: the same ladder the list's filter bar renders — one list,
+            so the two controls cannot drift. */}
+        {RATING_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.labelKey ? t(option.labelKey) : option.label}
           </option>
         ))}
       </select>
