@@ -81,13 +81,18 @@ describe("reading views back (#49)", () => {
   });
 
   // #286: the rating select's "Unrated" pick rides along with a saved view,
-  // and only an exact true survives the read-back.
+  // and only an exact true survives the read-back. The noise arrives in raw
+  // storage form — makeView would sanitize it before it ever got stored.
   it("keeps the Unrated pick through the round trip and drops non-boolean noise", () => {
     const unrated = addView([], makeView("Unrated only", plan, { ...filters, unratedOnly: true }));
     expect(readViews(serializeViews(unrated))[0].filters.unratedOnly).toBe(true);
 
-    const noisy = addView([], makeView("Smuggled flag", plan, { ...filters, unratedOnly: "yes" }));
-    expect(readViews(serializeViews(noisy))[0].filters.unratedOnly).toBe(false);
+    const noisy = serializeViews([
+      { id: "v8", name: "Smuggled flag", plan: [], filters: { text: "docs", unratedOnly: "yes" } },
+    ]);
+    const smuggled = readViews(noisy)[0].filters;
+    expect(smuggled.text).toBe("docs");
+    expect(smuggled.unratedOnly).toBe(false);
   });
 
   // Codex P2 on #337: the two rating picks are mutually exclusive — a
