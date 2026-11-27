@@ -489,6 +489,9 @@ body {
   background: var(--ui-surface-container-low);
   border-inline-end: 1px solid var(--ui-outline-variant);
   color: var(--ui-on-surface);
+  /* #346: the fold animates the width alone; the global reduced-motion
+     rules collapse it where asked. */
+  transition: width var(--ui-duration-enter) var(--ui-ease-enter);
 }
 
 .ui-sidebar--standalone {
@@ -496,6 +499,44 @@ body {
   display: flex;
   flex: none;
   height: 100%;
+}
+
+/* ── The mini rail (#346) ────────────────────────────────────────────────
+   The mockup's collapsed sidebar state (design/mockups/
+   bookmarkit_manager_sidebar_collapsed): the rail folds to 64px of icons.
+   The width itself is --app-sidebar-width — the shell's
+   data-sidebar-collapsed re-points it below, so the shell, the fixed
+   header and the toast dock give up the folded width in the same step.
+   What lives here is the rail's own folding: rows centered on their icons
+   alone, the captions, labels and counts gone (each row names itself with
+   a tooltip), the primary squared to its 40px icon, the brand stacked.
+   The drawer never carries data-collapsed — BookmarkApp passes the flag
+   to the rail alone. */
+.ui-sidebar[data-collapsed="true"] {
+  /* The mockup's px-2 py-4 fold. */
+  padding: var(--ui-space-gutter-md) var(--ui-space-gutter-sm);
+  align-items: center;
+}
+
+.ui-sidebar[data-collapsed="true"] .ui-sidebar-brand {
+  flex-direction: column;
+  align-items: center;
+}
+
+.ui-sidebar[data-collapsed="true"] .ui-sidebar-row {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* The icon-only folder rows: the tree's own recipe, centered on the glyph. */
+.ui-sidebar[data-collapsed="true"] .ui-tree-row {
+  justify-content: center;
+}
+
+.ui-sidebar[data-collapsed="true"] .ui-sidebar-primary {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  padding-inline: 0;
 }
 
 /* The rail as the navigation drawer's content: it fills the drawer panel,
@@ -527,6 +568,12 @@ body {
 @media (min-width: 1024px) {
   .bookmarkit-shell {
     padding-inline-start: var(--app-sidebar-width);
+  }
+
+  /* #346: the mini rail re-points the one variable — the shell's padding
+     and the fixed header and toast dock give up the folded width with it. */
+  .bookmarkit-shell[data-sidebar-collapsed="true"] {
+    --app-sidebar-width: 4rem;
   }
 
   /* The fixed header starts where the rail ends — `inset-x-0` in the markup

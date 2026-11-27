@@ -111,3 +111,14 @@ export const InAFolder = {
 export const SavingAView = {
   args: { ...baseArgs, canSaveView: true, activeSavedViewId: "v1" },
 };
+
+// #346: the mockup's mini rail — the fold and its toggle, beside the same
+// stand-in workspace so the width trade reads against the shell.
+export const Collapsed = {
+  args: {
+    ...baseArgs,
+    id: "workspace-sidebar",
+    collapsed: true,
+    onToggleCollapse: noop,
+  },
+};
