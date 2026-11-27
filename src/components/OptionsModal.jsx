@@ -963,7 +963,7 @@ const OptionsModal = ({
   "textPrimary": "#f9fafb",
   "textSecondary": "#d1d5db",
   "border": "#374151",
-  "accent": "#3b82f7",
+  "accent": "#3b82f6",
   "accentHover": "#2563eb"
 }`}
         </pre>
