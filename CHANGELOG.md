@@ -1,5 +1,12 @@
 # bookmarkit
 
+## 0.18.0
+
+### Minor Changes
+
+- fd4ff1e: Stories for every application component under the shared theme/direction decorator, and the accessibility/RTL sweep: the folder tree mirrors with logical properties, review-dialog row titles read their own direction, the settings' checkbox rows join the 44px coarse-pointer floor, and the review footer count announces its changes.
+- 0218d7e: The filter row's parity items from the mockup: an "Unrated" pick in the rating filter (also in the shell's compact row, and carried by saved views), the result count as a polite live region in the tabular style, and sort labels aligned to the mockup ("Recently added", "Title (A–Z)").
+
 ## 0.17.0
 
 ### Minor Changes

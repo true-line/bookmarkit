@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BookmarkIt by True Line AI LLC",
   "short_name": "BookmarkIt",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Save, organize, search, filter, and sort your bookmarks in one place.",
   "icons": {
     "16": "icon16.png",
