@@ -164,123 +164,128 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
 </head>
 <body class="bg-light-surface text-light-on-surface font-body antialiased">
   <div class="min-h-[1024px] flex flex-col lg:flex-row" data-stitch-vh="min-h-[1024px]===min-h-screen">
-    <!-- Persistent Navigation Sidebar -->
-    <aside class="w-full lg:w-64 shrink-0 bg-light-surface-container-low border-b lg:border-b-0 lg:border-e border-light-outline-variant p-5 flex flex-col gap-6">
-      <!-- Brand Header -->
-      <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5 min-w-0">
+    <!-- Persistent Collapsible Navigation Sidebar -->
+    <aside id="workspace-sidebar" data-collapsed="false" class="w-full lg:w-72 shrink-0 bg-light-surface-container-low border-b lg:border-b-0 lg:border-e border-light-outline-variant p-5 flex flex-col gap-6 transition-[width] duration-surface-enter ease-surface-enter motion-reduce:transition-none">
+      <!-- Brand Header & Collapse Toggle -->
+      <div id="sidebar-header" class="flex items-center justify-between gap-2">
+        <div id="sidebar-brand" class="flex items-center gap-2.5 min-w-0">
           <div class="w-8 h-8 rounded bg-light-primary-container text-light-on-primary flex items-center justify-center shrink-0 shadow-sm">
             <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: &#39;FILL&#39; 1;" aria-hidden="true">bookmark</span>
           </div>
-          <div class="min-w-0 text-start">
+          <div class="sidebar-label min-w-0 text-start">
             <span data-design-text-token="headline-sm" class="font-headline text-headline-sm text-light-on-surface block truncate">BookmarkIt</span>
             <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant block">Local-first</span>
           </div>
         </div>
-        <button data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" aria-label="Help and keyboard shortcuts" class="inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded bg-light-surface-container text-light-on-surface-variant border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">help</span>
-        </button>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="sidebar-help-btn" data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" aria-label="Help and keyboard shortcuts" title="Help &amp; shortcuts" class="sidebar-label inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded bg-light-surface-container text-light-on-surface-variant border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">help</span>
+          </button>
+          <button id="sidebar-collapse-btn" data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" aria-expanded="true" aria-controls="workspace-sidebar" aria-label="Collapse sidebar" title="Collapse sidebar" class="hidden lg:inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded bg-light-surface-container text-light-on-surface-variant border border-light-outline-variant hover:bg-light-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+            <span id="sidebar-collapse-icon" class="material-symbols-outlined text-[18px]" aria-hidden="true">dock_to_left</span>
+          </button>
+        </div>
       </div>
 
       <!-- Primary Action -->
-      <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="w-full inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
-        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
-        <span data-design-text-token="label-lg" class="text-label-lg">Add Bookmark</span>
+      <button id="sidebar-add-btn" data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" aria-label="Add Bookmark" title="Add Bookmark" class="w-full inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded bg-light-primary-container text-light-on-primary shadow-sm hover:bg-light-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">add</span>
+        <span data-design-text-token="label-lg" class="sidebar-label text-label-lg">Add Bookmark</span>
       </button>
 
       <!-- Smart Views -->
-      <nav aria-label="Smart views" class="flex flex-col gap-1 text-start">
-        <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant px-2.5 pb-1">Views</span>
-        <button type="button" aria-current="page" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded bg-light-surface-container-highest text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+      <nav aria-label="Smart views" class="flex flex-col gap-1 text-start w-full">
+        <span data-design-text-token="label-sm" class="sidebar-label text-label-sm text-light-on-surface-variant px-2.5 pb-1">Views</span>
+        <button type="button" aria-current="page" title="All Bookmarks (2,089)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded bg-light-surface-container-highest text-light-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px] text-light-primary" aria-hidden="true">bookmarks</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">All Bookmarks</span>
+            <span class="material-symbols-outlined text-[18px] text-light-primary shrink-0" aria-hidden="true">bookmarks</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">All Bookmarks</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant tabular-nums">2,089</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm text-light-on-surface-variant tabular-nums">2,089</span>
         </button>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="Weekly Digest (14)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">calendar_today</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">Weekly Digest</span>
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">calendar_today</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">Weekly Digest</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">14</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm tabular-nums">14</span>
         </button>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="Never Opened (183)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">visibility_off</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">Never Opened</span>
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">visibility_off</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">Never Opened</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">183</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm tabular-nums">183</span>
         </button>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="Untagged (42)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">label_off</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">Untagged</span>
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">label_off</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">Untagged</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">42</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm tabular-nums">42</span>
         </button>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="Broken Links (7)" class="sidebar-nav-item relative w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px] text-danger" aria-hidden="true">link_off</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">Broken Links</span>
+            <span class="material-symbols-outlined text-[18px] text-danger shrink-0" aria-hidden="true">link_off</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">Broken Links</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm text-danger tabular-nums">7</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm text-danger tabular-nums">7</span>
         </button>
       </nav>
 
       <!-- Folders Tree -->
-      <nav aria-label="Folders" class="flex flex-col gap-1 text-start">
-        <div class="flex items-center justify-between px-2.5 pb-1">
+      <nav aria-label="Folders" class="flex flex-col gap-1 text-start w-full">
+        <div class="sidebar-label flex items-center justify-between px-2.5 pb-1">
           <span data-design-text-token="label-sm" class="text-label-sm text-light-on-surface-variant">Folders</span>
           <button type="button" aria-label="Manage folders" class="text-label-sm text-light-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary rounded">Edit</button>
         </div>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="AI &amp; Agents (412)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">AI &amp; Agents</span>
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">AI &amp; Agents</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">412</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm tabular-nums">412</span>
         </button>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="Terminal &amp; CLI (98)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">Terminal &amp; CLI</span>
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">Terminal &amp; CLI</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">98</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm tabular-nums">98</span>
         </button>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="Design Systems (64)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">Design Systems</span>
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">Design Systems</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">64</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm tabular-nums">64</span>
         </button>
-        <button type="button" class="w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
+        <button type="button" title="Reading List (127)" class="sidebar-nav-item w-full flex items-center justify-between gap-2 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change motion-reduce:transition-none">
           <span class="flex items-center gap-2.5 min-w-0">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">folder</span>
-            <span data-design-text-token="label-md" class="text-label-md truncate">Reading List</span>
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">folder</span>
+            <span data-design-text-token="label-md" class="sidebar-label text-label-md truncate">Reading List</span>
           </span>
-          <span data-design-text-token="label-sm" class="text-label-sm tabular-nums">127</span>
+          <span data-design-text-token="label-sm" class="sidebar-count text-label-sm tabular-nums">127</span>
         </button>
       </nav>
 
       <!-- Maintenance & Options Footer -->
-      <div class="mt-auto pt-4 border-t border-light-outline-variant flex flex-col gap-1 text-start">
-        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">health_and_safety</span>
-          <span data-design-text-token="label-md" class="text-label-md">Check Links</span>
+      <div class="mt-auto pt-4 border-t border-light-outline-variant flex flex-col gap-1 text-start w-full">
+        <button type="button" title="Check Links" class="sidebar-nav-item w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">health_and_safety</span>
+          <span data-design-text-token="label-md" class="sidebar-label text-label-md">Check Links</span>
         </button>
-        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">filter_none</span>
-          <span data-design-text-token="label-md" class="text-label-md">Remove Duplicates</span>
+        <button type="button" title="Remove Duplicates" class="sidebar-nav-item w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">filter_none</span>
+          <span data-design-text-token="label-md" class="sidebar-label text-label-md">Remove Duplicates</span>
         </button>
-        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">swap_vert</span>
-          <span data-design-text-token="label-md" class="text-label-md">Import / Export</span>
+        <button type="button" title="Import / Export" class="sidebar-nav-item w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface-variant hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">swap_vert</span>
+          <span data-design-text-token="label-md" class="sidebar-label text-label-md">Import / Export</span>
         </button>
-        <button type="button" class="w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">settings</span>
-          <span data-design-text-token="label-md" class="text-label-md">Options</span>
+        <button type="button" title="Options" class="sidebar-nav-item w-full flex items-center gap-2.5 min-h-[36px] px-2.5 py-1.5 rounded text-light-on-surface hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-light-primary">
+          <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">settings</span>
+          <span data-design-text-token="label-md" class="sidebar-label text-label-md">Options</span>
         </button>
       </div>
     </aside>
@@ -572,6 +577,48 @@ if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
           if (agentForm) agentForm.classList.remove('hidden');
           agentInput?.focus();
         }
+      });
+
+      var sidebar = document.getElementById('workspace-sidebar');
+      var sidebarHeader = document.getElementById('sidebar-header');
+      var collapseBtn = document.getElementById('sidebar-collapse-btn');
+      var collapseIcon = document.getElementById('sidebar-collapse-icon');
+      var addBtn = document.getElementById('sidebar-add-btn');
+
+      collapseBtn?.addEventListener('click', function () {
+        if (!sidebar) return;
+        var collapsed = sidebar.getAttribute('data-collapsed') === 'true';
+        var next = !collapsed;
+        sidebar.setAttribute('data-collapsed', next ? 'true' : 'false');
+        collapseBtn.setAttribute('aria-expanded', next ? 'false' : 'true');
+        collapseBtn.setAttribute('aria-label', next ? 'Expand sidebar' : 'Collapse sidebar');
+        collapseBtn.setAttribute('title', next ? 'Expand sidebar' : 'Collapse sidebar');
+        if (collapseIcon) collapseIcon.textContent = next ? 'dock_to_right' : 'dock_to_left';
+
+        sidebar.classList.toggle('lg:w-72', !next);
+        sidebar.classList.toggle('lg:w-16', next);
+        sidebar.classList.toggle('p-5', !next);
+        sidebar.classList.toggle('lg:px-2', next);
+        sidebar.classList.toggle('lg:py-4', next);
+        sidebar.classList.toggle('items-center', next);
+
+        sidebarHeader?.classList.toggle('flex-col', next);
+        sidebarHeader?.classList.toggle('gap-3', next);
+
+        addBtn?.classList.toggle('w-full', !next);
+        addBtn?.classList.toggle('px-4', !next);
+        addBtn?.classList.toggle('w-10', next);
+        addBtn?.classList.toggle('px-0', next);
+
+        document.querySelectorAll('.sidebar-label, .sidebar-count').forEach(function (el) {
+          el.classList.toggle('hidden', next);
+        });
+        document.querySelectorAll('.sidebar-nav-item').forEach(function (el) {
+          el.classList.toggle('justify-between', !next);
+          el.classList.toggle('px-2.5', !next);
+          el.classList.toggle('justify-center', next);
+          el.classList.toggle('px-0', next);
+        });
       });
     })();
   </script>
