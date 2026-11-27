@@ -325,7 +325,6 @@ export const surfaceMessages = {
     remoteFaviconsLabel: "Load site icons from the web",
     reset: "Reset",
     resetAria: "Revert unsaved setting changes",
-    resetAria: "Revert unsaved setting changes",
     selectModel: "Select a model…",
     setTemperature: "Set temperature",
     // #293: the sheet app bar's second line, per the mobile mockup.
