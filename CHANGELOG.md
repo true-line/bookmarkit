@@ -1,5 +1,13 @@
 # bookmarkit
 
+## 0.18.0
+
+### Minor Changes
+
+- fd4ff1e: Stories for every application component under the shared theme/direction decorator, and the accessibility/RTL sweep: the folder tree mirrors with logical properties, review-dialog row titles read their own direction, the settings' checkbox rows join the 44px coarse-pointer floor, and the review footer count announces its changes.
+- 0218d7e: The filter row's parity items from the mockup: an "Unrated" pick in the rating filter (also in the shell's compact row, and carried by saved views), the result count as a polite live region in the tabular style, and sort labels aligned to the mockup ("Recently added", "Title (A–Z)").
+- 6ff16be: Mobile adaptations for Options and Import & Export: settings now draft until **Done** (**Reset** reverts; closing, Escape or the sheet's back arrow discards, while key clearing, encryption and theme uploads stay immediate), and below `lg` both dialogs become full-page sheets — a back bar over the same body, a sticky Reset/Done footer for Options, and the import/export app bar naming the library's size. The confirm card's choice rows join the 44px coarse-pointer floor.
+
 ## 0.17.0
 
 ### Minor Changes
