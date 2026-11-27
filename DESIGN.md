@@ -235,6 +235,25 @@ rating >= 4 then sort by title asc`, the `then` compositions, the
   review dialog is a native button/input/select, so keyboard order is DOM
   order under the shared focus contract.
 
+### The filter row's parity items (#286)
+
+The mockup's unified search-and-filter row carries three items that stand on
+their own, landed without the row's fourth: "Unrated" joins the rating
+select — its own `unratedOnly` flag, because rating 0 is the bookmarks
+nothing has rated, an exact pick rather than a minimum on `minRating` —
+riding the same shared ladder (`RATING_OPTIONS`/`applyRatingPick`) as the
+shell's compact row so the two controls cannot drift, and round-tripping
+through saved views like the other flags. The summary count is a live region
+(`role="status"`, `aria-live="polite"`) in the tabular reading. The sort
+labels take the mockup's words — "Recently added", "Title (A–Z)" — while the
+field set stays the superset it is.
+
+The row's remaining item is a decision, not a task, and it stays open: the
+mockup merges instant filtering and the AI ask into one always-enabled
+field, which would touch two deliberate contracts — agent search and manual
+filters clear independently, and the search box is provider-gated (#207).
+Until that is decided the row keeps the two controls apart.
+
 ### The manager shell (#283)
 
 `SidebarNav` is the mockup's persistent navigation sidebar: a fixed rail from
