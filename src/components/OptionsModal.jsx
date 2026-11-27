@@ -367,20 +367,24 @@ const OptionsModal = ({
   // A locked session reads no key value, so the clear affordance follows the
   // same visibility as the field's contents.
   const hasApiKey = Boolean(draft.providerOptions.apiKey);
-  // #349: the pill tells the truth with the asks' own readiness rule —
-  // isSearchEnabled over the draft's staged options, a locked key counting
-  // as configured (it still reaches the unlock prompt). An unset provider
-  // reads "No active provider" instead of a green lie; typing a key makes
-  // it true before Done, as the draft always has.
-  const providerActive = isSearchEnabled(draft.provider, draft.providerOptions, encryption.locked);
-  const activeLabel = providerActive
-    ? draft.providerOptions.model
-      ? t("options.activeProviderModel", {
-          provider: draft.provider || t("common.none"),
-          model: draft.providerOptions.model,
-        })
-      : t("options.activeProvider", { provider: draft.provider || t("common.none") })
-    : t("options.noActiveProvider");
+  // #349: the pill tells the truth with the asks' own readiness rule, over
+  // the draft's staged options. Locked is its own reading, not evidence —
+  // the search gate's pass-through exists to reach the unlock prompt, and
+  // a locked session may hold no key, or one for another provider — so it
+  // reads "Provider locked" until the unlock says otherwise. An unset
+  // provider reads "No active provider" instead of a green lie; typing a
+  // key makes it true before Done, as the draft always has.
+  const providerActive = isSearchEnabled(draft.provider, draft.providerOptions);
+  const activeLabel = encryption.locked
+    ? t("options.lockedProvider")
+    : providerActive
+      ? draft.providerOptions.model
+        ? t("options.activeProviderModel", {
+            provider: draft.provider || t("common.none"),
+            model: draft.providerOptions.model,
+          })
+        : t("options.activeProvider", { provider: draft.provider || t("common.none") })
+      : t("options.noActiveProvider");
 
   const isValidBaseUrl = (url) => {
     if (!url) return true; // empty = use provider default, always OK
@@ -494,7 +498,8 @@ const OptionsModal = ({
       {/* Read-only status: shows what provider + model will actually be
           used once Done commits, as the options-settings screen's
           active-provider pill — with the asks' own readiness rule (#349),
-          so an unset provider cannot read as active. */}
+          so an unset provider cannot read as active, and a locked one
+          reads locked rather than active. */}
       <div>
         <span className="ui-pill">
           <span

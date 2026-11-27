@@ -700,14 +700,18 @@ describe("OptionsModal active-provider pill (#349)", () => {
     expect(screen.getByText("Active: gemini")).toBeInTheDocument();
   });
 
-  it("keeps a locked provider active — its unlock pass-through, as the asks read it", () => {
+  it("reads a locked session as locked, never as active — even with staged credentials", () => {
+    // The search gate's locked pass-through exists to reach the unlock
+    // prompt; it is not evidence (the blob may hold no key, or another
+    // provider's). Until the unlock says otherwise, the pill says locked.
     render(
       <OptionsModal
         {...baseProps}
-        providerOptions={{}}
+        providerOptions={{ apiKey: "sk-live" }}
         encryption={{ encrypted: true, locked: true }}
       />
     );
-    expect(screen.getByText("Active: gemini")).toBeInTheDocument();
+    expect(screen.getByText("Provider locked — unlock to use")).toBeInTheDocument();
+    expect(screen.queryByText(/Active:/)).not.toBeInTheDocument();
   });
 });
