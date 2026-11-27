@@ -46,20 +46,28 @@ function comboFor(event) {
  * an open dialog owns the keyboard, and no individual handler should have to
  * know that.
  *
+ * `allowWhileTyping` names the combos the typing guard lets through. A modifier
+ * combo cannot collide with text entry, and #340's summon must reach the agent
+ * bar out of the field the user is already in — the overlay is the way out, not
+ * another thing to leave first.
+ *
  * @param {Record<string, (event: KeyboardEvent) => void>} bindings Keyed by
  *   combo: "Escape", "h", "Mod+a".
- * @param {{ enabled?: boolean }} [options]
+ * @param {{ enabled?: boolean, allowWhileTyping?: string[] }} [options]
  */
-export function useKeyboardShortcuts(bindings, { enabled = true } = {}) {
+export function useKeyboardShortcuts(bindings, { enabled = true, allowWhileTyping = [] } = {}) {
   const bindingsRef = useRef(bindings);
   bindingsRef.current = bindings;
+  const exemptRef = useRef(allowWhileTyping);
+  exemptRef.current = allowWhileTyping;
 
   useEffect(() => {
     if (!enabled) return undefined;
     const onKeyDown = (event) => {
-      if (isTypingContext(event.target)) return;
       const combo = comboFor(event);
-      if (combo) bindingsRef.current[combo]?.(event);
+      if (!combo) return;
+      if (isTypingContext(event.target) && !exemptRef.current.includes(combo)) return;
+      bindingsRef.current[combo]?.(event);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

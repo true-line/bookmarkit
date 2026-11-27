@@ -32,8 +32,10 @@ const EXAMPLE_COMMAND_KEYS = [
 // out, so nothing the copy used to state is lost — including the two-stage
 // gestures: repeating the selection opens the bookmark, which is a keyboard
 // user's only documented way to open one. Labels are catalogue keys resolved
-// at render; the keycap names themselves stay literal.
+// at render; the keycap names themselves stay literal. The agent bar's summon
+// leads (#340): it is the surface the search section above describes.
 const SHORTCUTS = [
+  { labelKey: "help.shortcutAgentBar", keys: ["Cmd/Ctrl+K"] },
   { labelKey: "help.shortcutSelect", keys: ["Click"] },
   { labelKey: "help.shortcutOpenNewTab", keys: ["Double-click"] },
   { labelKey: "help.shortcutOpenSelected", keys: ["Click again", "Enter", "Space"] },
