@@ -28,7 +28,18 @@ describe("MobileFilterRow (#299)", () => {
 
     fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "4" } });
 
-    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, minRating: 4 });
+    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, unratedOnly: false, minRating: 4 });
+  });
+
+  // #286: the compact row renders the same ladder as the list's filter bar —
+  // Unrated included, as its own flag.
+  it("picks Unrated as its own flag, from the same ladder", () => {
+    const { onChange } = setup();
+
+    const options = [...screen.getByLabelText("Minimum rating").options].map((o) => o.textContent);
+    expect(options).toContain("Unrated");
+    fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "unrated" } });
+    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, unratedOnly: true, minRating: 0 });
   });
 
   it("offers the date sort, newest first, while none is on", () => {

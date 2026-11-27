@@ -75,10 +75,38 @@ describe("FilterBar (#53)", () => {
   it("changes rating and sort", () => {
     const { onChange } = setup();
     fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "3" } });
-    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, minRating: 3 });
+    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, unratedOnly: false, minRating: 3 });
 
     fireEvent.change(screen.getByLabelText("Sort by"), { target: { value: "title" } });
     expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, sortBy: "title" });
+  });
+
+  // #286: the mockup's Unrated pick is its own flag — the bookmarks with no
+  // rating — and it shows back as the select's selection.
+  it("picks Unrated as its own flag", () => {
+    const { onChange } = setup();
+
+    fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "unrated" } });
+    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, unratedOnly: true, minRating: 0 });
+  });
+
+  it("shows the Unrated pick selected, and a star rung turns it off", () => {
+    const { onChange } = setup({ filters: { ...EMPTY_FILTERS, unratedOnly: true } });
+
+    expect(screen.getByLabelText("Minimum rating")).toHaveValue("unrated");
+    fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "4" } });
+    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, unratedOnly: false, minRating: 4 });
+  });
+
+  // #286: the mockup's live count — the summary announces itself and its
+  // digits wear the tabular reading.
+  it("announces the summary as a polite live region in the numeric style", () => {
+    setup({ summary: "3 of 42 bookmarks match" });
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toHaveClass("ui-numeric");
+    expect(status).toHaveTextContent("3 of 42 bookmarks match");
   });
 
   it("names the sort options from the catalogue, in SORT_FIELDS' order", () => {
@@ -88,11 +116,11 @@ describe("FilterBar (#53)", () => {
     const options = screen.getByLabelText("Sort by").querySelectorAll("option");
     expect([...options].map((option) => [option.value, option.textContent])).toEqual([
       ["", "Default order"],
-      ["title", "Title"],
+      ["title", "Title (A–Z)"],
       ["url", "URL"],
       ["rating", "Rating"],
       ["folderId", "Folder"],
-      ["createdAt", "Date added"],
+      ["createdAt", "Recently added"],
       ["lastOpenedAt", "Last opened"],
       ["updatedAt", "Date modified"],
     ]);

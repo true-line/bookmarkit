@@ -106,6 +106,7 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters({ ...EMPTY_FILTERS, includeTags: ["x"] })).toBe(true);
     expect(hasActiveFilters({ ...EMPTY_FILTERS, excludeTags: ["x"] })).toBe(true);
     expect(hasActiveFilters({ ...EMPTY_FILTERS, minRating: 1 })).toBe(true);
+    expect(hasActiveFilters({ ...EMPTY_FILTERS, unratedOnly: true })).toBe(true);
     expect(hasActiveFilters({ ...EMPTY_FILTERS, sortBy: "title" })).toBe(true);
   });
 });
@@ -138,6 +139,13 @@ describe("applyManualFilters", () => {
       "1",
       "2",
     ]);
+  });
+
+  // #286: "Unrated" is the exact pick rating 0 represents, not a minimum.
+  it("isolates the unrated when the Unrated pick is on", () => {
+    expect(
+      applyManualFilters({ ...EMPTY_FILTERS, unratedOnly: true }, list).map((b) => b.id)
+    ).toEqual(["3"]);
   });
 
   it("sorts by field and direction", () => {
