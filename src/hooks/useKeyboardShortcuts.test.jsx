@@ -3,8 +3,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { useKeyboardShortcuts } from "./useKeyboardShortcuts.js";
 
-const Harness = ({ bindings, enabled = true }) => {
-  useKeyboardShortcuts(bindings, { enabled });
+const Harness = ({ bindings, enabled = true, allowWhileTyping }) => {
+  useKeyboardShortcuts(bindings, { enabled, allowWhileTyping });
   return (
     <div>
       <button type="button">a button</button>
@@ -90,6 +90,32 @@ describe("useKeyboardShortcuts (#27)", () => {
       fireEvent.keyDown(screen.getByLabelText(label), { key: "d" });
       fireEvent.keyDown(screen.getByLabelText(label), { key: "Escape" });
     }
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  // #340: the agent bar's summon has to work out of the field the user is
+  // already in — the overlay is the way out, not another thing to leave. Only
+  // the named combo is exempt, and a modifier combo cannot collide with text.
+  it("lets an exempt combo through the typing guard", () => {
+    const summon = vi.fn();
+    const plain = vi.fn();
+    render(<Harness bindings={{ d: plain, "Mod+k": summon }} allowWhileTyping={["Mod+k"]} />);
+
+    for (const label of ["search", "notes", "editor", "editor text"]) {
+      fireEvent.keyDown(screen.getByLabelText(label), { key: "k", ctrlKey: true });
+      fireEvent.keyDown(screen.getByLabelText(label), { key: "d" });
+    }
+
+    expect(summon).toHaveBeenCalledTimes(4);
+    expect(plain).not.toHaveBeenCalled();
+  });
+
+  it("keeps combos the caller did not exempt guarded while typing", () => {
+    const handler = vi.fn();
+    render(<Harness bindings={{ "Mod+a": handler }} allowWhileTyping={["Mod+k"]} />);
+
+    fireEvent.keyDown(screen.getByLabelText("search"), { key: "a", ctrlKey: true });
 
     expect(handler).not.toHaveBeenCalled();
   });

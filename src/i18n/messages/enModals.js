@@ -61,10 +61,11 @@ export const surfaceMessages = {
     licenses: "Licenses",
     privacyPolicy: "Privacy Policy",
     searchBody:
-      "The main search bar is powered by an AI agent. When a provider is configured in Options, type commands in plain English to find, sort, and manage your bookmarks. For example:",
+      "Press Cmd/Ctrl+K to summon the AI agent bar, then type commands in plain English to find, sort, and manage your bookmarks. Configure a provider in Options first — without one, the shortcut tells you. For example:",
     searchHeading: "Natural Language Search",
     shortcutsClear: "Clear selection & pending deletes",
     shortcutsHeading: "Keyboard Shortcuts",
+    shortcutAgentBar: "Summon the AI agent bar",
     shortcutDelete: "Delete selected (asks to confirm)",
     shortcutEditSelected: "Edit selected bookmark",
     shortcutEditingModal: "Open the editing modal",
@@ -76,7 +77,7 @@ export const surfaceMessages = {
     shortcutUndo: "Undo last change",
     title: "Help & Keyboard Shortcuts",
     tipsDuplicates:
-      'Use the <strong>Remove Duplicates</strong> button (or type "remove duplicates" into the search) to review duplicates pair by pair — both copies are shown, and nothing goes until you confirm.',
+      'Use the <strong>Remove Duplicates</strong> button (or type "remove duplicates" into the agent bar) to review duplicates pair by pair — both copies are shown, and nothing goes until you confirm.',
     tipsHeading: "Tips",
     tipsImportExport:
       "<strong>Import/Export</strong> lets you back up or restore bookmarks from JSON/HTML.",

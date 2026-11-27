@@ -79,21 +79,13 @@ import SidebarNav, { SMART_VIEW_LABEL_KEYS } from "./SidebarNav.jsx";
 import AgentPlan from "./AgentPlan.jsx";
 import Kbd from "./Kbd.jsx";
 import Toast from "./Toast.jsx";
-// #250: the header/toolbar chrome speaks the unified design system — buttons,
-// icon buttons and the search input-field-icon (leading search icon, trailing
-// provider-ready badge). AgentPlan/Kbd/Toast are standalone app components,
+import AgentSpotlightBar from "./AgentSpotlightBar.jsx";
+// #250: the header/toolbar chrome speaks the unified design system — buttons
+// and icon buttons. AgentPlan/Kbd/Toast are standalone app components,
 // re-homed verbatim when the legacy library retired (#255). Row/state
 // compositions live in index.css.
-import { Button, IconButton, InputField } from "../design-system/index.js";
-import {
-  AddIcon,
-  CopiesIcon,
-  HealthIcon,
-  SearchIcon,
-  SettingsIcon,
-  SparkIcon,
-  SwapIcon,
-} from "./icons.jsx";
+import { Button, IconButton } from "../design-system/index.js";
+import { CopiesIcon, HealthIcon, SettingsIcon, SwapIcon } from "./icons.jsx";
 
 // Plan steps that write a new order to the store, rather than sorting the view.
 const REORDER_ACTIONS = ["reorder", "reorderAscending", "reorderDescending", "persistSortedOrder"];
@@ -204,7 +196,12 @@ const BookmarkApp = () => {
   // #198: the list's view mode — single column, flow columns, grid — a
   // display preference persisted like the other display toggles.
   const [viewMode, setViewMode] = useState(listViewMode);
-  const [searchQuery, setSearchQuery] = useState("");
+  // #340: the agent ask is the Spotlight overlay (#339's decision — the strip
+  // carries no agent field in any provider state), summoned with Cmd/Ctrl+K.
+  // Without a provider the shortcut answers with the gate toast: the #207
+  // gate moved from a permanently visible disabled field to press time.
+  const [isAgentBarOpen, setIsAgentBarOpen] = useState(false);
+  const [agentGateNotice, setAgentGateNotice] = useState(false);
   // The agent's accumulated plan. It stays here rather than inside the engine
   // because the view, the manual filters and a persisted reorder all read it.
   const [lastAction, setLastAction] = useState(null);
@@ -342,8 +339,6 @@ const BookmarkApp = () => {
     bookmarksRef.current = bookmarks;
   }, [bookmarks]);
 
-  // PERF-07: Debounce search for displayedBookmarks (input updates instantly; search updates after 300ms)
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   // #53: debounce only the filter text — chips/selects apply immediately, since they
   // are discrete choices and waiting on them feels broken.
   const debouncedFilterText = useDebounce(manualFilters.text, 300);
@@ -447,7 +442,6 @@ const BookmarkApp = () => {
       closeWorkspaceViews();
       setLastAction(view.plan.length > 0 ? view.plan : null);
       setManualFilters(view.filters);
-      setSearchQuery("");
     },
     [closeWorkspaceViews]
   );
@@ -1041,13 +1035,30 @@ const BookmarkApp = () => {
     navDrawerOpen ||
     // #301: the bulk-edit sheet below `lg` — a dialog to the keyboard like
     // the rest, so `d` cannot stage a deletion behind it while it is open.
-    bulkEditorOpen;
+    bulkEditorOpen ||
+    // #340: the agent bar — an overlay under the dialog contract, so the
+    // shortcuts cannot act on the list behind its scrim. Re-summoning while
+    // it is open is Escape's and the scrim's job to answer.
+    isAgentBarOpen;
 
   useKeyboardShortcuts(
     {
       // Dialogs, the navigation drawer included (#294), take Escape
       // themselves; with one open the shortcuts are disabled altogether.
       Escape: clearSelection,
+      // #340: the agent bar's summon, branching on the provider at press
+      // time — configured, the overlay opens; not, the gate toast answers.
+      // The combo is exempt from the typing guard: the summon has to work
+      // out of whatever field the user is already in.
+      "Mod+k": (event) => {
+        event.preventDefault();
+        if (!isAgentConfigured) {
+          setAgentGateNotice(true);
+          return;
+        }
+        setAgentGateNotice(false);
+        setIsAgentBarOpen(true);
+      },
       // #56: the history outlives the toast, so this reaches writes whose offer
       // has already gone.
       "Mod+z": (event) => {
@@ -1091,7 +1102,7 @@ const BookmarkApp = () => {
         if (selected?.url) showCustomMessage(t("app.urlCheckUnavailable"), "info");
       },
     },
-    { enabled: !isDialogOpen }
+    { enabled: !isDialogOpen, allowWhileTyping: ["Mod+k"] }
   );
 
   // ─── Persisted reorder (UX-05: with undo) ───────────────────────────────────
@@ -1204,12 +1215,18 @@ const BookmarkApp = () => {
   // dedupe and embedding paths apply (#86). A locked key keeps the box open:
   // submitting a query is how the user reaches the engine's unlock prompt.
   const isAgentConfigured = isSearchEnabled(runtimeProvider, providerOptions, encryption.locked);
+  // #340 (review): the gate toast answers a press, and it yields the moment
+  // its answer stops being true — a provider configured while the notice is
+  // up must not leave it hanging once Options closes.
+  useEffect(() => {
+    if (isAgentConfigured) setAgentGateNotice(false);
+  }, [isAgentConfigured]);
   // #301: Auto-Tag asks the provider directly and has no unlock prompt to
   // offer, so its gate is the same readiness without the locked pass-through
   // search uses to reach the unlock flow — locked settings mean it is off.
   const canAutoTag = isSearchEnabled(runtimeProvider, providerOptions, false);
 
-  const { isProcessing, run: runAgent } = useAgentEngine({
+  const { run: runAgent } = useAgentEngine({
     provider: runtimeProvider,
     providerOptions,
     locked: encryption.locked,
@@ -1219,21 +1236,24 @@ const BookmarkApp = () => {
     showMessage: showCustomMessage,
   });
 
-  const handleSearchInputKeyDown = useCallback(
-    (e) => {
-      if (e.key !== "Enter") return;
-      // The one query that is not a query: "options" opens the dialog. It predates
-      // the agent and costs nothing to keep working.
-      if ((searchQuery || "").trim().toLowerCase() === "options") {
+  // #340: the overlay's Ask — the retired field's Enter path, minus the field.
+  // The overlay closes before the ask goes out: Spotlight is a summoner, not a
+  // progress pane, and an error dialog must not stack its focus trap over the
+  // closing overlay. "options" stays the one query that is not a query; it
+  // predates the agent and costs nothing to keep working.
+  const handleAgentAsk = useCallback(
+    (query) => {
+      setIsAgentBarOpen(false);
+      if (query.toLowerCase() === "options") {
         setIsOptionsOpen(true);
         return;
       }
       setBookmarksToDelete([]);
       // #296/#295: a query names the list it wants; a workspace view yields to it.
       closeWorkspaceViews();
-      runAgent(searchQuery);
+      runAgent(query);
     },
-    [closeWorkspaceViews, searchQuery, runAgent]
+    [closeWorkspaceViews, runAgent]
   );
 
   // ─── Import handlers ─────────────────────────────────────────────────────────
@@ -1488,39 +1508,10 @@ const BookmarkApp = () => {
                 effectsEnabled={effects}
               />
             )}
-            <div className="flex justify-center items-center gap-3">
-              {/* #283: from `lg` the brand lives in the navigation sidebar. */}
-              <div className="w-full max-w-md">
-                <InputField
-                  id="search-input"
-                  type="text"
-                  icon={<SearchIcon />}
-                  placeholder={
-                    isAgentConfigured
-                      ? t("app.searchPlaceholderAgent")
-                      : t("app.searchPlaceholderSetup")
-                  }
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchInputKeyDown}
-                  disabled={!isAgentConfigured || isProcessing}
-                  aria-label={t("app.searchAria")}
-                  trailing={
-                    isProcessing ? (
-                      <span className="ui-spinner" aria-hidden="true" />
-                    ) : isAgentConfigured ? (
-                      // The mockup's AI Ready reading: the provider badge rides the
-                      // trailing slot without taking pointer events (the search
-                      // itself does the AI ask).
-                      <span className="ui-ai-badge" aria-hidden="true">
-                        <SparkIcon />
-                        {t("app.aiReady")}
-                      </span>
-                    ) : undefined
-                  }
-                />
-              </div>
-            </div>
+            {/* #340: the merged field is gone — #339's decision rejected it in
+                every provider state, and the ask lives in the Spotlight bar
+                summoned with Cmd/Ctrl+K, never inline in the strip. The text
+                filter is the FilterBar's, and it filters; it never asks. */}
             {/* #299: the compact filter row — the shell owns rating and sort
                 below `lg`, and the select mode is the touch path into the
                 selection the bottom bar acts on. */}
@@ -1728,9 +1719,9 @@ const BookmarkApp = () => {
                     isMobileViewport={!isSidebarViewport}
                     isLoading={isLoading}
                     bookmarksTotal={bookmarks.length}
-                    searchActive={!!debouncedSearchQuery || hasActiveFilters(effectiveFilters)}
+                    searchActive={hasActiveFilters(effectiveFilters)}
                     lastAction={lastAction}
-                    searchQuery={debouncedSearchQuery || debouncedFilterText}
+                    searchQuery={debouncedFilterText}
                     onClearSearch={clearAllFilters}
                     onAddNew={handleAddNewBookmark}
                     onImport={handleImportExportOpen}
@@ -1785,6 +1776,16 @@ const BookmarkApp = () => {
 
       {/* ─── Modals ─── */}
       <ErrorBoundary fallbackMessage={t("app.modalFallbackMessage")}>
+        {/* #340: the Spotlight agent bar and its press-time gate. At the root
+            like the selection bar — no ancestor transform may re-anchor the
+            fixed overlay, and the header slides away independently of it. */}
+        <AgentSpotlightBar
+          open={isAgentBarOpen}
+          noticeOpen={agentGateNotice}
+          onClose={() => setIsAgentBarOpen(false)}
+          onDismissNotice={() => setAgentGateNotice(false)}
+          onSubmit={handleAgentAsk}
+        />
         {isHelpModalOpen && <HelpModal onClose={() => setIsHelpModalOpen(false)} />}
         {isOptionsOpen && (
           <OptionsModal

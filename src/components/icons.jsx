@@ -183,12 +183,27 @@ export function StarIcon({ size = 14 }) {
   );
 }
 
-/** The provider-ready badge on the search field (auto_awesome). */
+/** The AI surfaces' glyph (auto_awesome) — the agent bar's ask chip, the
+ *  duplicate review's second opinion and bulk Auto-Tag. It rode the search
+ *  field's provider-ready badge until that field retired with the strip's
+ *  agent ask (#340). */
 export function SparkIcon({ size = 14 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
       <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
       <path d="M19 15v4M17 17h4" />
+    </svg>
+  );
+}
+
+/** The agent bar's press-time provider gate (#340) — the mockup toast's
+ *  error glyph. */
+export function ErrorIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
     </svg>
   );
 }

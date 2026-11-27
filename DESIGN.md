@@ -303,6 +303,42 @@ state is corrected to the decision itself — the bar and the toast start
 hidden, and the shortcut branches on the provider, so nothing agent-facing
 shows until Cmd/Ctrl+K summons it.
 
+The decision landed as `AgentSpotlightBar` (#340), mounted at the shell's
+root beside the dialogs — no ancestor transform may re-anchor the fixed
+overlay, the way the selection bar stays clear of the sliding header. The
+overlay is the design system's dialog contract on the mockup's floating
+reading: the spec scrim over the whole window, the command bar floating
+bottom-center — a named `role="dialog"` with `aria-modal="true"` wrapped
+around the search form, so the modal context is announced like every other
+trapped overlay — the shared `useFocusTrap` (input focused on summon, focus
+restored on close), Escape stopped at the panel, and the 150ms deferred
+exit every dialog closes through. The retirement is total: the header's
+gated field, its AI-ready badge and both placeholders are gone, and with
+them the `searchQuery` state that only ever fed the agent — the strip's
+text filter is the FilterBar's, and it filters; it never asks.
+
+The shortcut branches at press time. With a provider configured, Cmd/Ctrl+K
+opens the overlay; without one it answers with the mockup's `role="alert"`
+toast ("Configure an AI provider in Options before using the agent.",
+assertive, with a dismiss button) — the #207 gate at press time, so
+readiness is read from the live settings, not a mount-time snapshot, and a
+notice already up yields the moment its answer stops being true:
+configuring a provider while it shows clears it. The
+summon is exempt from the shortcut hook's typing guard (`allowWhileTyping`):
+a modifier combo cannot collide with text entry, and the overlay is the way
+out of the field the user is already in. While the overlay is up it joins
+the dialog set (`isDialogOpen`), so no list shortcut acts behind its scrim.
+
+Ask dismisses the overlay before the ask goes out. Spotlight is a summoner,
+not a progress pane — the answer lands in the list and the plan bar — and
+closing first keeps an error dialog from stacking a second live focus trap
+over the closing overlay, which would strand focus outside the newer
+dialog. "options" keeps its pre-agent meaning as the one query that is not
+a query and opens Options directly. Open for qwts (from the issue): mobile
+has no keyboard — whether the top bar grows a summon affordance or the
+agent stays desktop-only is undecided; no strip field returns in either
+case.
+
 ### The manager shell (#283)
 
 `SidebarNav` is the mockup's persistent navigation sidebar: a fixed rail from

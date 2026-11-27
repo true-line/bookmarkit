@@ -524,3 +524,127 @@ describe("BookmarkApp's link health view (#295, sheet #303)", () => {
     }
   });
 });
+
+// #340: the agent ask is the Spotlight overlay, never a strip field (#339's
+// decision). This is the summon wired at the app level — the gate toast
+// answering without a provider, the overlay opening focused with one, Escape
+// restoring focus, and the ask's handoff to Options for the one query that is
+// not a query (which also keeps the suite off the network: no other ask runs
+// a real provider call here).
+describe("BookmarkApp's agent bar (#340)", () => {
+  afterEach(() => {
+    localStorage.removeItem("bm_runtime_llm_provider");
+    localStorage.removeItem("bm_runtime_llm_options");
+  });
+
+  // The provider settings read storage once on mount (the web build's
+  // localStorage fallback), so readiness at press time is only guaranteed
+  // after those promises settle.
+  const configureProvider = async () => {
+    localStorage.setItem("bm_runtime_llm_provider", "gemini");
+    // Options persist keyed by provider (useLLMSettings), so the key lands
+    // in gemini's slice.
+    localStorage.setItem(
+      "bm_runtime_llm_options",
+      JSON.stringify({ gemini: { apiKey: "test-key" } })
+    );
+    await renderShell();
+    await act(async () => {});
+  };
+
+  it("carries no agent field in the strip, and the gate toast answers the summon", async () => {
+    installViewport();
+    await renderShell();
+
+    // The retired field, by name and by placeholder — the strip's text filter
+    // is the FilterBar's, and it filters; it never asks.
+    expect(screen.queryByLabelText("Natural language search")).toBeNull();
+    expect(screen.queryByPlaceholderText(/natural language queries/i)).toBeNull();
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveAttribute("aria-live", "assertive");
+    expect(toast).toHaveTextContent("Configure an AI provider in Options before using the agent.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss notice" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("opens the overlay focused with a provider configured", async () => {
+    installViewport();
+    await configureProvider();
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+
+    const input = await screen.findByLabelText("Ask AI agent");
+    expect(input).toHaveFocus();
+    expect(screen.getByRole("search", { name: "AI Agent command bar" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("closes on Escape and restores focus to where the summon came from", async () => {
+    installViewport();
+    await configureProvider();
+
+    const trigger = screen.getByRole("button", { name: "Add" });
+    trigger.focus();
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    const input = await screen.findByLabelText("Ask AI agent");
+    expect(input).toHaveFocus();
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    // Scoped: the filter strip's region is role="search" too — only the
+    // command bar's is the overlay's.
+    await waitFor(() =>
+      expect(screen.queryByRole("search", { name: "AI Agent command bar" })).toBeNull()
+    );
+    expect(trigger).toHaveFocus();
+  });
+
+  it("owns the keyboard while open, and 'options' still opens Options", async () => {
+    installViewport();
+    await configureProvider();
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    const input = await screen.findByLabelText("Ask AI agent");
+
+    // The overlay is a dialog to the keyboard like the rest: with it open the
+    // list shortcuts are suspended, so `d` stages nothing behind the scrim —
+    // the bar's own named dialog is the only one on screen.
+    fireEvent.keyDown(window, { key: "d" });
+    expect(screen.getAllByRole("dialog").map((d) => d.getAttribute("aria-label"))).toEqual([
+      "AI Agent command bar",
+    ]);
+
+    fireEvent.change(input, { target: { value: "options" } });
+    fireEvent.submit(screen.getByRole("search", { name: "AI Agent command bar" }));
+
+    // The overlay closes before the ask goes out; the easter egg lands.
+    await waitFor(() =>
+      expect(screen.queryByRole("search", { name: "AI Agent command bar" })).toBeNull()
+    );
+    expect(screen.getByRole("dialog", { name: "Options" })).toBeInTheDocument();
+  });
+
+  it("yields a stale gate notice once a provider becomes ready (#340 review)", async () => {
+    installViewport();
+    await renderShell();
+    await act(async () => {});
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(await screen.findByRole("alert")).toHaveAttribute("aria-live", "assertive");
+
+    // The user answers the notice the ordinary way: Options, the key, Done.
+    fireEvent.click(screen.getByRole("button", { name: "Options" }));
+    const options = await screen.findByRole("dialog", { name: "Options" });
+    fireEvent.change(within(options).getByLabelText("API Key"), {
+      target: { value: "test-key" },
+    });
+    fireEvent.click(within(options).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Options" })).toBeNull());
+
+    // The notice's answer stopped being true — it yields without a press.
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+  });
+});
