@@ -504,16 +504,20 @@ body {
 /* ── The mini rail (#346) ────────────────────────────────────────────────
    The mockup's collapsed sidebar state (design/mockups/
    bookmarkit_manager_sidebar_collapsed): the rail folds to 64px of icons.
-   The width itself is --app-sidebar-width — the shell's
-   data-sidebar-collapsed re-points it below, so the shell, the fixed
-   header and the toast dock give up the folded width in the same step.
-   What lives here is the rail's own folding: rows centered on their icons
+   In the shell the width is --app-sidebar-width, which the shell's
+   data-sidebar-collapsed re-points below; the shell's padding and the
+   fixed header's and toast dock's insets carry the matching transition,
+   so the whole frame tracks the rail's animated fold. A rail placed
+   outside the shell — Storybook's standalone — takes its folded width
+   here directly. What lives here is the rail's own folding: rows
+   centered on their icons
    alone, the captions, labels and counts gone (each row names itself with
    a tooltip), the primary squared to its 40px icon, the brand stacked.
    The drawer never carries data-collapsed — BookmarkApp passes the flag
    to the rail alone. */
 .ui-sidebar[data-collapsed="true"] {
-  /* The mockup's px-2 py-4 fold. */
+  /* The mockup's px-2 py-4 fold, at the mockup's 64px width. */
+  width: 4rem;
   padding: var(--ui-space-gutter-md) var(--ui-space-gutter-sm);
   align-items: center;
 }
@@ -568,6 +572,9 @@ body {
 @media (min-width: 1024px) {
   .bookmarkit-shell {
     padding-inline-start: var(--app-sidebar-width);
+    /* #346: the rail animates its fold, so the frame's dependent edges
+       track it; the global reduced-motion rules collapse these too. */
+    transition: padding-inline-start var(--ui-duration-enter) var(--ui-ease-enter);
   }
 
   /* #346: the mini rail re-points the one variable — the shell's padding
@@ -581,10 +588,12 @@ body {
      the header trade sides together in a right-to-left document. */
   .bookmarkit-header {
     inset-inline-start: var(--app-sidebar-width);
+    transition: inset-inline-start var(--ui-duration-enter) var(--ui-ease-enter);
   }
 
   .bookmarkit-toast-dock {
     inset-inline-start: var(--app-sidebar-width);
+    transition: inset-inline-start var(--ui-duration-enter) var(--ui-ease-enter);
   }
 
   .ui-sidebar:not(.ui-sidebar--standalone) {

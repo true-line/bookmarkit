@@ -16,8 +16,12 @@ const setup = (props = {}) => {
     onRenameFolder: vi.fn(),
     onDeleteFolder: vi.fn(),
   };
-  render(<FolderTree bookmarks={bookmarks} {...handlers} {...props} />);
-  return handlers;
+  const view = render(<FolderTree bookmarks={bookmarks} {...handlers} {...props} />);
+  return {
+    ...handlers,
+    rerender: (next = {}) =>
+      view.rerender(<FolderTree bookmarks={bookmarks} {...handlers} {...next} />),
+  };
 };
 
 /** A drop carrying one kind of payload, since jsdom has no real DataTransfer. */
@@ -287,6 +291,35 @@ describe("FolderTree folded into the mini rail (#346)", () => {
     setup({ iconOnly: true, manageable: false });
 
     expect(screen.queryByRole("button", { name: "Rename Work" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove folder Work" })).not.toBeInTheDocument();
+  });
+
+  it("names the always-present rows with a hover reading, like every folder", () => {
+    setup({ iconOnly: true });
+
+    // Root and No folder are mounted even when nothing is unfiled, so their
+    // glyphs carry the same tooltip the folder rows do.
+    expect(screen.getByRole("button", { name: "All bookmarks" })).toHaveAttribute(
+      "title",
+      "All bookmarks"
+    );
+    expect(screen.getByRole("button", { name: "No folder" })).toHaveAttribute("title", "No folder");
+  });
+
+  it("stands a pending remove offer down when the tree folds", () => {
+    const { rerender } = setup({ manageable: true });
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove folder Work" }));
+    expect(
+      screen.getByText("Move 2 bookmarks to no folder and remove this folder?")
+    ).toBeInTheDocument();
+
+    // Folding takes the actions away with the switch, and an offer left open
+    // goes with them — prose and two buttons have no 64px reading.
+    rerender({ manageable: false, iconOnly: true });
+    expect(screen.queryByText(/remove this folder\?/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Keep" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove folder Work" })).not.toBeInTheDocument();
   });
 });

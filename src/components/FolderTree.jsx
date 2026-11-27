@@ -174,8 +174,9 @@ function FolderNode({
 
         {!iconOnly && <Count node={node} active={active || dropping} />}
 
-        {/* The row's actions wait for "Manage folders" where the caller has one. */}
-        {manageable && (
+        {/* The row's actions wait for "Manage folders" where the caller has one —
+            and stand down folded, like the switch that names them (#346). */}
+        {manageable && !iconOnly && (
           <>
             <IconButton
               label={t("folderTree.rename", { path: node.path })}
@@ -196,8 +197,10 @@ function FolderNode({
         )}
       </Row>
 
-      {/* Deleting a folder never deletes bookmarks, so the offer has to say where they go. */}
-      {confirmingDelete && (
+      {/* Deleting a folder never deletes bookmarks, so the offer has to say where they go.
+          Folded, the offer stands down with the actions — prose and two buttons have
+          no 64px reading, and it comes back when the rail unfolds. */}
+      {confirmingDelete && !iconOnly && (
         <div className="ms-6 my-1 text-xs text-[var(--ui-on-surface-variant)]">
           <p className="mb-1">
             {t("folderTree.deleteConfirm", {
@@ -336,6 +339,7 @@ const FolderTree = React.memo(function FolderTree({
                     : "flex-1 min-w-0 text-start truncate"
                 }
                 aria-label={iconOnly ? t("folderTree.allBookmarks") : undefined}
+                title={iconOnly ? t("folderTree.allBookmarks") : undefined}
               >
                 {iconOnly ? <FolderIcon size={18} /> : t("folderTree.allBookmarks")}
               </button>
@@ -378,6 +382,7 @@ const FolderTree = React.memo(function FolderTree({
                     : "flex-1 min-w-0 text-start truncate"
                 }
                 aria-label={iconOnly ? t("folderTree.noFolder") : undefined}
+                title={iconOnly ? t("folderTree.noFolder") : undefined}
               >
                 {iconOnly ? <FolderIcon size={18} /> : t("folderTree.noFolder")}
               </button>
