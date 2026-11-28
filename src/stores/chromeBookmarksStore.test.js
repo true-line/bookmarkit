@@ -353,3 +353,74 @@ describe("chromeBookmarksStore folder cleanup", () => {
     expect(fake.urlPaths()).toEqual(["bookmarkit/Landed/Good"]);
   });
 });
+
+// #373: Chrome 134 marks special folders with folderType and may pair a local
+// bar with an account-synced copy, and fresh profiles no longer give the bar
+// node id "1" (observed ids "5"/"6") — nor the title the store used to match.
+describe("ensureRootFolder finds the bookmarks bar without id 1 (#373)", () => {
+  afterEach(() => {
+    delete globalThis.chrome;
+  });
+
+  // The shape a freshly installed current Chrome shows: two root children with
+  // ids that have nothing to do with the legacy "1", and an English title the
+  // old check missed by one letter of casing.
+  it("locates the bar by folderType on a modern profile", async () => {
+    installFakeChromeBookmarks({
+      rootChildren: [
+        { id: "5", title: "Bookmarks Bar", folderType: "bookmarks-bar", syncing: false },
+        { id: "6", title: "Other bookmarks", folderType: "other" },
+      ],
+    });
+    const store = createChromeBookmarksStore();
+    await store.init();
+
+    const [bar, other] = (await chrome.bookmarks.getTree())[0].children;
+    expect(bar.id).toBe("5");
+    expect(bar.children.map((n) => n.title)).toEqual(["bookmarkit"]);
+    expect(other.children).toEqual([]);
+  });
+
+  // With account bookmarks the root can hold both copies of the bar. Writing
+  // into the account copy would publish the bookmarkit folder to every synced
+  // device, so the local one stays the store's target, whichever comes first.
+  it("prefers the local bar over the account-synced copy", async () => {
+    installFakeChromeBookmarks({
+      rootChildren: [
+        { id: "5", title: "Bookmarks Bar", folderType: "bookmarks-bar", syncing: true },
+        { id: "6", title: "Bookmarks Bar", folderType: "bookmarks-bar", syncing: false },
+      ],
+    });
+    const store = createChromeBookmarksStore();
+    await store.init();
+
+    const [account, local] = (await chrome.bookmarks.getTree())[0].children;
+    expect(account.children).toEqual([]);
+    expect(local.id).toBe("6");
+    expect(local.children.map((n) => n.title)).toEqual(["bookmarkit"]);
+  });
+
+  // Chrome older than 134 has neither folderType nor syncing, so a profile
+  // whose ids are not legacy either is found by position alone.
+  it("falls back to the root's first child when nothing else marks the bar", async () => {
+    installFakeChromeBookmarks({
+      rootChildren: [
+        { id: "9", title: "Lesezeichenleiste" },
+        { id: "10", title: "Weitere Lesezeichen" },
+      ],
+    });
+    const store = createChromeBookmarksStore();
+    await store.init();
+
+    const [bar] = (await chrome.bookmarks.getTree())[0].children;
+    expect(bar.id).toBe("9");
+    expect(bar.children.map((n) => n.title)).toEqual(["bookmarkit"]);
+  });
+
+  it("fails with a clear error when the tree has no bar at all", async () => {
+    installFakeChromeBookmarks({ rootChildren: [] });
+    const store = createChromeBookmarksStore();
+
+    await expect(store.init()).rejects.toThrow(/bookmarks bar/);
+  });
+});
