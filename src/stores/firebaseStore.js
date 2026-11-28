@@ -16,11 +16,26 @@ import {
   setDoc,
   deleteDoc,
   writeBatch,
-  query,
   getDocs,
-  orderBy,
 } from "firebase/firestore";
 import { chunk, MAX_FIRESTORE_BATCH_OPS } from "./batching.js";
+
+// #358: Firestore's orderBy() is also an existence filter — a document that
+// lacks the ordered field is silently dropped from the result. create() and
+// bulkAdd() write no position field, so an ordered read hid exactly the
+// bookmarks they had just written, and nothing repaired them later because
+// reorderBookmarks() builds from list(). The app reads the collection in full
+// anyway, so reads fetch every document and sort here: position ascending,
+// documents without a position last, then title (case-insensitive, like
+// persistSortedOrder).
+const byPositionThenTitle = (a, b) => {
+  const posA = typeof a.position === "number" ? a.position : Number.POSITIVE_INFINITY;
+  const posB = typeof b.position === "number" ? b.position : Number.POSITIVE_INFINITY;
+  if (posA !== posB) return posA - posB;
+  const titleA = typeof a.title === "string" ? a.title.toLowerCase() : "";
+  const titleB = typeof b.title === "string" ? b.title.toLowerCase() : "";
+  return titleA < titleB ? -1 : titleA > titleB ? 1 : 0;
+};
 
 /**
  * @param {object} options
@@ -100,7 +115,6 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
         }
       });
       // PERF-04: Enable offline persistence so the app works without network on startup.
-      // Requires composite index: position ASC, title ASC (see src/stores/FIREBASE_SETUP.md).
       try {
         await enableIndexedDbPersistence(db);
       } catch (e) {
@@ -114,9 +128,11 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
       }
       // PERF-04: Subscribe to changes with error handler to detect auth/rules failures
       unsubSnapshot = onSnapshot(
-        query(collectionRef(), orderBy("position", "asc"), orderBy("title", "asc")),
+        collectionRef(),
         (snapshot) => {
-          const all = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          const all = snapshot.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort(byPositionThenTitle);
           notify(all);
         },
         (error) => {
@@ -130,10 +146,8 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
       );
     },
     async list() {
-      const snap = await getDocs(
-        query(collectionRef(), orderBy("position", "asc"), orderBy("title", "asc"))
-      );
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const snap = await getDocs(collectionRef());
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byPositionThenTitle);
     },
     subscribe(cb) {
       listeners.add(cb);
@@ -148,12 +162,14 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
       listeners.clear();
     },
     async create(bookmark) {
+      // #358: one write. Readers take the id from the document reference, so
+      // the follow-up setDoc that stored it under `id` only cost a second
+      // write and a second snapshot notification for the same bookmark.
       const ref = await addDoc(collectionRef(), {
         ...bookmark,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      await setDoc(ref, { id: ref.id }, { merge: true });
       return { ...bookmark, id: ref.id };
     },
     async update(id, patch) {
@@ -181,7 +197,7 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
       await commitInChunks(ops);
     },
     async bulkReplace(bookmarks) {
-      const snap = await getDocs(query(collectionRef()));
+      const snap = await getDocs(collectionRef());
       const ops = [];
       snap.forEach((d) => ops.push((batch) => batch.delete(d.ref)));
       bookmarks.forEach((b, index) => {
@@ -198,8 +214,9 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
       await commitInChunks(ops);
     },
     async bulkAdd(bookmarks) {
-      // The list query sorts by position then title; new docs get default
-      // position and append. Reorder handles explicit ordering afterward.
+      // #358: no position is written, so these documents sort after every
+      // positioned one (see byPositionThenTitle). Reorder handles explicit
+      // ordering afterward.
       const added = [];
       const ops = [];
       bookmarks.forEach((b) => {
