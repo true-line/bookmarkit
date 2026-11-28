@@ -1,42 +1,20 @@
 # Firebase Setup for BookmarkIt
 
-## Required Composite Index
+## Reads and ordering
 
-The `firebaseStore.js` queries Firestore with two `orderBy` clauses:
+`firebaseStore.js` reads the whole bookmark collection — it does not send an
+`orderBy()` query — and sorts in memory: `position` ascending, documents
+without a `position` last, then `title` (case-insensitive).
 
-```js
-(orderBy("position", "asc"), orderBy("title", "asc"));
-```
-
-Firestore requires a **composite index** for multi-field ordering. Without it,
-the query performs a full collection scan on every read.
-
-### Creating the index
-
-1. Open the [Firebase Console](https://console.firebase.google.com/)
-2. Select your project → **Firestore Database** → **Indexes**
-3. Click **Add Index** and configure:
-   - **Collection**: `bookmarks` (or the full path under your `appId`)
-   - **Fields**: `position ASC`, `title ASC`
-   - **Query scope**: Collection
-4. Click **Create**
-
-Alternatively, deploy via the Firebase CLI using `firestore.indexes.json`:
-
-```json
-{
-  "indexes": [
-    {
-      "collectionGroup": "bookmarks",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "position", "order": "ASCENDING" },
-        { "fieldPath": "title", "order": "ASCENDING" }
-      ]
-    }
-  ]
-}
-```
+This is deliberate (#358): Firestore's `orderBy()` is also an existence filter —
+from [Order and limit data](https://firebase.google.com/docs/firestore/query-data/order-limit-data),
+"The result set will not include documents that do not contain the given
+field." `create()` and `bulkAdd()` write no `position` field, so an ordered
+query would silently hide exactly the bookmarks they had just written. Fetching
+everything avoids that trap, needs no composite index (a multi-field
+`orderBy()` query would require one, and Firestore rejects the query with an
+error linking to the console until it exists), and costs nothing extra since
+the app renders the collection in full.
 
 ## Offline Persistence
 
