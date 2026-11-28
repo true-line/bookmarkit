@@ -3,6 +3,7 @@
 // in localStorage keyed by bookmark id. This allows non-destructive metadata alongside native Chrome bookmarks.
 
 import { createChromeBookmarksStore } from "./chromeBookmarksStore.js";
+import { sortBookmarksByField } from "./bookmarkSort.js";
 import { normalizeStatusReason } from "../utils/urlStatus.js";
 
 const META_KEY_PREFIX = "bm_meta:"; // localStorage key prefix
@@ -168,24 +169,7 @@ export function createLocalCompositeStore(options = {}) {
     async persistSortedOrder({ sortBy = "title", order = "asc" } = {}) {
       // Compute sorted order from merged metadata so rating/tags/title work consistently
       const merged = await this.list();
-      const key = sortBy === "folder" ? "folderId" : sortBy;
-      const sorted = [...merged].sort((a, b) => {
-        let valA = a[key] ?? "";
-        let valB = b[key] ?? "";
-        if (key === "rating") {
-          valA = a.rating || 0;
-          valB = b.rating || 0;
-        } else if (key === "createdAt" || key === "updatedAt") {
-          valA = a[key] ? new Date(a[key]).getTime() : 0;
-          valB = b[key] ? new Date(b[key]).getTime() : 0;
-        } else {
-          if (typeof valA === "string") valA = valA.toLowerCase();
-          if (typeof valB === "string") valB = valB.toLowerCase();
-        }
-        if (order === "asc") return valA < valB ? -1 : valA > valB ? 1 : 0;
-        return valA > valB ? -1 : valA < valB ? 1 : 0;
-      });
-      const orderedIds = sorted.map((b) => b.id);
+      const orderedIds = sortBookmarksByField(merged, { sortBy, order }).map((b) => b.id);
       if (typeof chromeStore.reorderBookmarks === "function") {
         await chromeStore.reorderBookmarks(orderedIds);
       } else if (typeof chromeStore.persistSortedOrder === "function") {

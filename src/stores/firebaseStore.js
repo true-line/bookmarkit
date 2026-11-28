@@ -19,6 +19,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { chunk, MAX_FIRESTORE_BATCH_OPS } from "./batching.js";
+import { sortBookmarksByField } from "./bookmarkSort.js";
 
 // #358: Firestore's orderBy() is also an existence filter — a document that
 // lacks the ordered field is silently dropped from the result. create() and
@@ -50,20 +51,53 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
   let db = null;
   let auth = null;
   let userId = null;
+  // Depth of chunked writes this store is making itself (#359). Every
+  // committed batch echoes a snapshot, so while a write is in flight those
+  // echoes are dropped and the outermost release notifies once from a fresh
+  // read — DESIGN.md's "one write, one notification, whatever its size",
+  // which the chrome store keeps the same way.
+  let writeDepth = 0;
 
   const notify = (all) => listeners.forEach((cb) => cb(all));
 
   const collectionRef = () => collection(db, "artifacts", appId, "users", userId, "bookmarks");
 
+  const readAll = async () => {
+    const snap = await getDocs(collectionRef());
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byPositionThenTitle);
+  };
+
   // #15: Commit a list of write operations in batches of <=500 (the Firestore
   // limit). Each op is a function that applies one write to the passed batch.
   // NOTE: chunking sacrifices cross-chunk atomicity for operations that exceed
   // the limit; a non-destructive/rollback strategy is tracked separately (#18).
+  //
+  // #359: the whole run is one store write, so the snapshot echoes the
+  // batches produce are dropped and the notification happens here — a fresh
+  // read once the last commit has landed, on the failure path too, because a
+  // batch that throws may leave earlier chunks committed and a listener left
+  // on the old list would be exactly the #18 mistake in reverse.
   const commitInChunks = async (ops) => {
-    for (const group of chunk(ops, MAX_FIRESTORE_BATCH_OPS)) {
-      const batch = writeBatch(db);
-      group.forEach((applyOp) => applyOp(batch));
-      await batch.commit();
+    writeDepth += 1;
+    try {
+      for (const group of chunk(ops, MAX_FIRESTORE_BATCH_OPS)) {
+        const batch = writeBatch(db);
+        group.forEach((applyOp) => applyOp(batch));
+        await batch.commit();
+      }
+    } finally {
+      writeDepth -= 1;
+      if (writeDepth === 0) {
+        try {
+          notify(await readAll());
+        } catch (error) {
+          // The write may be fine with the read failing behind it; the
+          // subscription or the caller reports a read failure instead of
+          // this release masking the write's own error.
+          console.error("Firestore read after write failed:", error);
+          onError?.(error);
+        }
+      }
     }
   };
 
@@ -130,6 +164,9 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
       unsubSnapshot = onSnapshot(
         collectionRef(),
         (snapshot) => {
+          // #359: echoes of this store's own chunked writes are dropped here;
+          // commitInChunks reads the finished collection once and notifies.
+          if (writeDepth > 0) return;
           const all = snapshot.docs
             .map((d) => ({ id: d.id, ...d.data() }))
             .sort(byPositionThenTitle);
@@ -146,8 +183,7 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
       );
     },
     async list() {
-      const snap = await getDocs(collectionRef());
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byPositionThenTitle);
+      return readAll();
     },
     subscribe(cb) {
       listeners.add(cb);
@@ -244,13 +280,13 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
         ...orderedIds.filter((id) => existingIds.includes(id)),
         ...existingIds.filter((id) => !orderedSet.has(id)),
       ];
+      // #359: position only. The local store's reorder is a
+      // chrome.bookmarks.move and touches no metadata, so "Date modified"
+      // survives a sort there — stamping every positioned document here made
+      // Firebase mode the one backend where it did not.
       const ops = normalized.map(
         (id, idx) => (batch) =>
-          batch.set(
-            doc(collectionRef(), id),
-            { position: idx, updatedAt: new Date().toISOString() },
-            { merge: true }
-          )
+          batch.set(doc(collectionRef(), id), { position: idx }, { merge: true })
       );
       await commitInChunks(ops);
     },
@@ -259,20 +295,7 @@ export function createFirebaseStore({ firebaseConfig, appId, initialAuthToken, o
      */
     async persistSortedOrder({ sortBy = "title", order = "asc" } = {}) {
       const list = await this.list();
-      const sorted = [...list].sort((a, b) => {
-        let valA = a[sortBy] ?? "";
-        let valB = b[sortBy] ?? "";
-        if (sortBy === "rating") {
-          valA = a.rating || 0;
-          valB = b.rating || 0;
-        } else {
-          if (typeof valA === "string") valA = valA.toLowerCase();
-          if (typeof valB === "string") valB = valB.toLowerCase();
-        }
-        if (order === "asc") return valA < valB ? -1 : valA > valB ? 1 : 0;
-        return valA > valB ? -1 : valA < valB ? 1 : 0;
-      });
-      const orderedIds = sorted.map((b) => b.id);
+      const orderedIds = sortBookmarksByField(list, { sortBy, order }).map((b) => b.id);
       await this.reorderBookmarks(orderedIds);
     },
   };

@@ -16,6 +16,16 @@ everything avoids that trap, needs no composite index (a multi-field
 error linking to the console until it exists), and costs nothing extra since
 the app renders the collection in full.
 
+Ordering writes are position-only (#359): `reorderBookmarks()` sets each
+document's `position` and nothing else, so "Date modified" survives a sort the
+way it does when the Chrome store's reorder is a `chrome.bookmarks.move`. A
+sort maps the agent plan's `folder` key onto the stored `folderId` field and
+compares the two timestamps as instants — semantics shared with the local
+stores through `bookmarkSort.js`, so both backends cannot disagree. A bulk
+write is also one notification, whatever the batch count: while a write is
+committing its 500-operation chunks the snapshot subscription holds still, and
+the finished collection is read and announced once at the end.
+
 ## Offline Persistence
 
 `firebaseStore.init()` enables IndexedDB-based offline persistence via
