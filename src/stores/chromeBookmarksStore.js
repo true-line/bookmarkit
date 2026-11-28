@@ -59,7 +59,22 @@ export function createChromeBookmarksStore() {
 
   const ensureRootFolder = async () => {
     const tree = await chrome.bookmarks.getTree();
-    const bar = tree[0].children.find((n) => n.id === "1" || n.title === "Bookmarks bar");
+    // #373: Chrome 134 marks special folders with folderType and, with account
+    // bookmarks, may pair a local bar with an account-synced copy. Fresh
+    // profiles no longer give the bar node id "1" (observed "5"/"6") and its
+    // title casing differs from the hardcoded English one, so neither marker
+    // matches anymore. Look the bar up by what it is — preferring the local
+    // copy over the account one — then the legacy markers, then position: the
+    // root's first child is the bar on every Chromium build.
+    const children = tree[0].children || [];
+    const bar =
+      children.find((n) => n.folderType === "bookmarks-bar" && n.syncing !== true) ||
+      children.find((n) => n.folderType === "bookmarks-bar") ||
+      children.find((n) => n.id === "1" || n.title === "Bookmarks bar") ||
+      children[0];
+    if (!bar) {
+      throw new Error("Could not find the bookmarks bar in the bookmark tree");
+    }
     const existing = (bar.children || []).find(
       (n) => n.title === ROOT_FOLDER_TITLE && n.url === undefined
     );

@@ -16,9 +16,12 @@ function createEvent() {
 /**
  * Build a fake chrome.bookmarks backed by a node map. The tree starts with the
  * synthetic root ("0") and a "Bookmarks bar" folder ("1"), matching the shape
- * `ensureRootFolder` looks for.
+ * `ensureRootFolder` looks for. `rootChildren` replaces that bar with another
+ * set of root-level folders, so tests can exercise the shapes current Chrome
+ * ships (#373): bar nodes whose ids are not "1", plus folderType/syncing
+ * markers. Entries are plain folder nodes — `{ id, title, folderType?, syncing? }`.
  */
-export function createFakeChromeBookmarks() {
+export function createFakeChromeBookmarks({ rootChildren } = {}) {
   let nextId = 100;
   const nodes = new Map();
   const children = new Map();
@@ -33,7 +36,9 @@ export function createFakeChromeBookmarks() {
   };
 
   insert({ id: "0", title: "" });
-  insert({ id: "1", title: "Bookmarks bar", parentId: "0" }, "0");
+  for (const node of rootChildren ?? [{ id: "1", title: "Bookmarks bar" }]) {
+    insert({ ...node, parentId: "0" }, "0");
+  }
 
   const detach = (id) => {
     const siblings = children.get(nodes.get(id).parentId);
@@ -131,8 +136,8 @@ export function createFakeChromeBookmarks() {
 }
 
 /** Install a fresh fake on globalThis.chrome and return it. */
-export function installFakeChromeBookmarks() {
-  const fake = createFakeChromeBookmarks();
+export function installFakeChromeBookmarks(options) {
+  const fake = createFakeChromeBookmarks(options);
   globalThis.chrome = { bookmarks: fake.bookmarks };
   return fake;
 }
