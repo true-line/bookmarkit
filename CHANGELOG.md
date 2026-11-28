@@ -1,5 +1,14 @@
 # bookmarkit
 
+## 0.19.1
+
+### Patch Changes
+
+- 440303e: The local store finds the bookmarks bar by what it is, not by hardcoded id or English title (#373). Chrome 134 marks special folders with `folderType`, and current fresh profiles no longer give the bar node id `"1"` (one install observed ids `"5"` and `"6"`) nor the exact `"Bookmarks bar"` title the store matched — so `ensureRootFolder` hit an undefined node and every page of a freshly installed extension died on init. The bar is now located by `folderType` first (preferring the local copy over an account-synced one), then the legacy id/title markers, then the root's first child, and a tree without one fails with a clear error instead of a bare TypeError.
+- df910e7: Firebase mode keeps the bookmarks it writes (#358). Firestore's `orderBy()` is also an existence filter, so the store's ordered reads silently dropped every document without a `position` field — exactly the ones the add form's `create()` and every import through `bulkAdd()` had just written, and nothing repaired them later because reordering builds from the same list. The store now reads the whole collection and sorts in memory (position ascending, documents without a position last, then title), which also removes the composite index the ordered query required. `create()` is one write with one snapshot notification instead of two, and the Firebase setup guide describes the real read behaviour.
+- a71b4eb: The options dialog's two-column provider row no longer stretches the provider select: with Ollama or LM Studio chosen, the optional key hint makes the key column taller than the provider column, and the grid's default stretch grew the select and the gap under its label with it. Fields now align to the top of the row, so the provider select keeps its normal height.
+- 9ec7472: The Options status pill now verifies the provider instead of trusting the toggle: besides the asks' readiness rule (#349), the staged configuration needs a chosen model, a well-formed endpoint, and the modal's own model-list probe concluded for exactly the staged options. An unreachable local server, a refused key, or a half-finished configuration reads "Provider unavailable" or stays neutral — it can no longer show an active provider that cannot actually serve a request. While the probe is concluding, the pill reads "Checking provider…", and a locked session keeps its neutral dot as well as its label.
+
 ## 0.19.0
 
 ### Minor Changes
