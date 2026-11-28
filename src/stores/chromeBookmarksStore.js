@@ -66,8 +66,8 @@ export function createChromeBookmarksStore() {
     // root's first child is the bar on every Chromium build.
     const children = tree[0].children || [];
     const bar =
-      children.find((n) => n.folderType === "bookmarksBar" && n.syncing !== true) ||
-      children.find((n) => n.folderType === "bookmarksBar") ||
+      children.find((n) => n.folderType === "bookmarks-bar" && n.syncing !== true) ||
+      children.find((n) => n.folderType === "bookmarks-bar") ||
       children.find((n) => n.id === "1" || n.title === "Bookmarks bar") ||
       children[0];
     if (!bar) {

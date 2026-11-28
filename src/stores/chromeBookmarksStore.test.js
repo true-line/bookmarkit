@@ -368,7 +368,7 @@ describe("ensureRootFolder finds the bookmarks bar without id 1 (#373)", () => {
   it("locates the bar by folderType on a modern profile", async () => {
     installFakeChromeBookmarks({
       rootChildren: [
-        { id: "5", title: "Bookmarks Bar", folderType: "bookmarksBar", syncing: false },
+        { id: "5", title: "Bookmarks Bar", folderType: "bookmarks-bar", syncing: false },
         { id: "6", title: "Other bookmarks", folderType: "other" },
       ],
     });
@@ -387,8 +387,8 @@ describe("ensureRootFolder finds the bookmarks bar without id 1 (#373)", () => {
   it("prefers the local bar over the account-synced copy", async () => {
     installFakeChromeBookmarks({
       rootChildren: [
-        { id: "5", title: "Bookmarks Bar", folderType: "bookmarksBar", syncing: true },
-        { id: "6", title: "Bookmarks Bar", folderType: "bookmarksBar", syncing: false },
+        { id: "5", title: "Bookmarks Bar", folderType: "bookmarks-bar", syncing: true },
+        { id: "6", title: "Bookmarks Bar", folderType: "bookmarks-bar", syncing: false },
       ],
     });
     const store = createChromeBookmarksStore();
